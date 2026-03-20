@@ -64,9 +64,10 @@ export class FileContextManager {
       onRemoveAttachment: (filePath) => {
         if (filePath === this.currentNotePath) {
           this.currentNotePath = null;
-          this.state.detachFile(filePath);
-          this.refreshCurrentNoteChip();
         }
+
+        this.state.detachFile(filePath);
+        this.refreshCurrentNoteChip();
       },
       onOpenFile: async (filePath) => {
         const file = this.app.vault.getAbstractFileByPath(filePath);
@@ -157,6 +158,20 @@ export class FileContextManager {
       this.state.attachFile(notePath);
     }
     this.refreshCurrentNoteChip();
+  }
+
+  /**
+   * Attaches a file to the context by its path.
+   * Used by drag-drop handlers and other external sources.
+   */
+  attachFileFromPath(filePath: string): boolean {
+    const normalizedPath = this.normalizePathForVault(filePath);
+    if (!normalizedPath) return false;
+
+    // Don't check excluded tags for drag-dropped files - user has explicit intent
+    this.state.attachFile(normalizedPath);
+    this.refreshCurrentNoteChip();
+    return true;
   }
 
   /** Auto-attaches the currently focused file (for new sessions). */
@@ -266,7 +281,7 @@ export class FileContextManager {
   }
 
   private refreshCurrentNoteChip(): void {
-    this.chipsView.renderCurrentNote(this.currentNotePath);
+    this.chipsView.renderCurrentNote(this.currentNotePath, this.state.getAttachedFiles());
     this.callbacks.onChipsChanged?.();
   }
 
