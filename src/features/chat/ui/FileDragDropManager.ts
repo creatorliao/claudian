@@ -20,10 +20,6 @@ interface FileLike {
   basename?: string;
 }
 
-interface FolderLike {
-  children: unknown[];
-}
-
 export class FileDragDropManager {
   private app: App;
   private containerEl: HTMLElement;
@@ -122,7 +118,7 @@ export class FileDragDropManager {
     e.preventDefault();
     e.stopPropagation();
 
-    this.dragEnterCount--;
+    this.dragEnterCount = Math.max(0, this.dragEnterCount - 1);
 
     if (this.dragEnterCount === 0) {
       const inputWrapper = this.containerEl.querySelector('.claudian-input-wrapper');
@@ -292,32 +288,13 @@ export class FileDragDropManager {
     const resolved = this.app.metadataCache.getFirstLinkpathDest(filePath, '');
     if (this.isFileLike(resolved)) return resolved;
 
-    // Strategy 3: Search by basename
+    // Strategy 3: Search by basename across all vault files
     const basename = filePath.split('/').pop();
     if (basename) {
-      const vaultRoot = this.app.vault.getRoot();
-      if (this.isFolderLike(vaultRoot)) {
-        const found = this.searchFileByBasename(vaultRoot, basename);
-        if (found) return found;
-      }
+      const found = this.app.vault.getFiles().find(f => f.basename === basename);
+      if (found) return found;
     }
 
-    return null;
-  }
-
-  /**
-   * Recursively searches vault folder structure for a file by basename.
-   */
-  private searchFileByBasename(folder: FolderLike, basename: string): FileLike | null {
-    for (const child of folder.children) {
-      if (this.isFileLike(child) && child.basename === basename) {
-        return child;
-      }
-      if (this.isFolderLike(child)) {
-        const result = this.searchFileByBasename(child, basename);
-        if (result) return result;
-      }
-    }
     return null;
   }
 
@@ -336,8 +313,15 @@ export class FileDragDropManager {
       return true;
     }
 
-    // Obsidian file explorer drag can expose text/plain payloads without Files.
-    if (types.includes('text/plain') && !types.includes('Files')) {
+    // Obsidian file explorer drag can expose text/plain payloads without Files,
+    // but only when dragManager.draggable is absent (older Obsidian versions).
+    // Require the absence of 'Files' AND 'text/uri-list' to avoid matching
+    // URL drags, bookmark drags, and plain-text drags from external apps.
+    if (
+      types.includes('text/plain') &&
+      !types.includes('Files') &&
+      !types.includes('text/uri-list')
+    ) {
       return true;
     }
 
@@ -348,12 +332,6 @@ export class FileDragDropManager {
     if (!value || typeof value !== 'object') return false;
     const file = value as Record<string, unknown>;
     return typeof file.path === 'string' && !Array.isArray(file.children);
-  }
-
-  private isFolderLike(value: unknown): value is FolderLike {
-    if (!value || typeof value !== 'object') return false;
-    const folder = value as Record<string, unknown>;
-    return Array.isArray(folder.children);
   }
 
   destroy() {
