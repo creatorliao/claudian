@@ -94,6 +94,7 @@ const context = await esbuild.context({
     '@lezer/lr',
     ...builtins,
     ...builtins.map(m => `node:${m}`),
+    'node:sqlite',
   ],
   format: 'cjs',
   target: 'es2018',
