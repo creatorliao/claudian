@@ -86,6 +86,10 @@
       "name": "Comment Claudian doit-il vous appeler ?",
       "desc": "Votre nom pour les salutations personnalisées (laisser vide pour les salutations génériques)"
     },
+    "agentName": {
+      "name": "Nom affiché de l’agent",
+      "desc": "Nom affiché à côté du logo en haut à gauche du chat. Laisser vide pour « Claudian »."
+    },
     "excludedTags": {
       "name": "Tags exclus",
       "desc": "Les notes avec ces tags ne seront pas chargées automatiquement comme contexte (un par ligne, sans #)"

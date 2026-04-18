@@ -86,6 +86,10 @@
       "name": "Como o Claudian deve chamá-lo?",
       "desc": "Seu nome para saudações personalizadas (deixe vazio para saudações genéricas)"
     },
+    "agentName": {
+      "name": "Nome de exibição do agente",
+      "desc": "Nome ao lado do logotipo no canto superior esquerdo do chat. Deixe vazio para \"Claudian\"."
+    },
     "excludedTags": {
       "name": "Tags excluídas",
       "desc": "Notas com estas tags não serão carregadas automaticamente como contexto (uma por linha, sem #)"

@@ -85,6 +85,8 @@ export type TranslationKey =
   | "settings.experimental"
   | "settings.userName.name"
   | "settings.userName.desc"
+  | "settings.agentName.name"
+  | "settings.agentName.desc"
   | "settings.excludedTags.name"
   | "settings.excludedTags.desc"
   | "settings.mediaFolder.name"

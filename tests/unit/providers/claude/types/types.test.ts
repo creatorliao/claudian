@@ -65,6 +65,7 @@ describe('types.ts', () => {
     it('should be assignable with valid settings', () => {
       const settings: ClaudianSettings = {
         userName: '',
+        agentName: '',
         model: 'haiku',
         enableAutoTitleGeneration: true,
         titleGenerationModel: '',
@@ -115,6 +116,7 @@ describe('types.ts', () => {
     it('should accept custom model strings', () => {
       const settings: ClaudianSettings = {
         userName: '',
+        agentName: '',
         model: 'anthropic/custom-model-v1',
         enableAutoTitleGeneration: true,
         titleGenerationModel: '',
@@ -164,6 +166,7 @@ describe('types.ts', () => {
     it('should accept optional lastClaudeModel and lastCustomModel', () => {
       const settings: ClaudianSettings = {
         userName: '',
+        agentName: '',
         model: 'sonnet',
         enableAutoTitleGeneration: true,
         titleGenerationModel: '',

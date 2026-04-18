@@ -318,6 +318,22 @@ export class ClaudianSettingTab extends PluginSettingTab {
       });
 
     new Setting(container)
+      .setName(t('settings.agentName.name'))
+      .setDesc(t('settings.agentName.desc'))
+      .addText((text) => {
+        text
+          .setPlaceholder(t('settings.agentName.name'))
+          .setValue(this.plugin.settings.agentName)
+          .onChange(async (value) => {
+            this.plugin.settings.agentName = value;
+            await this.plugin.saveSettings();
+            for (const view of this.plugin.getAllViews()) {
+              view.syncAgentDisplayNameInHeader();
+            }
+          });
+      });
+
+    new Setting(container)
       .setName(t('settings.systemPrompt.name'))
       .setDesc(t('settings.systemPrompt.desc'))
       .addTextArea((text) => {

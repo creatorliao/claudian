@@ -85,6 +85,8 @@ export type ProviderConfigMap = Partial<Record<string, Record<string, unknown>>>
 export interface ClaudianSettings {
   // User preferences
   userName: string;
+  /** 对话界面左上角（Logo 旁）展示的智能体名称；留空则显示默认「Claudian」 */
+  agentName: string;
 
   // Security
   permissionMode: PermissionMode;

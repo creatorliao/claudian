@@ -86,6 +86,10 @@
       "name": "Wie soll Claudian dich nennen?",
       "desc": "Dein Name für personalisierte Begrüßungen (leer lassen für allgemeine Begrüßungen)"
     },
+    "agentName": {
+      "name": "Anzeigename des Assistenten",
+      "desc": "Name neben dem Logo oben links im Chat. Leer lassen für „Claudian“."
+    },
     "excludedTags": {
       "name": "Ausgeschlossene Tags",
       "desc": "Notizen mit diesen Tags werden nicht automatisch als Kontext geladen (einer pro Zeile, ohne #)"

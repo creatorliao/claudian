@@ -86,6 +86,10 @@
       "name": "What should Claudian call you?",
       "desc": "Your name for personalized greetings (leave empty for generic greetings)"
     },
+    "agentName": {
+      "name": "Agent display name",
+      "desc": "Name shown beside the logo in the top-left of the chat. Leave empty to use \"Claudian\"."
+    },
     "excludedTags": {
       "name": "Excluded tags",
       "desc": "Notes with these tags will not auto-load as context (one per line, without #)"

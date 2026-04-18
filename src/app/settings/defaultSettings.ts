@@ -5,6 +5,7 @@ import { DEFAULT_CODEX_PROVIDER_SETTINGS } from '../../providers/codex/settings'
 
 export const DEFAULT_CLAUDIAN_SETTINGS: ClaudianSettings = {
   userName: '',
+  agentName: '',
 
   permissionMode: 'yolo',
 

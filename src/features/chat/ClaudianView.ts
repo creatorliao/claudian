@@ -77,7 +77,7 @@ export class ClaudianView extends ItemView {
   }
 
   getDisplayText(): string {
-    return 'Claudian';
+    return this.getResolvedAgentDisplayName();
   }
 
   getIcon(): string {
@@ -229,8 +229,11 @@ export class ClaudianView extends ItemView {
     this.logoEl = this.titleSlotEl.createSpan({ cls: 'claudian-logo' });
     this.syncHeaderLogo(DEFAULT_CHAT_PROVIDER_ID);
 
-    // Title text (hidden in header mode when 2+ tabs)
-    this.titleTextEl = this.titleSlotEl.createEl('h4', { text: 'Claudian', cls: 'claudian-title-text' });
+    // Title text（智能体显示名，默认 Claudian；多标签 header 模式下由 updateTabBarVisibility 隐藏）
+    this.titleTextEl = this.titleSlotEl.createEl('h4', {
+      text: this.getResolvedAgentDisplayName(),
+      cls: 'claudian-title-text',
+    });
 
     // Header actions container (for header mode - initially hidden)
     this.headerActionsEl = header.createDiv({ cls: 'claudian-header-actions claudian-header-actions-slot' });
@@ -415,6 +418,22 @@ export class ClaudianView extends ItemView {
     if (this.titleTextEl) {
       this.titleTextEl.style.display = hideBranding ? 'none' : '';
     }
+  }
+
+  /**
+   * 解析设置中的智能体显示名（`agentName` 去空白；空则回退为「Claudian」）。
+   */
+  private getResolvedAgentDisplayName(): string {
+    const trimmed = this.plugin.settings.agentName.trim();
+    return trimmed.length > 0 ? trimmed : 'Claudian';
+  }
+
+  /**
+   * 设置页修改 `agentName` 并保存后调用，立即更新左上角标题文案。
+   */
+  syncAgentDisplayNameInHeader(): void {
+    if (!this.titleTextEl) return;
+    this.titleTextEl.setText(this.getResolvedAgentDisplayName());
   }
 
   /** Sets `data-provider` on the root container so CSS brand color follows the active provider. */
