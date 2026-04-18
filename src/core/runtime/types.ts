@@ -46,6 +46,8 @@ export interface ChatTurnRequest {
   text: string;
   images?: ImageAttachment[];
   currentNotePath?: string;
+  /** 自文件树拖拽附加的文件路径（vault 相对路径），在编码阶段注入为 <context_files> */
+  contextFiles?: string[];
   editorSelection?: EditorSelectionContext | null;
   browserSelection?: BrowserSelectionContext | null;
   canvasSelection?: CanvasSelectionContext | null;

@@ -62,6 +62,7 @@ const createMockFileContextManager = () => ({
   handleMentionKeydown: jest.fn().mockReturnValue(false),
   isMentionDropdownVisible: jest.fn().mockReturnValue(false),
   hideMentionDropdown: jest.fn(),
+  consumeContextFiles: jest.fn().mockReturnValue([]),
   destroy: jest.fn(),
 });
 
@@ -69,6 +70,10 @@ const createMockImageContextManager = () => ({
   destroy: jest.fn(),
   clearImages: jest.fn(),
   setEnabled: jest.fn(),
+});
+
+const createMockFileDragDropManager = () => ({
+  destroy: jest.fn(),
 });
 
 const createMockSlashCommandDropdown = () => ({
@@ -174,6 +179,7 @@ const createMockServiceTierToggle = () => ({
 // Shared mock instances (reset in beforeEach)
 let mockFileContextManager: ReturnType<typeof createMockFileContextManager>;
 let mockImageContextManager: ReturnType<typeof createMockImageContextManager>;
+let mockFileDragDropManager: ReturnType<typeof createMockFileDragDropManager>;
 let mockSlashCommandDropdown: ReturnType<typeof createMockSlashCommandDropdown>;
 let mockInstructionModeManager: ReturnType<typeof createMockInstructionModeManager>;
 let mockBangBashModeManager: ReturnType<typeof createMockBangBashModeManager>;
@@ -231,6 +237,13 @@ jest.mock('@/features/chat/ui/FileContext', () => ({
   FileContextManager: jest.fn().mockImplementation(() => {
     mockFileContextManager = createMockFileContextManager();
     return mockFileContextManager;
+  }),
+}));
+
+jest.mock('@/features/chat/ui/FileDragDropManager', () => ({
+  FileDragDropManager: jest.fn().mockImplementation(() => {
+    mockFileDragDropManager = createMockFileDragDropManager();
+    return mockFileDragDropManager;
   }),
 }));
 

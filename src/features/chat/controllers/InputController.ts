@@ -653,12 +653,18 @@ export class InputController {
       : options.content;
     const enabledMcpServers = mcpServerSelector?.getEnabledServers();
 
+    // 拖拽附加的文件在发送时一次性消费，避免重复注入到后续轮次
+    const contextFiles = !isCompact
+      ? (fileContextManager?.consumeContextFiles() ?? [])
+      : [];
+
     return {
       displayContent: options.content,
       turnRequest: {
         text: transformedText,
         images: options.images,
         currentNotePath: shouldSendCurrentNote && currentNotePath ? currentNotePath : undefined,
+        contextFiles: contextFiles.length > 0 ? contextFiles : undefined,
         editorSelection: editorContext,
         browserSelection: browserContext,
         canvasSelection: canvasContext,

@@ -11,6 +11,7 @@ import * as os from 'os';
 import * as path from 'path';
 
 import type { AgentDefinition, AgentFrontmatter } from '../../../core/types';
+import { normalizePathForFilesystem } from '../../../utils/path';
 import type { PluginManager } from '../plugins/PluginManager';
 import { buildAgentFromFrontmatter, parseAgentFile } from './AgentStorage';
 
@@ -133,17 +134,18 @@ export class AgentManager {
 
   private listMarkdownFiles(dir: string): string[] {
     const files: string[] = [];
+    const normalizedDir = normalizePathForFilesystem(dir);
 
     try {
-      const entries = fs.readdirSync(dir, { withFileTypes: true });
+      const entries = fs.readdirSync(normalizedDir, { withFileTypes: true });
 
       for (const entry of entries) {
         if (entry.isFile() && entry.name.endsWith('.md')) {
-          files.push(path.join(dir, entry.name));
+          files.push(path.join(normalizedDir, entry.name));
         }
       }
     } catch {
-      // Non-critical: directory may be unreadable
+      // Non-critical: directory可能不可读或不存在
     }
 
     return files;

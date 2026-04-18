@@ -40,6 +40,7 @@ import { SubagentManager } from '../services/SubagentManager';
 import { ChatState } from '../state/ChatState';
 import { BangBashModeManager as BangBashModeManagerClass } from '../ui/BangBashModeManager';
 import { FileContextManager } from '../ui/FileContext';
+import { FileDragDropManager } from '../ui/FileDragDropManager';
 import { ImageContextManager } from '../ui/ImageContext';
 import { createInputToolbar } from '../ui/InputToolbar';
 import { InstructionModeManager as InstructionModeManagerClass } from '../ui/InstructionModeManager';
@@ -389,6 +390,7 @@ export function createTab(options: TabCreateOptions): TabData {
     },
     ui: {
       fileContextManager: null,
+      fileDragDropManager: null,
       imageContextManager: null,
       modelSelector: null,
       thinkingBudgetSelector: null,
@@ -630,6 +632,26 @@ function initializeContextManagers(tab: TabData, plugin: ClaudianPlugin): void {
       },
     },
     dom.contextRowEl
+  );
+
+  // File drag-drop manager - handles dragging files from Obsidian file tree
+  tab.ui.fileDragDropManager = new FileDragDropManager(
+    app,
+    dom.inputContainerEl,
+    {
+      onFilesDropped: (filePaths) => {
+        if (!tab.ui.fileContextManager) return;
+        let added = 0;
+        for (const filePath of filePaths) {
+          if (tab.ui.fileContextManager.attachFileFromPath(filePath)) {
+            added++;
+          }
+        }
+        if (added > 0) {
+          new Notice(t('chat.fileDrop.notice', { count: added }));
+        }
+      },
+    }
   );
 }
 
@@ -1540,6 +1562,8 @@ export async function destroyTab(tab: TabData): Promise<void> {
 
   tab.controllers.inputController?.destroyResumeDropdown();
   tab.ui.fileContextManager?.destroy();
+  tab.ui.fileDragDropManager?.destroy();
+  tab.ui.fileDragDropManager = null;
   tab.ui.slashCommandDropdown?.destroy();
   tab.ui.slashCommandDropdown = null;
   tab.ui.instructionModeManager?.destroy();
