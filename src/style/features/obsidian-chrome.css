@@ -1,0 +1,46 @@
+/**
+ * Obsidian 壳层图标与视图内 .claudian-logo 对齐为 Claude 品牌色（#d97757）。
+ * 以下三处 DOM 互不重叠，均需单独覆盖（主题常把图标设为 currentColor / 深灰）：
+ *
+ * 1) 左侧功能区 Ribbon — addRibbonIcon
+ * 2) 侧栏/分屏顶部工作区页签 — ItemView.getIcon()
+ * 3) 窗格内视图顶栏左侧图标 — .workspace-leaf-content[data-type] .view-header-icon
+ *
+ * addIcon 内 path 已带 fill="#D97757"；此处 !important 防止主题覆盖。
+ */
+/* 1) Ribbon */
+.side-dock-actions .side-dock-ribbon-action[aria-label="Open Claudian"] svg,
+.side-dock-actions .clickable-icon[aria-label="Open Claudian"] svg,
+.side-dock-actions [aria-label="Open Claudian"] svg,
+.workspace-ribbon .side-dock-ribbon-action[aria-label="Open Claudian"] svg {
+  color: #d97757 !important;
+}
+
+.side-dock-actions .side-dock-ribbon-action[aria-label="Open Claudian"] svg path,
+.side-dock-actions .clickable-icon[aria-label="Open Claudian"] svg path,
+.side-dock-actions [aria-label="Open Claudian"] svg path,
+.workspace-ribbon .side-dock-ribbon-action[aria-label="Open Claudian"] svg path {
+  fill: #d97757 !important;
+}
+
+/* 2) 工作区页签（侧栏/主工作区条带上的 Claudian 标签） */
+.workspace-tab-header[data-type="claudian-view"] svg {
+  color: #d97757 !important;
+}
+
+.workspace-tab-header[data-type="claudian-view"] svg path {
+  fill: #d97757 !important;
+}
+
+/* 3) 窗格顶栏图标（与页签是两套 UI，易被漏选） */
+.workspace-leaf-content[data-type="claudian-view"] .view-header-icon {
+  color: #d97757 !important;
+}
+
+.workspace-leaf-content[data-type="claudian-view"] .view-header-icon svg {
+  color: #d97757 !important;
+}
+
+.workspace-leaf-content[data-type="claudian-view"] .view-header-icon svg path {
+  fill: #d97757 !important;
+}

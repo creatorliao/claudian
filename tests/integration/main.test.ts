@@ -9,6 +9,8 @@ jest.mock('fs');
 
 // Now import the plugin after mocking
 import ClaudianPlugin from '@/main';
+import { CLAUDIAN_APP_ICON_ID } from '@/shared/claudeBrandMark';
+import { addIcon } from 'obsidian';
 
 describe('ClaudianPlugin', () => {
   let plugin: ClaudianPlugin;
@@ -91,8 +93,12 @@ describe('ClaudianPlugin', () => {
     it('should add ribbon icon', async () => {
       await plugin.onload();
 
+      expect(addIcon).toHaveBeenCalledWith(
+        CLAUDIAN_APP_ICON_ID,
+        expect.stringContaining('path fill="#D97757"')
+      );
       expect((plugin.addRibbonIcon as jest.Mock)).toHaveBeenCalledWith(
-        'bot',
+        CLAUDIAN_APP_ICON_ID,
         'Open Claudian',
         expect.any(Function)
       );

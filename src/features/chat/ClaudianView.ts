@@ -7,6 +7,7 @@ import { ProviderSettingsCoordinator } from '../../core/providers/ProviderSettin
 import { DEFAULT_CHAT_PROVIDER_ID, type ProviderId } from '../../core/providers/types';
 import { VIEW_TYPE_CLAUDIAN } from '../../core/types';
 import type ClaudianPlugin from '../../main';
+import { CLAUDIAN_APP_ICON_ID } from '../../shared/claudeBrandMark';
 import type { HistoryConversationOpenState } from './controllers/ConversationController';
 import { getTabProviderId, onProviderAvailabilityChanged, updatePlanModeUI } from './tabs/Tab';
 import { TabBar } from './tabs/TabBar';
@@ -80,7 +81,7 @@ export class ClaudianView extends ItemView {
   }
 
   getIcon(): string {
-    return 'bot';
+    return CLAUDIAN_APP_ICON_ID;
   }
 
   /** Refreshes model-dependent UI across all tabs (used after settings/env changes). */

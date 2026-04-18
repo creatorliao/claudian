@@ -5,7 +5,7 @@ patchSetMaxListenersForElectron();
 import './providers';
 
 import type { Editor } from 'obsidian';
-import { MarkdownView, Notice, Plugin } from 'obsidian';
+import { addIcon, MarkdownView, Notice, Plugin } from 'obsidian';
 
 import { DEFAULT_CLAUDIAN_SETTINGS } from './app/settings/defaultSettings';
 import { SharedStorageService } from './app/storage/SharedStorageService';
@@ -35,6 +35,10 @@ import { type InlineEditContext, InlineEditModal } from './features/inline-edit/
 import { ClaudianSettingTab } from './features/settings/ClaudianSettings';
 import { setLocale } from './i18n/i18n';
 import type { Locale } from './i18n/types';
+import {
+  CLAUDIAN_APP_ICON_ID,
+  getClaudeBrandMarkAddIconInnerHtml,
+} from './shared/claudeBrandMark';
 import { buildCursorContext } from './utils/editor';
 import { getVaultPath } from './utils/path';
 
@@ -53,7 +57,9 @@ export default class ClaudianPlugin extends Plugin {
       (leaf) => new ClaudianView(leaf, this)
     );
 
-    this.addRibbonIcon('bot', 'Open Claudian', () => {
+    // 功能区与侧栏标签与视图内品牌标一致：使用 Claude 星芒（非 Lucide `bot`）
+    addIcon(CLAUDIAN_APP_ICON_ID, getClaudeBrandMarkAddIconInnerHtml());
+    this.addRibbonIcon(CLAUDIAN_APP_ICON_ID, 'Open Claudian', () => {
       this.activateView();
     });
 
