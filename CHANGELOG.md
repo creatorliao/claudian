@@ -2,6 +2,22 @@
 
 本文档记录 Claudian（Obsidian 插件）的版本变更；格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，版本号遵循语义化版本意图（主版本.次版本.修订号）。
 
+## [2.0.12] - 2026-04-19
+
+### 变更
+
+- **国际化精简**：界面语言仅保留 **English** 与 **简体中文**（`en.json` / `zh-CN.json`）；`Locale` 类型与设置页下拉同步。**默认 `locale` 为 `zh-CN`**；加载时通过 **`normalizeClaudianLocale`** 将历史配置中的已移除语言代码规范为 `zh-CN` 并 **持久化**。当前语言包缺键时仍 **回退英文词条**。
+- **标签页上限提示**：达到 `maxTabs` 时的 `Notice` 使用 **`chat.tabs.maxAllowedNotice`**（`t()`），不再硬编码英文（对齐差异清单 S4）。
+- **主输入框**：主聊天 `textarea` **不设 `placeholder`**，不再显示 *How can I help you today?* 等寒暄式提示（见《方案_国际化仅中英与智能体输入占位符.md》§8.5 与《方案_智能体名称配置与左上角展示.md》关联节）。
+
+### 文档
+
+- **`方案_国际化仅中英与智能体输入占位符.md`**：语言精简、默认语言、R1 无占位符等 **已执行决策** 与追溯。
+- **`方案_智能体名称配置与左上角展示.md`**：`agentName` 与主输入框占位符 **关联决策** 补充。
+- **`差异清单_国际化与配置扫描.md`**：R1 / 语言范围等条目与实现对齐。
+
+---
+
 ## [2.0.11] - 2026-04-19
 
 ### 变更
@@ -45,7 +61,7 @@
 - **Ribbon 切换聊天面板**：左侧功能区 Claudian 图标改为 **开关整块聊天工作区**——当前 **没有** `claudian-view` 叶子时 **打开**（行为与原先一致，仍受「在主编辑器区域打开」设置约束）；**已有** 任意数量该类型叶子时 **一次性关闭**（`Workspace.detachLeavesOfType`，等同用户手工关掉工作区标签）。
 - **命令**：保留 **`open-view`**（仅打开或聚焦聊天视图）；新增 **`toggle-view`**（切换开关），便于绑定热键。
 - **`activateView`**：对 **`workspace.revealLeaf`** 使用 **`await`**，与官方建议一致（侧栏会正确展开、deferred 叶子加载更可靠）。
-- **国际化**：新增 `commands.openChatView`、`commands.toggleChatView`、`ribbon.toggleClaudian`（十种界面语言）。
+- **国际化**：新增 `commands.openChatView`、`commands.toggleChatView`、`ribbon.toggleClaudian`（`en` / `zh-CN`）。
 
 ### 文档
 

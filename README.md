@@ -150,7 +150,7 @@ src/
 │   ├── inline-edit/             # Inline edit modal and provider-backed edit services
 │   └── settings/                # Settings shell with provider tabs
 ├── shared/                      # Reusable UI components and modals
-├── i18n/                        # Internationalization (10 locales)
+├── i18n/                        # Internationalization (en + zh-CN)
 ├── utils/                       # Cross-cutting utilities
 └── style/                       # Modular CSS
 ```

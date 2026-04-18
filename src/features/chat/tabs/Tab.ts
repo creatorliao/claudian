@@ -459,10 +459,10 @@ function buildTabDOM(contentEl: HTMLElement): TabDOMElements {
   const navRowEl = inputContainerEl.createDiv({ cls: 'claudian-input-nav-row' });
   const inputWrapper = inputContainerEl.createDiv({ cls: 'claudian-input-wrapper' });
   const contextRowEl = inputWrapper.createDiv({ cls: 'claudian-context-row' });
+  // 主输入框不设 placeholder：避免「How can I help you today?」等寒暄式提示（产品决策，见方案文档）。
   const inputEl = inputWrapper.createEl('textarea', {
     cls: 'claudian-input',
     attr: {
-      placeholder: 'How can I help you today?',
       rows: '3',
       dir: 'auto',
     },

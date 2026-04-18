@@ -40,7 +40,7 @@ import {
   InlineEditModal,
 } from "./features/inline-edit/ui/InlineEditModal";
 import { ClaudianSettingTab } from "./features/settings/ClaudianSettings";
-import { setLocale, t } from "./i18n/i18n";
+import { normalizeClaudianLocale, setLocale, t } from "./i18n/i18n";
 import type { Locale } from "./i18n/types";
 import {
   CLAUDIAN_APP_ICON_ID,
@@ -372,6 +372,11 @@ export default class ClaudianPlugin extends Plugin {
       this.settings.permissionMode = "normal";
     }
 
+    const rawLocale = this.settings.locale;
+    const normalizedLocale = normalizeClaudianLocale(rawLocale);
+    const didNormalizeLocale = normalizedLocale !== rawLocale;
+    this.settings.locale = normalizedLocale;
+
     const didNormalizeProviderSelection =
       ProviderSettingsCoordinator.normalizeProviderSelection(
         this.settings as unknown as Record<string, unknown>
@@ -418,7 +423,7 @@ export default class ClaudianPlugin extends Plugin {
       this.settings as unknown as Record<string, unknown>
     );
 
-    if (changed || didNormalizeModelVariants || didNormalizeProviderSelection) {
+    if (changed || didNormalizeModelVariants || didNormalizeProviderSelection || didNormalizeLocale) {
       await this.saveSettings();
     }
 

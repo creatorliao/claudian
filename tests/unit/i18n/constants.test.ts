@@ -1,17 +1,21 @@
 import { DEFAULT_LOCALE, getLocaleDisplayString, getLocaleInfo, SUPPORTED_LOCALES } from '@/i18n/constants';
 
 describe('i18n/constants', () => {
-  it('DEFAULT_LOCALE is en', () => {
-    expect(DEFAULT_LOCALE).toBe('en');
+  it('DEFAULT_LOCALE is Simplified Chinese', () => {
+    expect(DEFAULT_LOCALE).toBe('zh-CN');
   });
 
   it('getLocaleInfo returns metadata for a supported locale', () => {
-    const info = getLocaleInfo('en');
-    expect(info).toBeDefined();
-    expect(info?.code).toBe('en');
-    expect(info?.name).toBe('English');
-    expect(info?.englishName).toBe('English');
-    expect(info?.flag).toBe('🇺🇸');
+    const infoEn = getLocaleInfo('en');
+    expect(infoEn).toBeDefined();
+    expect(infoEn?.code).toBe('en');
+    expect(infoEn?.name).toBe('English');
+    expect(infoEn?.englishName).toBe('English');
+    expect(infoEn?.flag).toBe('🇺🇸');
+
+    const infoZh = getLocaleInfo('zh-CN');
+    expect(infoZh?.code).toBe('zh-CN');
+    expect(infoZh?.name).toBe('简体中文');
   });
 
   it('getLocaleInfo returns undefined for unknown locale', () => {

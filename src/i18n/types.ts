@@ -1,14 +1,5 @@
-export type Locale =
-  | "en"
-  | "zh-CN"
-  | "zh-TW"
-  | "ja"
-  | "ko"
-  | "de"
-  | "fr"
-  | "es"
-  | "ru"
-  | "pt";
+/** 界面语言：仅维护英文与简体中文两套文案 */
+export type Locale = "en" | "zh-CN";
 
 export type TranslationKey =
   // Common UI elements

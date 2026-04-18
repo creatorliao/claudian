@@ -1,37 +1,34 @@
 /**
  * i18n - Internationalization service for Claudian
  *
- * Provides translation functionality for all UI strings.
- * Supports 10 locales with English as the default fallback.
+ * 仅保留 English 与简体中文两套翻译；缺失键时回退到英文词条。
  */
 
-import * as de from './locales/de.json';
 import * as en from './locales/en.json';
-import * as es from './locales/es.json';
-import * as fr from './locales/fr.json';
-import * as ja from './locales/ja.json';
-import * as ko from './locales/ko.json';
-import * as pt from './locales/pt.json';
-import * as ru from './locales/ru.json';
 import * as zhCN from './locales/zh-CN.json';
-import * as zhTW from './locales/zh-TW.json';
 import type { Locale, TranslationKey } from './types';
 
 const translations: Record<Locale, typeof en> = {
   en,
   'zh-CN': zhCN,
-  'zh-TW': zhTW,
-  ja,
-  ko,
-  de,
-  fr,
-  es,
-  ru,
-  pt,
 };
 
-const DEFAULT_LOCALE: Locale = 'en';
-let currentLocale: Locale = DEFAULT_LOCALE;
+/** 当前语言下缺少翻译键时，从该语言拉取文案（英文为完整基准） */
+const FALLBACK_LOCALE: Locale = 'en';
+
+/** 与 DEFAULT_CLAUDIAN_SETTINGS.locale 一致，避免插件 onload 前出现语言漂移 */
+let currentLocale: Locale = 'zh-CN';
+
+/**
+ * 将磁盘或历史设置中的 locale 规范为仍受支持的一种。
+ * 已移除的语言（如 ja、zh-TW）映射为简体中文，以匹配产品默认。
+ */
+export function normalizeClaudianLocale(raw: string | undefined | null): Locale {
+  if (raw === 'en' || raw === 'zh-CN') {
+    return raw;
+  }
+  return 'zh-CN';
+}
 
 /**
  * Get a translation by key with optional parameters
@@ -46,7 +43,7 @@ export function t(key: TranslationKey, params?: Record<string, string | number>)
     if (value && typeof value === 'object' && k in value) {
       value = value[k];
     } else {
-      if (currentLocale !== DEFAULT_LOCALE) {
+      if (currentLocale !== FALLBACK_LOCALE) {
         return tFallback(key, params);
       }
       return key;
@@ -67,7 +64,7 @@ export function t(key: TranslationKey, params?: Record<string, string | number>)
 }
 
 function tFallback(key: TranslationKey, params?: Record<string, string | number>): string {
-  const dict = translations[DEFAULT_LOCALE];
+  const dict = translations[FALLBACK_LOCALE];
   const keys = key.split('.');
   let value: any = dict;
 
@@ -123,17 +120,8 @@ export function getAvailableLocales(): Locale[] {
  */
 export function getLocaleDisplayName(locale: Locale): string {
   const names: Record<Locale, string> = {
-    'en': 'English',
+    en: 'English',
     'zh-CN': '简体中文',
-    'zh-TW': '繁體中文',
-    'ja': '日本語',
-    'ko': '한국어',
-    'de': 'Deutsch',
-    'fr': 'Français',
-    'es': 'Español',
-    'ru': 'Русский',
-    'pt': 'Português',
   };
-  return names[locale] || locale;
+  return names[locale] ?? locale;
 }
-

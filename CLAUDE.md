@@ -38,7 +38,7 @@ npm run test:coverage
 | **features/inline-edit** | Inline edit modal and provider-backed edit services | `InlineEditModal` plus provider-owned inline edit services |
 | **features/settings** | Shared settings shell with provider tabs | General tab plus provider-owned Claude and Codex tab renderers |
 | **shared** | Reusable UI building blocks | Dropdowns, modals, mention UI, icons |
-| **i18n** | Internationalization | 10 locales |
+| **i18n** | Internationalization | English + 简体中文（`en` / `zh-CN`） |
 | **utils** | Cross-cutting utilities | env, path, markdown, diff, context, file-link, image, browser, canvas, session, subagent helpers |
 | **style** | Modular CSS | See [`src/style/CLAUDE.md`](src/style/CLAUDE.md) |
 

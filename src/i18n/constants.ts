@@ -22,20 +22,12 @@ export interface LocaleInfo {
 export const SUPPORTED_LOCALES: LocaleInfo[] = [
   { code: 'en', name: 'English', englishName: 'English', flag: '🇺🇸' },
   { code: 'zh-CN', name: '简体中文', englishName: 'Simplified Chinese', flag: '🇨🇳' },
-  { code: 'zh-TW', name: '繁體中文', englishName: 'Traditional Chinese', flag: '🇹🇼' },
-  { code: 'ja', name: '日本語', englishName: 'Japanese', flag: '🇯🇵' },
-  { code: 'ko', name: '한국어', englishName: 'Korean', flag: '🇰🇷' },
-  { code: 'de', name: 'Deutsch', englishName: 'German', flag: '🇩🇪' },
-  { code: 'fr', name: 'Français', englishName: 'French', flag: '🇫🇷' },
-  { code: 'es', name: 'Español', englishName: 'Spanish', flag: '🇪🇸' },
-  { code: 'ru', name: 'Русский', englishName: 'Russian', flag: '🇷🇺' },
-  { code: 'pt', name: 'Português', englishName: 'Portuguese', flag: '🇧🇷' },
 ];
 
 /**
- * Default locale
+ * 新建安装与默认设置使用的界面语言
  */
-export const DEFAULT_LOCALE: Locale = 'en';
+export const DEFAULT_LOCALE: Locale = 'zh-CN';
 
 /**
  * Get locale info by code

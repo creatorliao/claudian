@@ -114,7 +114,7 @@ describe('ClaudianPlugin', () => {
       );
       expect((plugin.addRibbonIcon as jest.Mock)).toHaveBeenCalledWith(
         CLAUDIAN_APP_ICON_ID,
-        'Toggle Claudian chat panel',
+        '切换 Claudian 聊天面板',
         expect.any(Function)
       );
     });
@@ -124,7 +124,7 @@ describe('ClaudianPlugin', () => {
 
       expect((plugin.addCommand as jest.Mock)).toHaveBeenCalledWith({
         id: 'open-view',
-        name: 'Open chat view',
+        name: '打开聊天视图',
         callback: expect.any(Function),
       });
     });
@@ -134,7 +134,7 @@ describe('ClaudianPlugin', () => {
 
       expect((plugin.addCommand as jest.Mock)).toHaveBeenCalledWith({
         id: 'toggle-view',
-        name: 'Toggle chat view',
+        name: '切换聊天视图',
         callback: expect.any(Function),
       });
     });

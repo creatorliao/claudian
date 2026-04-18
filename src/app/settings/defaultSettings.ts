@@ -31,7 +31,7 @@ export const DEFAULT_CLAUDIAN_SETTINGS: ClaudianSettings = {
     focusInputKey: 'i',
   },
 
-  locale: 'en',
+  locale: 'zh-CN',
 
   providerConfigs: {
     claude: { ...DEFAULT_CLAUDE_PROVIDER_SETTINGS },
