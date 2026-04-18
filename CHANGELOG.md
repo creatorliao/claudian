@@ -2,6 +2,18 @@
 
 本文档记录 Claudian（Obsidian 插件）的版本变更；格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，版本号遵循语义化版本意图（主版本.次版本.修订号）。
 
+## [2.0.13] - 2026-04-19
+
+### 变更
+
+- **空会话欢迎语国际化**：`ConversationController.getGreeting()` 随机问候语改为 **`chat.welcome.*`**（`en` / `zh-CN`），不再在中文界面下出现 *You are absolutely right!* 等硬编码英文。
+
+### 文档
+
+- **`方案_国际化仅中英与智能体输入占位符.md`**：新增 **§8.6**（欢迎语池 i18n）追溯说明。
+
+---
+
 ## [2.0.12] - 2026-04-19
 
 ### 变更

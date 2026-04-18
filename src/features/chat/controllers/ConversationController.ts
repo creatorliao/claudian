@@ -4,6 +4,7 @@ import type { TitleGenerationService } from '../../../core/providers/types';
 import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
 import type { Conversation } from '../../../core/types';
 import { t } from '../../../i18n/i18n';
+import type { TranslationKey } from '../../../i18n/types';
 import type ClaudianPlugin from '../../../main';
 import { confirm } from '../../../shared/modals/ConfirmModal';
 import type { MessageRenderer } from '../rendering/MessageRenderer';
@@ -777,55 +778,79 @@ export class ConversationController {
   // Welcome & Greeting
   // ============================================
 
-  /** Generates a dynamic greeting based on time/day. */
+  /** Generates a dynamic greeting based on time/day（文案走 i18n，随界面语言切换）。 */
   getGreeting(): string {
     const now = new Date();
     const hour = now.getHours();
     const day = now.getDay(); // 0 = Sunday, 6 = Saturday
     const name = this.deps.plugin.settings.userName?.trim();
 
-    // Helper to optionally personalize a greeting (with fallback for no-name case)
-    const personalize = (base: string, noNameFallback?: string): string =>
-      name ? `${base}, ${name}` : (noNameFallback ?? base);
+    /** 有用户名时用带 {name} 的键，否则用无参键 */
+    const p = (named: TranslationKey, plain: TranslationKey): string =>
+      name ? t(named, { name }) : t(plain);
 
-    // Day-specific greetings (some personalized, some universal)
     const dayGreetings: Record<number, string[]> = {
-      0: [personalize('Happy Sunday'), 'Sunday session?', 'Welcome to the weekend'],
-      1: [personalize('Happy Monday'), personalize('Back at it', 'Back at it!')],
-      2: [personalize('Happy Tuesday')],
-      3: [personalize('Happy Wednesday')],
-      4: [personalize('Happy Thursday')],
-      5: [personalize('Happy Friday'), personalize('That Friday feeling')],
-      6: [personalize('Happy Saturday', 'Happy Saturday!'), personalize('Welcome to the weekend')],
+      0: [
+        p('chat.welcome.happySundayNamed', 'chat.welcome.happySunday'),
+        t('chat.welcome.sundaySession'),
+        t('chat.welcome.welcomeWeekend'),
+      ],
+      1: [
+        p('chat.welcome.happyMondayNamed', 'chat.welcome.happyMonday'),
+        p('chat.welcome.backAtItNamed', 'chat.welcome.backAtIt'),
+      ],
+      2: [p('chat.welcome.happyTuesdayNamed', 'chat.welcome.happyTuesday')],
+      3: [p('chat.welcome.happyWednesdayNamed', 'chat.welcome.happyWednesday')],
+      4: [p('chat.welcome.happyThursdayNamed', 'chat.welcome.happyThursday')],
+      5: [
+        p('chat.welcome.happyFridayNamed', 'chat.welcome.happyFriday'),
+        p('chat.welcome.thatFridayFeelingNamed', 'chat.welcome.thatFridayFeeling'),
+      ],
+      6: [
+        p('chat.welcome.happySaturdayNamed', 'chat.welcome.happySaturday'),
+        p('chat.welcome.welcomeWeekendNamed', 'chat.welcome.welcomeWeekend'),
+      ],
     };
 
-    // Time-specific greetings
     const getTimeGreetings = (): string[] => {
       if (hour >= 5 && hour < 12) {
-        return [personalize('Good morning'), 'Coffee and Claudian time?'];
-      } else if (hour >= 12 && hour < 18) {
-        return [personalize('Good afternoon'), personalize('Hey there'), personalize("How's it going") + '?'];
-      } else if (hour >= 18 && hour < 22) {
-        return [personalize('Good evening'), personalize('Evening'), personalize('How was your day') + '?'];
-      } else {
-        return ['Hello, night owl', personalize('Evening')];
+        return [
+          p('chat.welcome.goodMorningNamed', 'chat.welcome.goodMorning'),
+          t('chat.welcome.coffeeClaudian'),
+        ];
       }
+      if (hour >= 12 && hour < 18) {
+        return [
+          p('chat.welcome.goodAfternoonNamed', 'chat.welcome.goodAfternoon'),
+          p('chat.welcome.heyThereNamed', 'chat.welcome.heyThere'),
+          p('chat.welcome.howsItGoingNamed', 'chat.welcome.howsItGoing'),
+        ];
+      }
+      if (hour >= 18 && hour < 22) {
+        return [
+          p('chat.welcome.goodEveningNamed', 'chat.welcome.goodEvening'),
+          p('chat.welcome.eveningShortNamed', 'chat.welcome.eveningShort'),
+          p('chat.welcome.howWasYourDayNamed', 'chat.welcome.howWasYourDay'),
+        ];
+      }
+      return [
+        t('chat.welcome.helloNightOwl'),
+        p('chat.welcome.eveningShortNamed', 'chat.welcome.eveningShort'),
+      ];
     };
 
-    // General greetings
     const generalGreetings = [
-      personalize('Hey there'),
-      name ? `Hi ${name}, how are you?` : 'Hi, how are you?',
-      personalize("How's it going") + '?',
-      personalize('Welcome back') + '!',
-      personalize("What's new") + '?',
-      ...(name ? [`${name} returns!`] : []),
-      'You are absolutely right!',
+      p('chat.welcome.heyThereNamed', 'chat.welcome.heyThere'),
+      p('chat.welcome.hiHowAreYouNamed', 'chat.welcome.hiHowAreYou'),
+      p('chat.welcome.howsItGoingNamed', 'chat.welcome.howsItGoing'),
+      p('chat.welcome.welcomeBackNamed', 'chat.welcome.welcomeBack'),
+      p('chat.welcome.whatsNewNamed', 'chat.welcome.whatsNew'),
+      ...(name ? [t('chat.welcome.nameReturns', { name })] : []),
+      t('chat.welcome.youAreAbsolutelyRight'),
     ];
 
-    // Combine day + time + general greetings, pick randomly
     const allGreetings = [
-      ...(dayGreetings[day] || []),
+      ...(dayGreetings[day] ?? []),
       ...getTimeGreetings(),
       ...generalGreetings,
     ];

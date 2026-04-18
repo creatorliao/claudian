@@ -3,6 +3,7 @@ import { Menu, Notice } from 'obsidian';
 
 import { ConversationController, type ConversationControllerDeps } from '@/features/chat/controllers/ConversationController';
 import { ChatState } from '@/features/chat/state/ChatState';
+import { setLocale } from '@/i18n/i18n';
 import { confirm } from '@/shared/modals/ConfirmModal';
 
 jest.mock('@/shared/modals/ConfirmModal', () => ({
@@ -1058,6 +1059,13 @@ describe('ConversationController', () => {
   });
 
   describe('Greeting Time Branches', () => {
+    beforeEach(() => {
+      setLocale('en');
+    });
+    afterEach(() => {
+      setLocale('zh-CN');
+    });
+
     it.each([
       { name: 'morning (5-12)', hour: 9, day: 1, patterns: ['morning', 'Coffee'] },
       { name: 'afternoon (12-18)', hour: 14, day: 2, patterns: ['afternoon'] },
