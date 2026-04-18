@@ -2,6 +2,14 @@
 
 本文档记录 Claudian（Obsidian 插件）的版本变更；格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，版本号遵循语义化版本意图（主版本.次版本.修订号）。
 
+## [2.0.10] - 2026-04-18
+
+### 说明
+
+- **`main` 分支** 已合入 `feat/ribbon-toggle-chat-panel`。本版本用于 **主分支发布标记**；实现与文档以 **[2.0.9]**、**[2.0.8]** 条目为准（Ribbon / `toggle-view` 侧栏收起-展开、主区换焦、不 `detach`、i18n、**`报告_Ribbon切换聊天面板需求与方案.md`**、测试与 JSDoc 审计）。
+
+---
+
 ## [2.0.9] - 2026-04-18
 
 ### 变更
