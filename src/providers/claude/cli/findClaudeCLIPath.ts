@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 
+import { getExtraBinaryPaths } from '../../../utils/env';
 import { parsePathEntries, resolveNvmDefaultBin } from '../../../utils/path';
 
 /** 与逻辑平台一致地拼接路径：jest 在 Windows 上把 platform mock 成 darwin 时，须用 posix.join 才能与 Unix 风格桩路径一致 */
@@ -95,8 +96,12 @@ function resolveClaudeFromPathEntries(
   }
 
   if (!isWindows) {
+    //与 Windows 分支一致：先找名为 claude 的可执行文件，再沿 PATH 目录解析 npm/pnpm 的 cli.js（避免仅依赖硬编码列表）
     const unixCandidate = findFirstExistingPath(entries, ['claude'], false);
-    return unixCandidate;
+    if (unixCandidate) {
+      return unixCandidate;
+    }
+    return resolveCliJsFromPathEntries(entries, false);
   }
 
   const exeCandidate = findFirstExistingPath(entries, ['claude.exe', 'claude'], true);
@@ -127,6 +132,44 @@ function getNpmGlobalPrefix(): string | null {
   }
 
   return null;
+}
+
+/**
+ * 枚举 pnpm 全局安装目录下的 cli.js（macOS 多为 ~/Library/pnpm/global/<ver>/node_modules/...）。
+ * 版本号目录名随 pnpm 变化，因此用 readdir 动态收集。
+ */
+function collectPnpmGlobalClaudeCliJsPaths(homeDir: string, isWindows: boolean): string[] {
+  if (isWindows) {
+    return [];
+  }
+  const roots = [
+    joinPath(false, homeDir, 'Library', 'pnpm', 'global'),
+    joinPath(false, homeDir, '.local', 'share', 'pnpm', 'global'),
+  ];
+  const out: string[] = [];
+  for (const root of roots) {
+    let names: string[];
+    try {
+      const raw = fs.readdirSync(root) as unknown;
+      // 单测可能桩掉 readdirSync；仅处理标准 string[] 返回值
+      names = Array.isArray(raw) ? (raw as string[]) : [];
+    } catch {
+      continue;
+    }
+    for (const name of names) {
+      const candidate = joinPath(
+        false,
+        root,
+        name,
+        'node_modules',
+        '@anthropic-ai',
+        'claude-code',
+        'cli.js',
+      );
+      out.push(candidate);
+    }
+  }
+  return out;
 }
 
 function getNpmCliJsPaths(): string[] {
@@ -161,8 +204,11 @@ function getNpmCliJsPaths(): string[] {
     cliJsPaths.push(
       joinPath(false, homeDir, '.npm-global', 'lib', 'node_modules', '@anthropic-ai', 'claude-code', 'cli.js'),
       '/usr/local/lib/node_modules/@anthropic-ai/claude-code/cli.js',
+      '/opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js',
       '/usr/lib/node_modules/@anthropic-ai/claude-code/cli.js'
     );
+
+    cliJsPaths.push(...collectPnpmGlobalClaudeCliJsPaths(homeDir, isWindows));
 
     if (process.env.npm_config_prefix) {
       cliJsPaths.push(
@@ -174,21 +220,21 @@ function getNpmCliJsPaths(): string[] {
   return cliJsPaths;
 }
 
+/**
+ * 合并「设置里的 PATH」+ GUI 补全目录 + 进程 PATH，与运行时增强 PATH 的策略对齐，优先识别终端里同一套 claude。
+ */
+function buildMergedDiscoveryPathEntries(pathValue?: string): string[] {
+  const fromSettings = parsePathEntries(pathValue);
+  const fromProcess = parsePathEntries(getEnvValue('PATH'));
+  const extra = getExtraBinaryPaths();
+  return dedupePaths([...fromSettings, ...extra, ...fromProcess]);
+}
+
 export function findClaudeCLIPath(pathValue?: string): string | null {
   const homeDir = os.homedir();
   const isWindows = process.platform === 'win32';
 
-  const customEntries = dedupePaths(parsePathEntries(pathValue));
-
-  if (customEntries.length > 0) {
-    const customResolution = resolveClaudeFromPathEntries(customEntries, isWindows);
-    if (customResolution) {
-      return customResolution;
-    }
-  }
-
-  // On Windows, prefer native .exe, then cli.js. Avoid .cmd fallback
-  // because it requires shell: true and breaks SDK stdio streaming.
+  // Windows：必须先于「合并 PATH」探测常见 .exe 安装位；否则 Roaming/npm 下的 cli.js 会先于本机包命中（与历史行为及 SDK 预期一致）
   if (isWindows) {
     const exePaths: string[] = [
       joinPath(true, homeDir, '.claude', 'local', 'claude.exe'),
@@ -203,14 +249,24 @@ export function findClaudeCLIPath(pathValue?: string): string | null {
         return p;
       }
     }
+  }
 
+  const mergedEntries = buildMergedDiscoveryPathEntries(pathValue);
+  if (mergedEntries.length > 0) {
+    const mergedResolution = resolveClaudeFromPathEntries(mergedEntries, isWindows);
+    if (mergedResolution) {
+      return mergedResolution;
+    }
+  }
+
+  // Windows：合并 PATH 未命中时，再扫一遍固定 cli.js 列表（与 .cmd 规避逻辑一致）
+  if (isWindows) {
     const cliJsPaths = getNpmCliJsPaths();
     for (const p of cliJsPaths) {
       if (isExistingFile(p)) {
         return p;
       }
     }
-
   }
 
   const commonPaths: string[] = [
@@ -248,14 +304,6 @@ export function findClaudeCLIPath(pathValue?: string): string | null {
       if (isExistingFile(p)) {
         return p;
       }
-    }
-  }
-
-  const envEntries = dedupePaths(parsePathEntries(getEnvValue('PATH')));
-  if (envEntries.length > 0) {
-    const envResolution = resolveClaudeFromPathEntries(envEntries, isWindows);
-    if (envResolution) {
-      return envResolution;
     }
   }
 

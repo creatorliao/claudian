@@ -2,6 +2,24 @@
 
 本文档记录 Claudian（Obsidian 插件）的版本变更；格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，版本号遵循语义化版本意图（主版本.次版本.修订号）。
 
+## [2.0.16] - 2026-04-19
+
+### 修复
+
+- **Claude CLI 路径解析**：合并「设置中的 PATH + `getExtraBinaryPaths()` + 进程 PATH」后再探测，与 GUI 下查找 Node 的策略对齐；Unix/macOS 在 PATH 上除 `claude` 可执行文件外，增加与 Windows 一致的 **`cli.js` 推导**；补充 Homebrew Node 的 `cli.js` 路径及 **pnpm 全局目录**（`~/Library/pnpm/global` 等）动态枚举。
+- **Windows**：仍 **优先** 扫描约定的原生 `claude.exe` 安装位，再合并 PATH，避免 Roaming/npm 下的 `cli.js` 覆盖本机安装包。
+
+### 工程
+
+- **`getExtraBinaryPaths`**：从 `env` 模块导出，供 CLI 探测与 PATH 增强共用。
+- **单测**：Windows 场景对齐 `HOME` / `USERPROFILE` 与 `path.win32.join`；pnpm 目录枚举对非数组 `readdir` 桩做防护。
+
+### 文档
+
+- **`修复报告_Claude_CLI路径智能解析.md`**：问题、根因、方案与修改记录。
+
+---
+
 ## [2.0.15] - 2026-04-19
 
 ### 变更

@@ -40,8 +40,11 @@ function getAppProvidedCliPaths(): string[] {
   return [];
 }
 
-/** GUI apps like Obsidian have minimal PATH, so we add common binary locations. */
-function getExtraBinaryPaths(): string[] {
+/**
+ * GUI 应用（如 Obsidian）启动时 PATH 往往极短，与终端不一致。
+ * 与 `getEnhancedPath` / `findNodeDirectory` 共用此列表，便于在未配置环境变量时仍能解析到 npm/pnpm/本地安装的 CLI。
+ */
+export function getExtraBinaryPaths(): string[] {
   const home = getHomeDir();
 
   if (isWindowsPlatform()) {
