@@ -15,6 +15,7 @@ import type { SubagentManager } from '../services/SubagentManager';
 import type { ChatState } from '../state/ChatState';
 import type { BangBashModeManager } from '../ui/BangBashModeManager';
 import type { FileContextManager } from '../ui/FileContext';
+import type { FileDragDropManager } from '../ui/FileDragDropManager';
 import type { ImageContextManager } from '../ui/ImageContext';
 import type {
   ContextUsageMeter,
@@ -123,6 +124,7 @@ export interface TabServices {
  */
 export interface TabUIComponents {
   fileContextManager: FileContextManager | null;
+  fileDragDropManager: FileDragDropManager | null;
   imageContextManager: ImageContextManager | null;
   modelSelector: ModelSelector | null;
   thinkingBudgetSelector: ThinkingBudgetSelector | null;

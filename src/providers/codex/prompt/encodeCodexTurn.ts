@@ -24,6 +24,10 @@ export function encodeCodexTurn(request: ChatTurnRequest): PreparedChatTurn {
     sections.push(`\n[Current note: ${request.currentNotePath}]`);
   }
 
+  if (request.contextFiles && request.contextFiles.length > 0) {
+    sections.push(`\n[Context files: ${request.contextFiles.join(', ')}]`);
+  }
+
   if (request.editorSelection?.selectedText) {
     sections.push(
       `\n[Editor selection from ${request.editorSelection.notePath || 'current note'}:\n${request.editorSelection.selectedText}\n]`,
