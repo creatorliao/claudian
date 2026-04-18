@@ -266,7 +266,9 @@ export class ClaudianView extends ItemView {
     // New tab button (plus icon)
     const newTabBtn = this.headerActionsContent.createDiv({ cls: 'claudian-header-btn claudian-new-tab-btn' });
     setIcon(newTabBtn, 'square-plus');
-    newTabBtn.setAttribute('aria-label', 'New tab');
+    const newTabTip = t('chat.header.newTab');
+    newTabBtn.setAttribute('aria-label', newTabTip);
+    newTabBtn.setAttribute('title', newTabTip);
     newTabBtn.addEventListener('click', async () => {
       await this.createNewTab();
     });
@@ -274,7 +276,9 @@ export class ClaudianView extends ItemView {
     // New conversation button (square-pen icon - new conversation in current tab)
     const newBtn = this.headerActionsContent.createDiv({ cls: 'claudian-header-btn' });
     setIcon(newBtn, 'square-pen');
-    newBtn.setAttribute('aria-label', 'New conversation');
+    const newConvTip = t('chat.header.newConversation');
+    newBtn.setAttribute('aria-label', newConvTip);
+    newBtn.setAttribute('title', newConvTip);
     newBtn.addEventListener('click', async () => {
       await this.tabManager?.createNewConversation();
       this.updateHistoryDropdown();
@@ -284,7 +288,9 @@ export class ClaudianView extends ItemView {
     const historyContainer = this.headerActionsContent.createDiv({ cls: 'claudian-history-container' });
     const historyBtn = historyContainer.createDiv({ cls: 'claudian-header-btn' });
     setIcon(historyBtn, 'history');
-    historyBtn.setAttribute('aria-label', 'Chat history');
+    const historyTip = t('chat.header.history');
+    historyBtn.setAttribute('aria-label', historyTip);
+    historyBtn.setAttribute('title', historyTip);
 
     this.historyDropdown = historyContainer.createDiv({ cls: 'claudian-history-menu' });
 

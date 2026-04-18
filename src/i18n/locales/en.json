@@ -77,6 +77,11 @@
     "tabs": {
       "maxAllowedNotice": "Maximum {maxTabs} tabs allowed"
     },
+    "header": {
+      "newTab": "New tab",
+      "newConversation": "New conversation",
+      "history": "Chat history"
+    },
     "history": {
       "header": "Conversations",
       "empty": "No conversations",

@@ -77,6 +77,11 @@
     "tabs": {
       "maxAllowedNotice": "最多允许 {maxTabs} 个标签页"
     },
+    "header": {
+      "newTab": "新建标签",
+      "newConversation": "新对话",
+      "history": "聊天历史"
+    },
     "history": {
       "header": "对话",
       "empty": "暂无对话",
