@@ -7,11 +7,12 @@
 ### 变更
 
 - **Ribbon / `toggle-view` 语义调整**：由 **`detachLeavesOfType`（关标签）** 改为 **收起 / 再展开**——**尚无**聊天视图时仍 **`activateView()` 创建**；**在侧栏** 时通过 **`WorkspaceSidedock` / `WorkspaceMobileDrawer` 的 `collapse` / `expand`** 让出或恢复宽度，展开时 **`await revealLeaf`**；**在主编辑区**（`openInMainTab`）时，若正看着聊天则 **`setActiveLeaf` 切到主区其它叶子**（若有），否则 **`revealLeaf`** 回到聊天。
+- **不中断运行**：toggle 路径 **不** `detach` 叶子，**不** 触发 **`ClaudianView.onClose()`**（避免 `tabManager.destroy()`），流式与后台任务应在收起后 **继续执行**；仅折叠侧栏或切换主区活动叶。
 - **边界**：主区 **只有** 聊天一叶、无其它根区叶子时，「收起」无法切换焦点，行为为 **静默跳过**（侧栏模式不受影响）。
 
 ### 文档
 
-- **`报告_Ribbon切换聊天面板需求与方案.md`**：与收起/展开实现及边界表同步。
+- **`报告_Ribbon切换聊天面板需求与方案.md`**：收起/展开、边界表、**§1.3 运行时与任务连续性**（与 JSDoc 一致）。
 
 ---
 

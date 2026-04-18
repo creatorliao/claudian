@@ -235,7 +235,9 @@ export default class ClaudianPlugin extends Plugin {
   }
 
   /**
-   * Ribbon / toggle-view：在「腾出空间」与「回到聊天」之间切换，**不** `detach` 视图。
+   * Ribbon / toggle-view：在「腾出空间」与「回到聊天」之间切换。
+   *
+   * **不销毁视图**：本方法 **绝不** 调用 `detachLeavesOfType`、`WorkspaceLeaf.detach()` 或任何移除叶子的 API，因此 **不会** 触发 `ClaudianView.onClose()`（该处会 `tabManager.destroy()`，才会停止会话与流式等）。侧栏 `collapse` / 主区 `setActiveLeaf` 仅改变可见性与焦点，**聊天 TabManager、进行中的任务与流式应持续运行**（与「关闭 Claudian 内部某一标签」的 `deactivateTab` 无关，后者仅在视图内多标签切换时发生）。
    *
    * - **尚无** `claudian-view` 叶子：等同首次打开 → `activateView()`（按设置落在右侧栏或主编辑区）。
    * - **在侧栏**（左/右 dock 或移动抽屉祖先）：dock **已折叠** → `expand` + `revealLeaf`（再次展示）；**未折叠** → `collapse`（收起让出宽度）。
