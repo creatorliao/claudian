@@ -66,6 +66,9 @@
     "fileDrop": {
       "notice": "{count} 個のファイルをコンテキストに追加しました",
       "overlay": "ここにファイルをドロップしてコンテキストに追加"
+    },
+    "tabs": {
+      "maxAllowedNotice": "タブは最大 {maxTabs} 個までです"
     }
   },
   "settings": {

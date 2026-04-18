@@ -66,6 +66,9 @@
     "fileDrop": {
       "notice": "Added {count} file(s) to context",
       "overlay": "Drop file here to add to context"
+    },
+    "tabs": {
+      "maxAllowedNotice": "Maximum {maxTabs} tabs allowed"
     }
   },
   "settings": {

@@ -66,6 +66,9 @@
     "fileDrop": {
       "notice": "컨텍스트에 {count}개 파일 추가됨",
       "overlay": "파일을 여기에 드롭하여 컨텍스트에 추가"
+    },
+    "tabs": {
+      "maxAllowedNotice": "탭은 최대 {maxTabs}개까지 허용됩니다"
     }
   },
   "settings": {

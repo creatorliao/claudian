@@ -6,6 +6,7 @@ import { ProviderRegistry } from '../../core/providers/ProviderRegistry';
 import { ProviderSettingsCoordinator } from '../../core/providers/ProviderSettingsCoordinator';
 import { DEFAULT_CHAT_PROVIDER_ID, type ProviderId } from '../../core/providers/types';
 import { VIEW_TYPE_CLAUDIAN } from '../../core/types';
+import { t } from '../../i18n/i18n';
 import type ClaudianPlugin from '../../main';
 import { CLAUDIAN_APP_ICON_ID } from '../../shared/claudeBrandMark';
 import type { HistoryConversationOpenState } from './controllers/ConversationController';
@@ -375,7 +376,7 @@ export class ClaudianView extends ItemView {
     const tab = await this.tabManager?.createTab();
     if (!tab) {
       const maxTabs = this.plugin.settings.maxTabs ?? 3;
-      new Notice(`Maximum ${maxTabs} tabs allowed`);
+      new Notice(t('chat.tabs.maxAllowedNotice', { maxTabs }));
       return;
     }
     this.updateTabBarVisibility();

@@ -66,6 +66,9 @@
     "fileDrop": {
       "notice": "{count} arquivo(s) adicionado(s) ao contexto",
       "overlay": "Solte o arquivo aqui para adicionar ao contexto"
+    },
+    "tabs": {
+      "maxAllowedNotice": "Máximo de {maxTabs} abas permitidas"
     }
   },
   "settings": {

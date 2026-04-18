@@ -66,6 +66,9 @@
     "fileDrop": {
       "notice": "Добавлено файлов: {count}",
       "overlay": "Перетащите файл сюда, чтобы добавить в контекст"
+    },
+    "tabs": {
+      "maxAllowedNotice": "Допускается не более {maxTabs} вкладок"
     }
   },
   "settings": {

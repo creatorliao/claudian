@@ -66,6 +66,9 @@
     "fileDrop": {
       "notice": "{count} fichier(s) ajouté(s) au contexte",
       "overlay": "Déposez le fichier ici pour l'ajouter au contexte"
+    },
+    "tabs": {
+      "maxAllowedNotice": "Maximum {maxTabs} onglets autorisés"
     }
   },
   "settings": {

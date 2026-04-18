@@ -66,6 +66,9 @@
     "fileDrop": {
       "notice": "已新增 {count} 個檔案到上下文",
       "overlay": "拖放檔案到此處新增至上下文"
+    },
+    "tabs": {
+      "maxAllowedNotice": "最多允許 {maxTabs} 個分頁"
     }
   },
   "settings": {
