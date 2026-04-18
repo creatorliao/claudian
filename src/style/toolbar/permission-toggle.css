@@ -1,11 +1,20 @@
-/* Permission Mode Toggle */
+/* Permission Mode Toggle — 工具栏最左：勿用 margin-left:auto，否则会贴行尾 */
 .claudian-permission-toggle {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-left: auto;
-  padding-left: 12px;
-  padding-right: 8px;
+  margin-right: 8px;
+  padding-left: 2px;
+  padding-right: 4px;
+  flex-shrink: 0;
+}
+
+/* PLAN：仅文案时轻量徽章，与 Safe/YOLO 行高协调 */
+.claudian-permission-toggle--plan {
+  padding: 3px 10px 3px 10px;
+  border-radius: 6px;
+  background: var(--background-modifier-hover);
+  gap: 0;
 }
 
 .claudian-permission-label {
@@ -17,6 +26,11 @@
 .claudian-permission-label.plan-active {
   color: rgb(92, 148, 140);
   font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.claudian-permission-toggle--plan .claudian-permission-label.plan-active {
+  min-width: 0;
 }
 
 .claudian-toggle-switch {

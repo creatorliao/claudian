@@ -275,8 +275,9 @@ export class PermissionToggle {
   private render() {
     this.container.empty();
 
-    this.labelEl = this.container.createSpan({ cls: 'claudian-permission-label' });
+    // 拨杆在左、文案在右，与方案文档一致
     this.toggleEl = this.container.createDiv({ cls: 'claudian-toggle-switch' });
+    this.labelEl = this.container.createSpan({ cls: 'claudian-permission-label' });
 
     this.updateDisplay();
 
@@ -294,6 +295,7 @@ export class PermissionToggle {
     const toggleConfig = this.getToggleConfig();
     const capabilities = this.callbacks.getCapabilities();
     if (!toggleConfig) {
+      this.container.removeClass('claudian-permission-toggle--plan');
       this.container.style.display = 'none';
       return;
     }
@@ -305,10 +307,12 @@ export class PermissionToggle {
     const canShowPlan = Boolean(planValue) && capabilities.supportsPlanMode;
 
     if (canShowPlan && planValue && mode === planValue) {
+      this.container.addClass('claudian-permission-toggle--plan');
       this.toggleEl.style.display = 'none';
       this.labelEl.setText(planLabel);
       this.labelEl.addClass('plan-active');
     } else {
+      this.container.removeClass('claudian-permission-toggle--plan');
       this.toggleEl.style.display = '';
       this.labelEl.removeClass('plan-active');
       if (mode === toggleConfig.activeValue) {
@@ -1112,13 +1116,13 @@ export function createInputToolbar(
   permissionToggle: PermissionToggle;
   serviceTierToggle: ServiceTierToggle;
 } {
+  const permissionToggle = new PermissionToggle(parentEl, callbacks);
   const modelSelector = new ModelSelector(parentEl, callbacks);
   const thinkingBudgetSelector = new ThinkingBudgetSelector(parentEl, callbacks);
   const serviceTierToggle = new ServiceTierToggle(parentEl, callbacks);
   const contextUsageMeter = new ContextUsageMeter(parentEl);
   const externalContextSelector = new ExternalContextSelector(parentEl, callbacks);
   const mcpServerSelector = new McpServerSelector(parentEl);
-  const permissionToggle = new PermissionToggle(parentEl, callbacks);
 
   return {
     modelSelector,
