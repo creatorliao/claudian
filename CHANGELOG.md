@@ -2,6 +2,21 @@
 
 本文档记录 Claudian（Obsidian 插件）的版本变更；格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，版本号遵循语义化版本意图（主版本.次版本.修订号）。
 
+## [2.0.8] - 2026-04-18
+
+### 变更
+
+- **Ribbon 切换聊天面板**：左侧功能区 Claudian 图标改为 **开关整块聊天工作区**——当前 **没有** `claudian-view` 叶子时 **打开**（行为与原先一致，仍受「在主编辑器区域打开」设置约束）；**已有** 任意数量该类型叶子时 **一次性关闭**（`Workspace.detachLeavesOfType`，等同用户手工关掉工作区标签）。
+- **命令**：保留 **`open-view`**（仅打开或聚焦聊天视图）；新增 **`toggle-view`**（切换开关），便于绑定热键。
+- **`activateView`**：对 **`workspace.revealLeaf`** 使用 **`await`**，与官方建议一致（侧栏会正确展开、deferred 叶子加载更可靠）。
+- **国际化**：新增 `commands.openChatView`、`commands.toggleChatView`、`ribbon.toggleClaudian`（十种界面语言）。
+
+### 文档
+
+- **`报告_Ribbon切换聊天面板需求与方案.md`**：记录需求、Obsidian API 校准与实现说明。
+
+---
+
 ## [2.0.7] - 2026-04-18
 
 ### 变更

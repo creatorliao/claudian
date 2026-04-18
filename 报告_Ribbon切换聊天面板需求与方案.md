@@ -1,6 +1,6 @@
 # 报告：Ribbon 图标切换聊天面板显示（需求记录与方案）
 
-> **状态**：方案已定稿；**已在分支 `feat/ribbon-toggle-chat-panel` 落地实现**（`toggleClaudianView`、`detachLeavesOfType`、新命令 `toggle-view`、Ribbon 与 i18n）。合并前请在 Obsidian 内做一次手测。
+> **状态**：方案已定稿；**已在 v2.0.8 / 分支 `feat/ribbon-toggle-chat-panel` 落地**（`toggleClaudianView`、`detachLeavesOfType`、新命令 `toggle-view`、Ribbon 与 i18n）。合并或发版前建议在 Obsidian 内手测。
 
 ---
 
