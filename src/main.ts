@@ -241,9 +241,9 @@ export default class ClaudianPlugin extends Plugin {
    *
    * - **尚无** `claudian-view` 叶子：等同首次打开 → `activateView()`（按设置落在右侧栏或主编辑区）。
    * - **在侧栏**（左/右 dock 或移动抽屉祖先）：dock **已折叠** → `expand` + `revealLeaf`（再次展示）；**未折叠** → `collapse`（收起让出宽度）。
-   * - **在主编辑区等**（祖先链上无左右 dock）：当前活动视图是 Claudian → 切到主区中另一片叶子（若有）；否则 → `revealLeaf` 聚焦已有聊天。
+   * - **在主编辑区等**（祖先链上无左右 dock）：当前活动视图是 Claudian → 若有主区其它叶子则 `setActiveLeaf`，**否则静默 return**；活动视图不是 Claudian → `revealLeaf` 回到聊天。
    *
-   * 边界：主区仅有聊天、无其它根叶子时，「收起」无法切换焦点，本方法静默跳过（用户可用侧栏模式或另开笔记）。
+   * 边界：主区仅有聊天、无其它根叶子时，无法切换焦点，**不** 调用 `revealLeaf`（静默跳过；可用侧栏模式或另开笔记）。
    */
   async toggleClaudianView(): Promise<void> {
     const { workspace } = this.app;

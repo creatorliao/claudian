@@ -420,6 +420,25 @@ describe('ClaudianPlugin', () => {
       expect(mockApp.workspace.revealLeaf).not.toHaveBeenCalled();
     });
 
+    it('collapses left sidedock when Claudian is in the left sidebar', async () => {
+      await plugin.onload();
+      const dock = mockApp.workspace.leftSplit;
+      const mockTabs = { parent: dock };
+      const mockLeaf = {
+        id: 'left-sidebar',
+        parent: mockTabs,
+        view: { getViewType: () => VIEW_TYPE_CLAUDIAN },
+      };
+      dock.collapsed = false;
+      mockApp.workspace.getLeavesOfType.mockReturnValue([mockLeaf]);
+
+      const ribbonCallback = (plugin.addRibbonIcon as jest.Mock).mock.calls[0][2];
+      await ribbonCallback();
+
+      expect(dock.collapse).toHaveBeenCalled();
+      expect(mockApp.workspace.rightSplit.collapse).not.toHaveBeenCalled();
+    });
+
     it('expands sidedock and reveals Claudian when dock was collapsed', async () => {
       await plugin.onload();
       const dock = mockApp.workspace.rightSplit;
@@ -482,6 +501,28 @@ describe('ClaudianPlugin', () => {
       await ribbonCallback();
 
       expect(mockApp.workspace.setActiveLeaf).toHaveBeenCalledWith(mockMarkdownLeaf, { focus: true });
+      expect(mockApp.workspace.revealLeaf).not.toHaveBeenCalled();
+    });
+
+    it('does nothing when Claudian is focused in main area but no other root leaf exists', async () => {
+      await plugin.onload();
+      const inner = { parent: mockApp.workspace.rootSplit };
+      const mockTabs = { parent: inner };
+      const mockLeaf = {
+        id: 'main-claudian-only',
+        parent: mockTabs,
+        view: { getViewType: () => VIEW_TYPE_CLAUDIAN },
+      };
+      mockApp.workspace.getLeavesOfType.mockReturnValue([mockLeaf]);
+      mockApp.workspace.getActiveViewOfType.mockReturnValue({});
+      mockApp.workspace.iterateRootLeaves.mockImplementation((cb: (l: any) => void) => {
+        cb(mockLeaf);
+      });
+
+      const ribbonCallback = (plugin.addRibbonIcon as jest.Mock).mock.calls[0][2];
+      await ribbonCallback();
+
+      expect(mockApp.workspace.setActiveLeaf).not.toHaveBeenCalled();
       expect(mockApp.workspace.revealLeaf).not.toHaveBeenCalled();
     });
 
