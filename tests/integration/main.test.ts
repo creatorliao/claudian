@@ -8,9 +8,10 @@ import { DEFAULT_SETTINGS } from '@/providers/claude/types/settings';
 jest.mock('fs');
 
 // Now import the plugin after mocking
+import { addIcon } from 'obsidian';
+
 import ClaudianPlugin from '@/main';
 import { CLAUDIAN_APP_ICON_ID } from '@/shared/claudeBrandMark';
-import { addIcon } from 'obsidian';
 
 describe('ClaudianPlugin', () => {
   let plugin: ClaudianPlugin;
@@ -55,7 +56,8 @@ describe('ClaudianPlugin', () => {
         getLeaf: jest.fn().mockReturnValue({
           setViewState: jest.fn().mockResolvedValue(undefined),
         }),
-        revealLeaf: jest.fn(),
+        revealLeaf: jest.fn().mockResolvedValue(undefined),
+        detachLeavesOfType: jest.fn(),
       },
     };
 
@@ -99,7 +101,7 @@ describe('ClaudianPlugin', () => {
       );
       expect((plugin.addRibbonIcon as jest.Mock)).toHaveBeenCalledWith(
         CLAUDIAN_APP_ICON_ID,
-        'Open Claudian',
+        'Toggle Claudian chat panel',
         expect.any(Function)
       );
     });
@@ -110,6 +112,16 @@ describe('ClaudianPlugin', () => {
       expect((plugin.addCommand as jest.Mock)).toHaveBeenCalledWith({
         id: 'open-view',
         name: 'Open chat view',
+        callback: expect.any(Function),
+      });
+    });
+
+    it('should add command to toggle view', async () => {
+      await plugin.onload();
+
+      expect((plugin.addCommand as jest.Mock)).toHaveBeenCalledWith({
+        id: 'toggle-view',
+        name: 'Toggle chat view',
         callback: expect.any(Function),
       });
     });
@@ -375,7 +387,7 @@ describe('ClaudianPlugin', () => {
   });
 
   describe('ribbon icon callback', () => {
-    it('reveals existing view when ribbon icon is clicked', async () => {
+    it('detaches all Claudian leaves when ribbon is clicked and any exist', async () => {
       await plugin.onload();
       const mockLeaf = { id: 'existing' };
       mockApp.workspace.getLeavesOfType.mockReturnValue([mockLeaf]);
@@ -383,20 +395,54 @@ describe('ClaudianPlugin', () => {
       const ribbonCallback = (plugin.addRibbonIcon as jest.Mock).mock.calls[0][2];
       await ribbonCallback();
 
-      expect(mockApp.workspace.revealLeaf).toHaveBeenCalledWith(mockLeaf);
+      expect(mockApp.workspace.detachLeavesOfType).toHaveBeenCalledWith(VIEW_TYPE_CLAUDIAN);
+      expect(mockApp.workspace.revealLeaf).not.toHaveBeenCalled();
+    });
+
+    it('opens view when ribbon is clicked and no Claudian leaves exist', async () => {
+      const mockRightLeaf = {
+        setViewState: jest.fn().mockResolvedValue(undefined),
+      };
+      mockApp.workspace.getLeavesOfType.mockReturnValue([]);
+      mockApp.workspace.getRightLeaf.mockReturnValue(mockRightLeaf);
+
+      await plugin.onload();
+
+      const ribbonCallback = (plugin.addRibbonIcon as jest.Mock).mock.calls[0][2];
+      await ribbonCallback();
+
+      expect(mockApp.workspace.detachLeavesOfType).not.toHaveBeenCalled();
+      expect(mockRightLeaf.setViewState).toHaveBeenCalledWith({
+        type: VIEW_TYPE_CLAUDIAN,
+        active: true,
+      });
+      expect(mockApp.workspace.revealLeaf).toHaveBeenCalledWith(mockRightLeaf);
     });
   });
 
   describe('command callback', () => {
-    it('reveals existing view when command is executed', async () => {
+    it('reveals existing view when open-view command is executed', async () => {
       await plugin.onload();
       const mockLeaf = { id: 'existing' };
       mockApp.workspace.getLeavesOfType.mockReturnValue([mockLeaf]);
 
-      const commandConfig = (plugin.addCommand as jest.Mock).mock.calls[0][0];
+      const commandConfig = getRegisteredCommand('open-view');
       await commandConfig.callback();
 
       expect(mockApp.workspace.revealLeaf).toHaveBeenCalledWith(mockLeaf);
+      expect(mockApp.workspace.detachLeavesOfType).not.toHaveBeenCalled();
+    });
+
+    it('detaches all leaves when toggle-view command is executed and leaves exist', async () => {
+      await plugin.onload();
+      const mockLeaf = { id: 'existing' };
+      mockApp.workspace.getLeavesOfType.mockReturnValue([mockLeaf]);
+
+      const commandConfig = getRegisteredCommand('toggle-view');
+      await commandConfig.callback();
+
+      expect(mockApp.workspace.detachLeavesOfType).toHaveBeenCalledWith(VIEW_TYPE_CLAUDIAN);
+      expect(mockApp.workspace.revealLeaf).not.toHaveBeenCalled();
     });
   });
 

@@ -301,5 +301,12 @@
       "name": "語言",
       "desc": "更改插件介面的顯示語言"
     }
+  },
+  "commands": {
+    "openChatView": "開啟聊天檢視",
+    "toggleChatView": "切換聊天檢視"
+  },
+  "ribbon": {
+    "toggleClaudian": "切換 Claudian 聊天面板"
   }
 }

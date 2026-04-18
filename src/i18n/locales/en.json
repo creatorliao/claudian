@@ -301,5 +301,12 @@
       "name": "Language",
       "desc": "Change the display language of the plugin interface"
     }
+  },
+  "commands": {
+    "openChatView": "Open chat view",
+    "toggleChatView": "Toggle chat view"
+  },
+  "ribbon": {
+    "toggleClaudian": "Toggle Claudian chat panel"
   }
 }

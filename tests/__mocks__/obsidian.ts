@@ -74,7 +74,8 @@ export class App {
     getRightLeaf: jest.fn().mockReturnValue({
       setViewState: jest.fn().mockResolvedValue(undefined),
     }),
-    revealLeaf: jest.fn(),
+    revealLeaf: jest.fn().mockResolvedValue(undefined),
+    detachLeavesOfType: jest.fn(),
   };
 }
 

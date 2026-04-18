@@ -301,5 +301,12 @@
       "name": "Sprache",
       "desc": "Anzeigesprache der Plugin-Oberfläche ändern"
     }
+  },
+  "commands": {
+    "openChatView": "Chat-Ansicht öffnen",
+    "toggleChatView": "Chat-Ansicht ein-/ausblenden"
+  },
+  "ribbon": {
+    "toggleClaudian": "Claudian-Chat-Panel ein-/ausblenden"
   }
 }

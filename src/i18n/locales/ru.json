@@ -301,5 +301,12 @@
       "name": "Язык",
       "desc": "Изменить язык интерфейса плагина"
     }
+  },
+  "commands": {
+    "openChatView": "Открыть чат",
+    "toggleChatView": "Показать или скрыть чат"
+  },
+  "ribbon": {
+    "toggleClaudian": "Панель чата Claudian (показать/скрыть)"
   }
 }

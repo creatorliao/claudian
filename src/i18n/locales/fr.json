@@ -301,5 +301,12 @@
       "name": "Langue",
       "desc": "Changer la langue d'affichage de l'interface du plugin"
     }
+  },
+  "commands": {
+    "openChatView": "Ouvrir le chat",
+    "toggleChatView": "Afficher ou masquer le chat"
+  },
+  "ribbon": {
+    "toggleClaudian": "Panneau de chat Claudian (afficher/masquer)"
   }
 }

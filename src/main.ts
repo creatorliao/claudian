@@ -1,46 +1,47 @@
 // Must run before any SDK imports to patch Electron/Node.js realm incompatibility
-import { patchSetMaxListenersForElectron } from './utils/electronCompat';
+import { patchSetMaxListenersForElectron } from "./utils/electronCompat";
 patchSetMaxListenersForElectron();
 
-import './providers';
+import "./providers";
 
-import type { Editor } from 'obsidian';
-import { addIcon, MarkdownView, Notice, Plugin } from 'obsidian';
+import type { Editor } from "obsidian";
+import { addIcon, MarkdownView, Notice, Plugin } from "obsidian";
 
-import { DEFAULT_CLAUDIAN_SETTINGS } from './app/settings/defaultSettings';
-import { SharedStorageService } from './app/storage/SharedStorageService';
-import type { SharedAppStorage } from './core/bootstrap/storage';
+import { DEFAULT_CLAUDIAN_SETTINGS } from "./app/settings/defaultSettings";
+import { SharedStorageService } from "./app/storage/SharedStorageService";
+import type { SharedAppStorage } from "./core/bootstrap/storage";
 import {
   getEnvironmentVariablesForScope as getScopedEnvironmentVariables,
   getRuntimeEnvironmentText,
   setEnvironmentVariablesForScope,
-} from './core/providers/providerEnvironment';
-import { ProviderRegistry } from './core/providers/ProviderRegistry';
-import { ProviderSettingsCoordinator } from './core/providers/ProviderSettingsCoordinator';
-import { ProviderWorkspaceRegistry } from './core/providers/ProviderWorkspaceRegistry';
-import type { ProviderId } from './core/providers/types';
-import type { AppTabManagerState } from './core/providers/types';
-import { DEFAULT_CHAT_PROVIDER_ID } from './core/providers/types';
+} from "./core/providers/providerEnvironment";
+import { ProviderRegistry } from "./core/providers/ProviderRegistry";
+import { ProviderSettingsCoordinator } from "./core/providers/ProviderSettingsCoordinator";
+import { ProviderWorkspaceRegistry } from "./core/providers/ProviderWorkspaceRegistry";
+import type { ProviderId } from "./core/providers/types";
+import type { AppTabManagerState } from "./core/providers/types";
+import { DEFAULT_CHAT_PROVIDER_ID } from "./core/providers/types";
 import type {
   ClaudianSettings,
   Conversation,
   ConversationMeta,
-} from './core/types';
+} from "./core/types";
+import { VIEW_TYPE_CLAUDIAN } from "./core/types";
+import type { EnvironmentScope } from "./core/types/settings";
+import { ClaudianView } from "./features/chat/ClaudianView";
 import {
-  VIEW_TYPE_CLAUDIAN,
-} from './core/types';
-import type { EnvironmentScope } from './core/types/settings';
-import { ClaudianView } from './features/chat/ClaudianView';
-import { type InlineEditContext, InlineEditModal } from './features/inline-edit/ui/InlineEditModal';
-import { ClaudianSettingTab } from './features/settings/ClaudianSettings';
-import { setLocale } from './i18n/i18n';
-import type { Locale } from './i18n/types';
+  type InlineEditContext,
+  InlineEditModal,
+} from "./features/inline-edit/ui/InlineEditModal";
+import { ClaudianSettingTab } from "./features/settings/ClaudianSettings";
+import { setLocale, t } from "./i18n/i18n";
+import type { Locale } from "./i18n/types";
 import {
   CLAUDIAN_APP_ICON_ID,
   getClaudeBrandMarkAddIconInnerHtml,
-} from './shared/claudeBrandMark';
-import { buildCursorContext } from './utils/editor';
-import { getVaultPath } from './utils/path';
+} from "./shared/claudeBrandMark";
+import { buildCursorContext } from "./utils/editor";
+import { getVaultPath } from "./utils/path";
 
 export default class ClaudianPlugin extends Plugin {
   settings!: ClaudianSettings;
@@ -59,36 +60,48 @@ export default class ClaudianPlugin extends Plugin {
 
     // 功能区与侧栏标签与视图内品牌标一致：使用 Claude 星芒（非 Lucide `bot`）
     addIcon(CLAUDIAN_APP_ICON_ID, getClaudeBrandMarkAddIconInnerHtml());
-    this.addRibbonIcon(CLAUDIAN_APP_ICON_ID, 'Open Claudian', () => {
-      this.activateView();
+    // Ribbon：切换整块聊天工作区（无叶子则打开，有则全部 detach，等同手工关标签）
+    this.addRibbonIcon(CLAUDIAN_APP_ICON_ID, t("ribbon.toggleClaudian"), () => {
+      void this.toggleClaudianView();
     });
 
     this.addCommand({
-      id: 'open-view',
-      name: 'Open chat view',
+      id: "open-view",
+      name: t("commands.openChatView"),
       callback: () => {
-        this.activateView();
+        void this.activateView();
       },
     });
 
     this.addCommand({
-      id: 'inline-edit',
-      name: 'Inline edit',
+      id: "toggle-view",
+      name: t("commands.toggleChatView"),
+      callback: () => {
+        void this.toggleClaudianView();
+      },
+    });
+
+    this.addCommand({
+      id: "inline-edit",
+      name: "Inline edit",
       editorCallback: async (editor: Editor, ctx) => {
-        const view = ctx instanceof MarkdownView
-          ? ctx
-          : this.app.workspace.getActiveViewOfType(MarkdownView);
+        const view =
+          ctx instanceof MarkdownView
+            ? ctx
+            : this.app.workspace.getActiveViewOfType(MarkdownView);
         if (!view) {
-          new Notice('Inline edit unavailable: could not access the active markdown view.');
+          new Notice(
+            "Inline edit unavailable: could not access the active markdown view."
+          );
           return;
         }
 
         const selectedText = editor.getSelection();
-        const notePath = view.file?.path || 'unknown';
+        const notePath = view.file?.path || "unknown";
 
         let editContext: InlineEditContext;
         if (selectedText.trim()) {
-          editContext = { mode: 'selection', selectedText };
+          editContext = { mode: "selection", selectedText };
         } else {
           const cursor = editor.getCursor();
           const cursorContext = buildCursorContext(
@@ -97,7 +110,7 @@ export default class ClaudianPlugin extends Plugin {
             cursor.line,
             cursor.ch
           );
-          editContext = { mode: 'cursor', cursorContext };
+          editContext = { mode: "cursor", cursorContext };
         }
 
         const modal = new InlineEditModal(
@@ -107,19 +120,24 @@ export default class ClaudianPlugin extends Plugin {
           view,
           editContext,
           notePath,
-          () => this.getView()?.getActiveTab()?.ui.externalContextSelector?.getExternalContexts() ?? []
+          () =>
+            this.getView()
+              ?.getActiveTab()
+              ?.ui.externalContextSelector?.getExternalContexts() ?? []
         );
         const result = await modal.openAndWait();
 
-        if (result.decision === 'accept' && result.editedText !== undefined) {
-          new Notice(editContext.mode === 'cursor' ? 'Inserted' : 'Edit applied');
+        if (result.decision === "accept" && result.editedText !== undefined) {
+          new Notice(
+            editContext.mode === "cursor" ? "Inserted" : "Edit applied"
+          );
         }
       },
     });
 
     this.addCommand({
-      id: 'new-tab',
-      name: 'New tab',
+      id: "new-tab",
+      name: "New tab",
       checkCallback: (checking: boolean) => {
         if (!this.canCreateNewTab()) return false;
 
@@ -131,8 +149,8 @@ export default class ClaudianPlugin extends Plugin {
     });
 
     this.addCommand({
-      id: 'new-session',
-      name: 'New session (in current tab)',
+      id: "new-session",
+      name: "New session (in current tab)",
       checkCallback: (checking: boolean) => {
         const leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE_CLAUDIAN)[0];
         if (!leaf) return false;
@@ -154,8 +172,8 @@ export default class ClaudianPlugin extends Plugin {
     });
 
     this.addCommand({
-      id: 'close-current-tab',
-      name: 'Close current tab',
+      id: "close-current-tab",
+      name: "Close current tab",
       checkCallback: (checking: boolean) => {
         const leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE_CLAUDIAN)[0];
         if (!leaf) return false;
@@ -194,7 +212,7 @@ export default class ClaudianPlugin extends Plugin {
 
     if (!leaf) {
       const newLeaf = this.settings.openInMainTab
-        ? workspace.getLeaf('tab')
+        ? workspace.getLeaf("tab")
         : workspace.getRightLeaf(false);
       if (newLeaf) {
         await newLeaf.setViewState({
@@ -206,8 +224,22 @@ export default class ClaudianPlugin extends Plugin {
     }
 
     if (leaf) {
-      workspace.revealLeaf(leaf);
+      await workspace.revealLeaf(leaf);
     }
+  }
+
+  /**
+   * 功能区一键开关：已存在任意 `claudian-view` 工作区叶子时全部关闭，否则打开并聚焦。
+   * 关闭使用 `detachLeavesOfType`，与用户手工关闭标签一致。
+   */
+  async toggleClaudianView(): Promise<void> {
+    const { workspace } = this.app;
+    const leaves = workspace.getLeavesOfType(VIEW_TYPE_CLAUDIAN);
+    if (leaves.length > 0) {
+      workspace.detachLeavesOfType(VIEW_TYPE_CLAUDIAN);
+      return;
+    }
+    await this.activateView();
   }
 
   private canCreateNewTab(): boolean {
@@ -269,54 +301,64 @@ export default class ClaudianPlugin extends Plugin {
 
     // Plan mode is ephemeral — normalize back to normal on load so the app
     // doesn't start stuck in plan mode after a restart (prePlanPermissionMode is lost)
-    if (this.settings.permissionMode === 'plan') {
-      this.settings.permissionMode = 'normal';
+    if (this.settings.permissionMode === "plan") {
+      this.settings.permissionMode = "normal";
     }
 
-    const didNormalizeProviderSelection = ProviderSettingsCoordinator.normalizeProviderSelection(
-      this.settings as unknown as Record<string, unknown>,
-    );
+    const didNormalizeProviderSelection =
+      ProviderSettingsCoordinator.normalizeProviderSelection(
+        this.settings as unknown as Record<string, unknown>
+      );
     const didNormalizeModelVariants = this.normalizeModelVariantSettings();
 
     const allMetadata = await this.storage.sessions.listMetadata();
-    this.conversations = allMetadata.map(meta => {
-      const resumeSessionId = meta.sessionId !== undefined ? meta.sessionId : meta.id;
+    this.conversations = allMetadata
+      .map((meta) => {
+        const resumeSessionId =
+          meta.sessionId !== undefined ? meta.sessionId : meta.id;
 
-      return {
-        id: meta.id,
-        providerId: meta.providerId ?? DEFAULT_CHAT_PROVIDER_ID,
-        title: meta.title,
-        createdAt: meta.createdAt,
-        updatedAt: meta.updatedAt,
-        lastResponseAt: meta.lastResponseAt,
-        sessionId: resumeSessionId,
-        providerState: meta.providerState,
-        messages: [],
-        currentNote: meta.currentNote,
-        externalContextPaths: meta.externalContextPaths,
-        enabledMcpServers: meta.enabledMcpServers,
-        usage: meta.usage,
-        titleGenerationStatus: meta.titleGenerationStatus,
-        resumeAtMessageId: meta.resumeAtMessageId,
-      };
-    }).sort(
-      (a, b) => (b.lastResponseAt ?? b.updatedAt) - (a.lastResponseAt ?? a.updatedAt)
-    );
+        return {
+          id: meta.id,
+          providerId: meta.providerId ?? DEFAULT_CHAT_PROVIDER_ID,
+          title: meta.title,
+          createdAt: meta.createdAt,
+          updatedAt: meta.updatedAt,
+          lastResponseAt: meta.lastResponseAt,
+          sessionId: resumeSessionId,
+          providerState: meta.providerState,
+          messages: [],
+          currentNote: meta.currentNote,
+          externalContextPaths: meta.externalContextPaths,
+          enabledMcpServers: meta.enabledMcpServers,
+          usage: meta.usage,
+          titleGenerationStatus: meta.titleGenerationStatus,
+          resumeAtMessageId: meta.resumeAtMessageId,
+        };
+      })
+      .sort(
+        (a, b) =>
+          (b.lastResponseAt ?? b.updatedAt) - (a.lastResponseAt ?? a.updatedAt)
+      );
     setLocale(this.settings.locale as Locale);
 
-    const backfilledConversations = this.backfillConversationResponseTimestamps();
+    const backfilledConversations =
+      this.backfillConversationResponseTimestamps();
 
-    const { changed, invalidatedConversations } = this.reconcileModelWithEnvironment();
+    const { changed, invalidatedConversations } =
+      this.reconcileModelWithEnvironment();
 
     ProviderSettingsCoordinator.projectActiveProviderState(
-      this.settings as unknown as Record<string, unknown>,
+      this.settings as unknown as Record<string, unknown>
     );
 
     if (changed || didNormalizeModelVariants || didNormalizeProviderSelection) {
       await this.saveSettings();
     }
 
-    const conversationsToSave = new Set([...backfilledConversations, ...invalidatedConversations]);
+    const conversationsToSave = new Set([
+      ...backfilledConversations,
+      ...invalidatedConversations,
+    ]);
     for (const conv of conversationsToSave) {
       await this.storage.sessions.saveMetadata(
         this.storage.sessions.toSessionMetadata(conv)
@@ -332,7 +374,7 @@ export default class ClaudianPlugin extends Plugin {
 
       for (let i = conv.messages.length - 1; i >= 0; i--) {
         const msg = conv.messages[i];
-        if (msg.role === 'assistant') {
+        if (msg.role === "assistant") {
           conv.lastResponseAt = msg.timestamp;
           updated.push(conv);
           break;
@@ -344,28 +386,31 @@ export default class ClaudianPlugin extends Plugin {
 
   normalizeModelVariantSettings(): boolean {
     return ProviderSettingsCoordinator.normalizeAllModelVariants(
-      this.settings as unknown as Record<string, unknown>,
+      this.settings as unknown as Record<string, unknown>
     );
   }
 
   async saveSettings() {
     ProviderSettingsCoordinator.normalizeProviderSelection(
-      this.settings as unknown as Record<string, unknown>,
+      this.settings as unknown as Record<string, unknown>
     );
     ProviderSettingsCoordinator.persistProjectedProviderState(
-      this.settings as unknown as Record<string, unknown>,
+      this.settings as unknown as Record<string, unknown>
     );
 
     await this.storage.saveClaudianSettings(this.settings);
   }
 
   /** Updates and persists environment variables, restarting processes to apply changes. */
-  async applyEnvironmentVariables(scope: EnvironmentScope, envText: string): Promise<void> {
+  async applyEnvironmentVariables(
+    scope: EnvironmentScope,
+    envText: string
+  ): Promise<void> {
     await this.applyEnvironmentVariablesBatch([{ scope, envText }]);
   }
 
   async applyEnvironmentVariablesBatch(
-    updates: Array<{ scope: EnvironmentScope; envText: string }>,
+    updates: Array<{ scope: EnvironmentScope; envText: string }>
   ): Promise<void> {
     const settingsBag = this.settings as unknown as Record<string, unknown>;
     const nextEnvironmentByScope = new Map<EnvironmentScope, string>();
@@ -387,8 +432,10 @@ export default class ClaudianPlugin extends Plugin {
       return;
     }
 
-    const affectedProviderIds = this.getAffectedEnvironmentProviders(changedScopes);
-    const { changed, invalidatedConversations } = this.reconcileModelWithEnvironment(affectedProviderIds);
+    const affectedProviderIds =
+      this.getAffectedEnvironmentProviders(changedScopes);
+    const { changed, invalidatedConversations } =
+      this.reconcileModelWithEnvironment(affectedProviderIds);
     await this.saveSettings();
 
     if (invalidatedConversations.length > 0) {
@@ -403,9 +450,13 @@ export default class ClaudianPlugin extends Plugin {
     const tabManager = view?.getTabManager();
 
     if (tabManager) {
-      const affectedTabs = tabManager.getAllTabs().filter((tab) => (
-        affectedProviderIds.includes(tab.providerId ?? DEFAULT_CHAT_PROVIDER_ID)
-      ));
+      const affectedTabs = tabManager
+        .getAllTabs()
+        .filter((tab) =>
+          affectedProviderIds.includes(
+            tab.providerId ?? DEFAULT_CHAT_PROVIDER_ID
+          )
+        );
 
       for (const tab of affectedTabs) {
         if (tab.state.isStreaming) {
@@ -420,7 +471,8 @@ export default class ClaudianPlugin extends Plugin {
             continue;
           }
           try {
-            const externalContextPaths = tab.ui.externalContextSelector?.getExternalContexts() ?? [];
+            const externalContextPaths =
+              tab.ui.externalContextSelector?.getExternalContexts() ?? [];
             tab.service.resetSession();
             await tab.service.ensureReady({ externalContextPaths });
           } catch {
@@ -440,7 +492,9 @@ export default class ClaudianPlugin extends Plugin {
         }
       }
       if (failedTabs > 0) {
-        new Notice(`Environment changes applied, but ${failedTabs} affected tab(s) failed to restart.`);
+        new Notice(
+          `Environment changes applied, but ${failedTabs} affected tab(s) failed to restart.`
+        );
       }
     }
 
@@ -449,27 +503,27 @@ export default class ClaudianPlugin extends Plugin {
     }
 
     const noticeText = changed
-      ? 'Environment variables applied. Sessions will be rebuilt on next message.'
-      : 'Environment variables applied.';
+      ? "Environment variables applied. Sessions will be rebuilt on next message."
+      : "Environment variables applied.";
     new Notice(noticeText);
   }
 
   /** Returns the runtime environment variables (fixed at plugin load). */
   getActiveEnvironmentVariables(
     providerId: ProviderId = ProviderRegistry.resolveSettingsProviderId(
-      this.settings as unknown as Record<string, unknown>,
-    ),
+      this.settings as unknown as Record<string, unknown>
+    )
   ): string {
     return getRuntimeEnvironmentText(
       this.settings as unknown as Record<string, unknown>,
-      providerId,
+      providerId
     );
   }
 
   getEnvironmentVariablesForScope(scope: EnvironmentScope): string {
     return getScopedEnvironmentVariables(
       this.settings as unknown as Record<string, unknown>,
-      scope,
+      scope
     );
   }
 
@@ -479,33 +533,41 @@ export default class ClaudianPlugin extends Plugin {
       return null;
     }
 
-    return cliResolver.resolveFromSettings(this.settings as unknown as Record<string, unknown>);
+    return cliResolver.resolveFromSettings(
+      this.settings as unknown as Record<string, unknown>
+    );
   }
 
-  private reconcileModelWithEnvironment(providerIds: ProviderId[] = ProviderRegistry.getRegisteredProviderIds()): {
+  private reconcileModelWithEnvironment(
+    providerIds: ProviderId[] = ProviderRegistry.getRegisteredProviderIds()
+  ): {
     changed: boolean;
     invalidatedConversations: Conversation[];
   } {
     return ProviderSettingsCoordinator.reconcileProviders(
       this.settings as unknown as Record<string, unknown>,
       this.conversations,
-      providerIds,
+      providerIds
     );
   }
 
-  private getAffectedEnvironmentProviders(scopes: EnvironmentScope[]): ProviderId[] {
-    const registeredProviderIds = new Set(ProviderRegistry.getRegisteredProviderIds());
+  private getAffectedEnvironmentProviders(
+    scopes: EnvironmentScope[]
+  ): ProviderId[] {
+    const registeredProviderIds = new Set(
+      ProviderRegistry.getRegisteredProviderIds()
+    );
     const affectedProviderIds = new Set<ProviderId>();
 
     for (const scope of scopes) {
-      if (scope === 'shared') {
+      if (scope === "shared") {
         for (const providerId of registeredProviderIds) {
           affectedProviderIds.add(providerId);
         }
         continue;
       }
 
-      const providerId = scope.slice('provider:'.length) as ProviderId;
+      const providerId = scope.slice("provider:".length) as ProviderId;
       if (registeredProviderIds.has(providerId)) {
         affectedProviderIds.add(providerId);
       }
@@ -521,25 +583,30 @@ export default class ClaudianPlugin extends Plugin {
   private generateDefaultTitle(): string {
     const now = new Date();
     return now.toLocaleString(undefined, {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   }
 
   private getConversationPreview(conv: Conversation): string {
-    const firstUserMsg = conv.messages.find(m => m.role === 'user');
+    const firstUserMsg = conv.messages.find((m) => m.role === "user");
     if (!firstUserMsg) {
-      return 'New conversation';
+      return "New conversation";
     }
-    return firstUserMsg.content.substring(0, 50) + (firstUserMsg.content.length > 50 ? '...' : '');
+    return (
+      firstUserMsg.content.substring(0, 50) +
+      (firstUserMsg.content.length > 50 ? "..." : "")
+    );
   }
 
-  private async loadSdkMessagesForConversation(conversation: Conversation): Promise<void> {
-    await ProviderRegistry
-      .getConversationHistoryService(conversation.providerId)
-      .hydrateConversationHistory(conversation, getVaultPath(this.app));
+  private async loadSdkMessagesForConversation(
+    conversation: Conversation
+  ): Promise<void> {
+    await ProviderRegistry.getConversationHistoryService(
+      conversation.providerId
+    ).hydrateConversationHistory(conversation, getVaultPath(this.app));
   }
 
   async createConversation(options?: {
@@ -568,7 +635,7 @@ export default class ClaudianPlugin extends Plugin {
   }
 
   async switchConversation(id: string): Promise<Conversation | null> {
-    const conversation = this.conversations.find(c => c.id === id);
+    const conversation = this.conversations.find((c) => c.id === id);
     if (!conversation) return null;
 
     await this.loadSdkMessagesForConversation(conversation);
@@ -577,15 +644,15 @@ export default class ClaudianPlugin extends Plugin {
   }
 
   async deleteConversation(id: string): Promise<void> {
-    const index = this.conversations.findIndex(c => c.id === id);
+    const index = this.conversations.findIndex((c) => c.id === id);
     if (index === -1) return;
 
     const conversation = this.conversations[index];
     this.conversations.splice(index, 1);
 
-    await ProviderRegistry
-      .getConversationHistoryService(conversation.providerId)
-      .deleteConversationSession(conversation, getVaultPath(this.app));
+    await ProviderRegistry.getConversationHistoryService(
+      conversation.providerId
+    ).deleteConversationSession(conversation, getVaultPath(this.app));
 
     await this.storage.sessions.deleteMetadata(id);
 
@@ -596,14 +663,16 @@ export default class ClaudianPlugin extends Plugin {
       for (const tab of tabManager.getAllTabs()) {
         if (tab.conversationId === id) {
           tab.controllers.inputController?.cancelStreaming();
-          await tab.controllers.conversationController?.createNew({ force: true });
+          await tab.controllers.conversationController?.createNew({
+            force: true,
+          });
         }
       }
     }
   }
 
   async renameConversation(id: string, title: string): Promise<void> {
-    const conversation = this.conversations.find(c => c.id === id);
+    const conversation = this.conversations.find((c) => c.id === id);
     if (!conversation) return;
 
     conversation.title = title.trim() || this.generateDefaultTitle();
@@ -614,8 +683,11 @@ export default class ClaudianPlugin extends Plugin {
     );
   }
 
-  async updateConversation(id: string, updates: Partial<Conversation>): Promise<void> {
-    const conversation = this.conversations.find(c => c.id === id);
+  async updateConversation(
+    id: string,
+    updates: Partial<Conversation>
+  ): Promise<void> {
+    const conversation = this.conversations.find((c) => c.id === id);
     if (!conversation) return;
 
     // providerId is immutable — strip it from updates to prevent accidental mutation
@@ -628,11 +700,15 @@ export default class ClaudianPlugin extends Plugin {
 
     // Clear image data from memory after save (data is persisted by SDK).
     // Skip for pending forks: their deep-cloned images aren't in SDK storage yet.
-    if (!ProviderRegistry.getConversationHistoryService(conversation.providerId).isPendingForkConversation(conversation)) {
+    if (
+      !ProviderRegistry.getConversationHistoryService(
+        conversation.providerId
+      ).isPendingForkConversation(conversation)
+    ) {
       for (const msg of conversation.messages) {
         if (msg.images) {
           for (const img of msg.images) {
-            img.data = '';
+            img.data = "";
           }
         }
       }
@@ -640,7 +716,7 @@ export default class ClaudianPlugin extends Plugin {
   }
 
   async getConversationById(id: string): Promise<Conversation | null> {
-    const conversation = this.conversations.find(c => c.id === id) || null;
+    const conversation = this.conversations.find((c) => c.id === id) || null;
 
     if (conversation) {
       await this.loadSdkMessagesForConversation(conversation);
@@ -650,15 +726,15 @@ export default class ClaudianPlugin extends Plugin {
   }
 
   getConversationSync(id: string): Conversation | null {
-    return this.conversations.find(c => c.id === id) || null;
+    return this.conversations.find((c) => c.id === id) || null;
   }
 
   findEmptyConversation(): Conversation | null {
-    return this.conversations.find(c => c.messages.length === 0) || null;
+    return this.conversations.find((c) => c.messages.length === 0) || null;
   }
 
   getConversationList(): ConversationMeta[] {
-    return this.conversations.map(c => ({
+    return this.conversations.map((c) => ({
       id: c.id,
       providerId: c.providerId,
       title: c.title,
@@ -686,10 +762,12 @@ export default class ClaudianPlugin extends Plugin {
 
   getAllViews(): ClaudianView[] {
     const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_CLAUDIAN);
-    return leaves.map(leaf => leaf.view as ClaudianView);
+    return leaves.map((leaf) => leaf.view as ClaudianView);
   }
 
-  findConversationAcrossViews(conversationId: string): { view: ClaudianView; tabId: string } | null {
+  findConversationAcrossViews(
+    conversationId: string
+  ): { view: ClaudianView; tabId: string } | null {
     for (const view of this.getAllViews()) {
       const tabManager = view.getTabManager();
       if (!tabManager) continue;
@@ -712,5 +790,4 @@ export default class ClaudianPlugin extends Plugin {
     const maxTabs = this.settings.maxTabs ?? 3;
     return Math.max(3, Math.min(10, maxTabs));
   }
-
 }

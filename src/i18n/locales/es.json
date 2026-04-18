@@ -301,5 +301,12 @@
       "name": "Idioma",
       "desc": "Cambiar el idioma de visualización de la interfaz del plugin"
     }
+  },
+  "commands": {
+    "openChatView": "Abrir chat",
+    "toggleChatView": "Alternar chat"
+  },
+  "ribbon": {
+    "toggleClaudian": "Alternar panel de chat Claudian"
   }
 }

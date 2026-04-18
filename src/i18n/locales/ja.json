@@ -301,5 +301,12 @@
       "name": "言語",
       "desc": "プラグインインターフェースの表示言語を変更"
     }
+  },
+  "commands": {
+    "openChatView": "チャットを開く",
+    "toggleChatView": "チャット表示の切り替え"
+  },
+  "ribbon": {
+    "toggleClaudian": "Claudian チャットパネルの表示切り替え"
   }
 }
