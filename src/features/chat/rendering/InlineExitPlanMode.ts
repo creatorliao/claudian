@@ -1,9 +1,8 @@
 import * as nodePath from 'path';
 
 import type { ExitPlanModeDecision } from '../../../core/types/tools';
+import { t } from '../../../i18n/i18n';
 import type { RenderContentFn } from './MessageRenderer';
-
-const HINTS_TEXT = 'Arrow keys to navigate \u00B7 Enter to select \u00B7 Esc to cancel';
 
 export class InlineExitPlanMode {
   private containerEl: HTMLElement;
@@ -45,7 +44,7 @@ export class InlineExitPlanMode {
     this.rootEl = this.containerEl.createDiv({ cls: 'claudian-plan-approval-inline' });
 
     const titleEl = this.rootEl.createDiv({ cls: 'claudian-plan-inline-title' });
-    titleEl.setText('Plan complete');
+    titleEl.setText(t('chat.plan.complete'));
 
     this.planContent = this.readPlanContent();
     if (this.planContent) {
@@ -58,14 +57,19 @@ export class InlineExitPlanMode {
     } else if (this.planReadError) {
       this.rootEl.createDiv({
         cls: 'claudian-plan-content-preview claudian-plan-read-error',
-        text: `Could not read plan file: ${this.planReadError}. "Approve (new session)" will not include plan details.`,
+        text: t('chat.plan.readError', {
+          error:
+            this.planReadError === 'path outside allowed plan directory'
+              ? t('chat.plan.errorPathOutside')
+              : this.planReadError,
+        }),
       });
     }
 
     const allowedPrompts = this.input.allowedPrompts as Array<{ tool: string; prompt: string }> | undefined;
     if (allowedPrompts && Array.isArray(allowedPrompts) && allowedPrompts.length > 0) {
       const permEl = this.rootEl.createDiv({ cls: 'claudian-plan-permissions' });
-      permEl.createDiv({ text: 'Requested permissions:', cls: 'claudian-plan-permissions-label' });
+      permEl.createDiv({ text: t('chat.plan.permissionsLabel'), cls: 'claudian-plan-permissions-label' });
       const listEl = permEl.createEl('ul', { cls: 'claudian-plan-permissions-list' });
       for (const perm of allowedPrompts) {
         listEl.createEl('li', { text: perm.prompt });
@@ -78,7 +82,7 @@ export class InlineExitPlanMode {
     newSessionRow.addClass('is-focused');
     newSessionRow.createSpan({ text: '\u203A', cls: 'claudian-ask-cursor' });
     newSessionRow.createSpan({ text: '1. ', cls: 'claudian-ask-item-num' });
-    newSessionRow.createSpan({ text: 'Approve (new session)', cls: 'claudian-ask-item-label' });
+    newSessionRow.createSpan({ text: t('chat.plan.approveNewSession'), cls: 'claudian-ask-item-label' });
     newSessionRow.addEventListener('click', () => {
       this.focusedIndex = 0;
       this.updateFocus();
@@ -92,7 +96,7 @@ export class InlineExitPlanMode {
     const approveRow = actionsEl.createDiv({ cls: 'claudian-ask-item' });
     approveRow.createSpan({ text: '\u00A0', cls: 'claudian-ask-cursor' });
     approveRow.createSpan({ text: '2. ', cls: 'claudian-ask-item-num' });
-    approveRow.createSpan({ text: 'Approve (current session)', cls: 'claudian-ask-item-label' });
+    approveRow.createSpan({ text: t('chat.plan.approveCurrentSession'), cls: 'claudian-ask-item-label' });
     approveRow.addEventListener('click', () => {
       this.focusedIndex = 1;
       this.updateFocus();
@@ -106,7 +110,7 @@ export class InlineExitPlanMode {
     this.feedbackInput = feedbackRow.createEl('input', {
       type: 'text',
       cls: 'claudian-ask-custom-text',
-      placeholder: 'Enter feedback to continue planning...',
+      placeholder: t('chat.plan.exitFeedbackPlaceholder'),
     });
     this.feedbackInput.addEventListener('focus', () => { this.isInputFocused = true; });
     this.feedbackInput.addEventListener('blur', () => { this.isInputFocused = false; });
@@ -116,7 +120,7 @@ export class InlineExitPlanMode {
     });
     this.items.push(feedbackRow);
 
-    this.rootEl.createDiv({ text: HINTS_TEXT, cls: 'claudian-ask-hints' });
+    this.rootEl.createDiv({ text: t('chat.askQuestion.hintsPlanNav'), cls: 'claudian-ask-hints' });
 
     this.rootEl.setAttribute('tabindex', '0');
     this.rootEl.addEventListener('keydown', this.boundKeyDown);
@@ -159,9 +163,9 @@ export class InlineExitPlanMode {
 
   private extractPlanContent(): string {
     if (this.planContent) {
-      return `Implement this plan:\n\n${this.planContent}`;
+      return t('chat.plan.implementPlanBlock', { content: this.planContent });
     }
-    return 'Implement the approved plan.';
+    return t('chat.plan.implementPlanFallback');
   }
 
   private handleKeyDown(e: KeyboardEvent): void {

@@ -24,6 +24,7 @@ import {
   TOOL_WRITE_STDIN,
 } from '../../../core/tools/toolNames';
 import type { AskUserQuestionItem, AskUserQuestionOption, ToolCallInfo } from '../../../core/types';
+import { t } from '../../../i18n/i18n';
 import { MCP_ICON_SVG } from '../../../shared/icons';
 import { parseApplyPatchDiffs } from '../../../utils/diff';
 import { setupCollapsible } from './collapsible';
@@ -345,23 +346,26 @@ function renderWebSearchActionExpanded(container: HTMLElement, input: Record<str
 
   switch (data.actionType) {
     case 'open_page':
-      linesEl.createDiv({ cls: 'claudian-tool-line', text: 'Open page' });
+      linesEl.createDiv({ cls: 'claudian-tool-line', text: t('chat.tool.openPage') });
       if (data.url) {
         appendToolLink(linesEl, data.url, data.url);
       } else {
-        linesEl.createDiv({ cls: 'claudian-tool-line', text: 'URL unavailable' });
+        linesEl.createDiv({ cls: 'claudian-tool-line', text: t('chat.tool.urlUnavailable') });
       }
       return true;
 
     case 'find_in_page':
-      linesEl.createDiv({ cls: 'claudian-tool-line', text: 'Find in page' });
+      linesEl.createDiv({ cls: 'claudian-tool-line', text: t('chat.tool.findInPage') });
       if (data.url) {
         appendToolLink(linesEl, data.url, data.url);
       } else {
-        linesEl.createDiv({ cls: 'claudian-tool-line', text: 'URL unavailable' });
+        linesEl.createDiv({ cls: 'claudian-tool-line', text: t('chat.tool.urlUnavailable') });
       }
       if (data.pattern) {
-        linesEl.createDiv({ cls: 'claudian-tool-line', text: `Pattern: ${data.pattern}` });
+        linesEl.createDiv({
+          cls: 'claudian-tool-line',
+          text: t('chat.tool.pattern', { pattern: data.pattern }),
+        });
       }
       return true;
 
@@ -370,17 +374,17 @@ function renderWebSearchActionExpanded(container: HTMLElement, input: Record<str
       const primaryQuery = data.query || data.queries[0];
       linesEl.createDiv({
         cls: 'claudian-tool-line',
-        text: primaryQuery ? `Query: ${primaryQuery}` : 'Search web',
+        text: primaryQuery ? t('chat.tool.query', { query: primaryQuery }) : t('chat.tool.searchWeb'),
       });
 
       const alternateQueries = data.queries.filter(query => query !== primaryQuery);
       for (const query of alternateQueries.slice(0, 4)) {
-        linesEl.createDiv({ cls: 'claudian-tool-line', text: `Alt query: ${query}` });
+        linesEl.createDiv({ cls: 'claudian-tool-line', text: t('chat.tool.altQuery', { query }) });
       }
       if (alternateQueries.length > 4) {
         linesEl.createDiv({
           cls: 'claudian-tool-truncated',
-          text: `... ${alternateQueries.length - 4} more queries`,
+          text: t('chat.tool.moreQueries', { count: String(alternateQueries.length - 4) }),
         });
       }
       return true;
@@ -430,13 +434,13 @@ function renderWebSearchExpanded(
     return;
   }
 
-  container.createDiv({ cls: 'claudian-tool-empty', text: 'No result' });
+  container.createDiv({ cls: 'claudian-tool-empty', text: t('chat.tool.noResult') });
 }
 
 function renderFileSearchExpanded(container: HTMLElement, result: string): void {
   const lines = result.split(/\r?\n/).filter(line => line.trim());
   if (lines.length === 0) {
-    container.createDiv({ cls: 'claudian-tool-empty', text: 'No matches found' });
+    container.createDiv({ cls: 'claudian-tool-empty', text: t('chat.tool.noMatches') });
     return;
   }
   renderLinesExpanded(container, result, 15, true);
@@ -463,7 +467,7 @@ function renderLinesExpanded(
   if (truncated) {
     linesEl.createDiv({
       cls: 'claudian-tool-truncated',
-      text: `... ${lines.length - maxLines} more lines`,
+      text: t('chat.tool.moreLines', { count: String(lines.length - maxLines) }),
     });
   }
 }
@@ -505,7 +509,7 @@ function renderWebFetchExpanded(container: HTMLElement, result: string): void {
     lineEl.setText(result.slice(0, maxChars));
     linesEl.createDiv({
       cls: 'claudian-tool-truncated',
-      text: `... ${result.length - maxChars} more characters`,
+      text: t('chat.tool.moreChars', { count: String(result.length - maxChars) }),
     });
   } else {
     lineEl.setText(result);
@@ -539,12 +543,12 @@ function renderApplyPatchExpanded(
       });
 
       if (fileDiff.operation === 'delete' && fileDiff.diffLines.length === 0) {
-        sectionEl.createDiv({ cls: 'claudian-tool-empty', text: 'File deleted' });
+        sectionEl.createDiv({ cls: 'claudian-tool-empty', text: t('chat.tool.fileDeleted') });
         continue;
       }
 
       if (fileDiff.diffLines.length === 0) {
-        sectionEl.createDiv({ cls: 'claudian-tool-empty', text: 'No textual diff available' });
+        sectionEl.createDiv({ cls: 'claudian-tool-empty', text: t('chat.tool.noTextualDiff') });
         continue;
       }
 
@@ -590,7 +594,7 @@ function renderApplyPatchExpanded(
     return;
   }
 
-  container.createDiv({ cls: 'claudian-tool-empty', text: 'No result' });
+  container.createDiv({ cls: 'claudian-tool-empty', text: t('chat.tool.noResult') });
 }
 
 function renderAgentLifecycleExpanded(container: HTMLElement, result: string): void {
@@ -618,7 +622,7 @@ export function renderExpandedContent(
   input: Record<string, unknown> = {},
 ): void {
   if (!result && toolName !== TOOL_WEB_SEARCH) {
-    container.createDiv({ cls: 'claudian-tool-empty', text: 'No result' });
+    container.createDiv({ cls: 'claudian-tool-empty', text: t('chat.tool.noResult') });
     return;
   }
 
@@ -694,13 +698,19 @@ const STATUS_ICONS: Record<string, string> = {
 function setTodoWriteStatus(statusEl: HTMLElement, input: Record<string, unknown>): void {
   const isComplete = areAllTodosCompleted(input);
   const status = isComplete ? 'completed' : 'running';
-  const ariaLabel = isComplete ? 'Status: completed' : 'Status: in progress';
+  const ariaLabel = isComplete
+    ? t('chat.tool.todoStatusCompleted')
+    : t('chat.tool.todoStatusInProgress');
   resetStatusElement(statusEl, `status-${status}`, ariaLabel);
   if (isComplete) setIcon(statusEl, 'check');
 }
 
 function setToolStatus(statusEl: HTMLElement, status: ToolCallInfo['status']): void {
-  resetStatusElement(statusEl, `status-${status}`, `Status: ${status}`);
+  resetStatusElement(
+    statusEl,
+    `status-${status}`,
+    t('chat.accessibility.statusWithValue', { status }),
+  );
   const icon = STATUS_ICONS[status];
   if (icon) setIcon(statusEl, icon);
 }
@@ -716,7 +726,7 @@ export function renderTodoWriteResult(
   const todos = input.todos as TodoItem[] | undefined;
   if (!todos || !Array.isArray(todos)) {
     const item = container.createSpan({ cls: 'claudian-tool-result-item' });
-    item.setText('Tasks updated');
+    item.setText(t('chat.tool.tasksUpdated'));
     return;
   }
 
@@ -810,7 +820,7 @@ function renderAskUserQuestionResult(container: HTMLElement, toolCall: ToolCallI
     const bodyEl = pairEl.createDiv({ cls: 'claudian-ask-review-body' });
     bodyEl.createDiv({ text: q.question, cls: 'claudian-ask-review-q-text' });
     bodyEl.createDiv({
-      text: answer || 'Not answered',
+      text: answer || t('chat.askQuestion.notAnswered'),
       cls: answer ? 'claudian-ask-review-a-text' : 'claudian-ask-review-empty',
     });
   }
@@ -826,14 +836,14 @@ function renderAskUserQuestionFallback(container: HTMLElement, toolCall: ToolCal
     : [];
 
   if (questions.length === 0) {
-    contentFallback(container, initialText || toolCall.result || 'Waiting for answer...');
+    contentFallback(container, initialText || toolCall.result || t('chat.tool.waitingForAnswer'));
     return;
   }
 
   if (initialText || toolCall.result) {
     container.createDiv({
       cls: 'claudian-ask-review-prompt',
-      text: initialText || toolCall.result || 'Waiting for answer...',
+      text: initialText || toolCall.result || t('chat.tool.waitingForAnswer'),
     });
   }
 
@@ -846,7 +856,7 @@ function renderAskUserQuestionFallback(container: HTMLElement, toolCall: ToolCal
     bodyEl.createDiv({ text: question.question, cls: 'claudian-ask-review-q-text' });
 
     if (!Array.isArray(question.options) || question.options.length === 0) {
-      bodyEl.createDiv({ cls: 'claudian-ask-review-empty', text: 'No options recorded' });
+      bodyEl.createDiv({ cls: 'claudian-ask-review-empty', text: t('chat.tool.noOptionsRecorded') });
       continue;
     }
 
@@ -925,7 +935,7 @@ function renderToolContent(
   } else if (toolCall.name === TOOL_ASK_USER_QUESTION) {
     content.addClass('claudian-tool-content-ask');
     if (initialText) {
-      renderAskUserQuestionFallback(content, toolCall, 'Waiting for answer...');
+      renderAskUserQuestionFallback(content, toolCall, t('chat.tool.waitingForAnswer'));
     } else if (!renderAskUserQuestionResult(content, toolCall)) {
       renderAskUserQuestionFallback(content, toolCall);
     }
@@ -948,9 +958,12 @@ export function renderToolCall(
   toolCallElements.set(toolCall.id, toolEl);
 
   statusEl.addClass(`status-${toolCall.status}`);
-  statusEl.setAttribute('aria-label', `Status: ${toolCall.status}`);
+  statusEl.setAttribute(
+    'aria-label',
+    t('chat.accessibility.statusWithValue', { status: toolCall.status }),
+  );
 
-  renderToolContent(content, toolCall, 'Running...');
+  renderToolContent(content, toolCall, t('chat.subagent.runningShort'));
 
   const state = { isExpanded: false };
   toolCall.isExpanded = false;

@@ -150,11 +150,17 @@ describe('parsePathEntries', () => {
   });
 
   it('splits on platform separator', () => {
-    const sep = isWindows ? ';' : ':';
-    const result = parsePathEntries(`/a${sep}/b${sep}/c`);
-    expect(result).toContain('/a');
-    expect(result).toContain('/b');
-    expect(result).toContain('/c');
+    const originalPlatform = process.platform;
+    // 在 Windows 上 process 实际为 win32 时，单字母 MSYS 路径 /a 会被译成盘符，需用非 win32 验证「分隔符」语义
+    Object.defineProperty(process, 'platform', { value: 'linux' });
+    try {
+      const result = parsePathEntries('/a:/b:/c');
+      expect(result).toContain('/a');
+      expect(result).toContain('/b');
+      expect(result).toContain('/c');
+    } finally {
+      Object.defineProperty(process, 'platform', { value: originalPlatform });
+    }
   });
 
   it('filters out empty segments', () => {
@@ -231,6 +237,17 @@ describe('translateMsysPath', () => {
 });
 
 describe('normalizePathForFilesystem', () => {
+  const originalPlatform = process.platform;
+
+  beforeEach(() => {
+    // 以下用例期望 POSIX 风格路径；在 Windows 开发机上跑 jest 时避免 MSYS 盘符转换干扰断言
+    Object.defineProperty(process, 'platform', { value: 'darwin' });
+  });
+
+  afterEach(() => {
+    Object.defineProperty(process, 'platform', { value: originalPlatform });
+  });
+
   it('returns empty string for empty input', () => {
     expect(normalizePathForFilesystem('')).toBe('');
   });
@@ -283,29 +300,57 @@ describe('normalizePathForFilesystem', () => {
 });
 
 describe('normalizePathForComparison', () => {
-  it('returns empty string for empty input', () => {
-    expect(normalizePathForComparison('')).toBe('');
-  });
+  const hostWindows = process.platform === 'win32';
+  const originalPlatform = process.platform;
 
-  it('returns empty string for null-like input', () => {
-    expect(normalizePathForComparison(null as any)).toBe('');
-    expect(normalizePathForComparison(undefined as any)).toBe('');
-  });
+  describe('POSIX 风格路径（在 Windows 主机上 mock 为 darwin，避免 /u 被当成盘符）', () => {
+    beforeEach(() => {
+      if (hostWindows) {
+        Object.defineProperty(process, 'platform', { value: 'darwin' });
+      }
+    });
 
-  it('normalizes slashes to forward slash', () => {
-    // On any platform, result should use forward slashes
-    const result = normalizePathForComparison('/usr/local/bin');
-    expect(result).not.toContain('\\');
-  });
+    afterEach(() => {
+      if (hostWindows) {
+        Object.defineProperty(process, 'platform', { value: originalPlatform });
+      }
+    });
 
-  it('removes trailing slash', () => {
-    const result = normalizePathForComparison('/usr/local/bin/');
-    expect(result).not.toMatch(/\/$/);
-  });
+    it('returns empty string for empty input', () => {
+      expect(normalizePathForComparison('')).toBe('');
+    });
 
-  it('removes multiple trailing slashes', () => {
-    const result = normalizePathForComparison('/usr/local/bin///');
-    expect(result).not.toMatch(/\/$/);
+    it('returns empty string for null-like input', () => {
+      expect(normalizePathForComparison(null as any)).toBe('');
+      expect(normalizePathForComparison(undefined as any)).toBe('');
+    });
+
+    it('normalizes slashes to forward slash', () => {
+      const result = normalizePathForComparison('/usr/local/bin');
+      expect(result).not.toContain('\\');
+    });
+
+    it('removes trailing slash', () => {
+      const result = normalizePathForComparison('/usr/local/bin/');
+      expect(result).not.toMatch(/\/$/);
+    });
+
+    it('removes multiple trailing slashes', () => {
+      const result = normalizePathForComparison('/usr/local/bin///');
+      expect(result).not.toMatch(/\/$/);
+    });
+
+    if (!isWindows) {
+      it('preserves case on Unix', () => {
+        const result = normalizePathForComparison('/Users/Test');
+        expect(result).toContain('Test');
+      });
+    }
+
+    it('normalizes redundant separators', () => {
+      const result = normalizePathForComparison('/usr//local///bin');
+      expect(result).toBe('/usr/local/bin');
+    });
   });
 
   if (isWindows) {
@@ -314,18 +359,6 @@ describe('normalizePathForComparison', () => {
       expect(result).toBe(result.toLowerCase());
     });
   }
-
-  if (!isWindows) {
-    it('preserves case on Unix', () => {
-      const result = normalizePathForComparison('/Users/Test');
-      expect(result).toContain('Test');
-    });
-  }
-
-  it('normalizes redundant separators', () => {
-    const result = normalizePathForComparison('/usr//local///bin');
-    expect(result).toBe('/usr/local/bin');
-  });
 });
 
 describe('isPathWithinVault', () => {
@@ -460,10 +493,26 @@ describe('findClaudeCLIPath', () => {
   });
 
   it('falls back to npm cli.js paths when binary not found', () => {
-    const cliJsPath = path.join(
-      os.homedir(), '.npm-global', 'lib', 'node_modules',
-      '@anthropic-ai', 'claude-code', 'cli.js'
-    );
+    const cliJsPath = isWindows
+      ? path.join(
+          os.homedir(),
+          'AppData',
+          'Roaming',
+          'npm',
+          'node_modules',
+          '@anthropic-ai',
+          'claude-code',
+          'cli.js',
+        )
+      : path.join(
+          os.homedir(),
+          '.npm-global',
+          'lib',
+          'node_modules',
+          '@anthropic-ai',
+          'claude-code',
+          'cli.js',
+        );
 
     jest.spyOn(fs, 'existsSync').mockImplementation(
       p => String(p) === cliJsPath
@@ -477,9 +526,11 @@ describe('findClaudeCLIPath', () => {
   });
 
   it('falls back to PATH environment when common and npm paths fail', () => {
-    const envClaudePath = '/env/specific/bin/claude';
+    const envClaudePath = isWindows ? 'C:\\env\\specific\\bin\\claude.exe' : '/env/specific/bin/claude';
     const originalPath = process.env.PATH;
-    process.env.PATH = `/env/specific/bin:${originalPath}`;
+    const sep = isWindows ? ';' : ':';
+    const prefix = isWindows ? 'C:\\env\\specific\\bin' : '/env/specific/bin';
+    process.env.PATH = `${prefix}${sep}${originalPath ?? ''}`;
 
     jest.spyOn(fs, 'existsSync').mockImplementation(
       p => String(p) === envClaudePath

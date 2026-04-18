@@ -1,3 +1,4 @@
+import { setLocale } from '@/i18n/i18n';
 import type { CodexSubagentStorage } from '@/providers/codex/storage/CodexSubagentStorage';
 import { createCodexSubagentPersistenceKey } from '@/providers/codex/storage/CodexSubagentStorage';
 import type { CodexSubagentDefinition } from '@/providers/codex/types/subagent';
@@ -6,6 +7,10 @@ import {
   validateCodexNicknameCandidates,
   validateCodexSubagentName,
 } from '@/providers/codex/ui/CodexSubagentSettings';
+
+beforeAll(() => {
+  setLocale('en');
+});
 
 function makeAgent(name: string, overrides: Partial<CodexSubagentDefinition> = {}): CodexSubagentDefinition {
   return {

@@ -1,9 +1,9 @@
+import { t } from '../../../i18n/i18n';
+
 export type PlanApprovalDecision =
   | { type: 'implement' }
   | { type: 'revise'; text: string }
   | { type: 'cancel' };
-
-const HINTS_TEXT = 'Arrow keys to navigate \u00B7 Enter to select \u00B7 Esc to cancel';
 
 export class InlinePlanApproval {
   private containerEl: HTMLElement;
@@ -29,7 +29,7 @@ export class InlinePlanApproval {
   render(): void {
     this.rootEl = this.containerEl.createDiv({ cls: 'claudian-plan-approval-inline' });
 
-    this.rootEl.createDiv({ cls: 'claudian-plan-inline-title', text: 'Plan complete' });
+    this.rootEl.createDiv({ cls: 'claudian-plan-inline-title', text: t('chat.plan.complete') });
 
     const actionsEl = this.rootEl.createDiv({ cls: 'claudian-ask-list' });
 
@@ -38,7 +38,7 @@ export class InlinePlanApproval {
     implementRow.addClass('is-focused');
     implementRow.createSpan({ text: '\u203A', cls: 'claudian-ask-cursor' });
     implementRow.createSpan({ text: '1. ', cls: 'claudian-ask-item-num' });
-    implementRow.createSpan({ text: 'Implement', cls: 'claudian-ask-item-label' });
+    implementRow.createSpan({ text: t('chat.plan.implement'), cls: 'claudian-ask-item-label' });
     implementRow.addEventListener('click', () => {
       this.focusedIndex = 0;
       this.updateFocus();
@@ -53,7 +53,7 @@ export class InlinePlanApproval {
     this.feedbackInput = reviseRow.createEl('input', {
       type: 'text',
       cls: 'claudian-ask-custom-text',
-      placeholder: 'Enter feedback to revise plan...',
+      placeholder: t('chat.plan.feedbackRevisePlaceholder'),
     });
     this.feedbackInput.addEventListener('focus', () => { this.isInputFocused = true; });
     this.feedbackInput.addEventListener('blur', () => { this.isInputFocused = false; });
@@ -67,7 +67,7 @@ export class InlinePlanApproval {
     const cancelRow = actionsEl.createDiv({ cls: 'claudian-ask-item' });
     cancelRow.createSpan({ text: '\u00A0', cls: 'claudian-ask-cursor' });
     cancelRow.createSpan({ text: '3. ', cls: 'claudian-ask-item-num' });
-    cancelRow.createSpan({ text: 'Cancel', cls: 'claudian-ask-item-label' });
+    cancelRow.createSpan({ text: t('common.cancel'), cls: 'claudian-ask-item-label' });
     cancelRow.addEventListener('click', () => {
       this.focusedIndex = 2;
       this.updateFocus();
@@ -75,7 +75,7 @@ export class InlinePlanApproval {
     });
     this.items.push(cancelRow);
 
-    this.rootEl.createDiv({ text: HINTS_TEXT, cls: 'claudian-ask-hints' });
+    this.rootEl.createDiv({ text: t('chat.askQuestion.hintsPlanNav'), cls: 'claudian-ask-hints' });
 
     this.rootEl.setAttribute('tabindex', '0');
     this.rootEl.addEventListener('keydown', this.boundKeyDown);

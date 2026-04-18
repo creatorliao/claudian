@@ -19,7 +19,9 @@
     "disabled": "Disabled",
     "platform": "Platform",
     "refresh": "Refresh",
-    "rewind": "Rewind"
+    "rewind": "Rewind",
+    "learnMore": "Learn more",
+    "unknownError": "Unknown error"
   },
   "chat": {
     "rewind": {
@@ -31,7 +33,12 @@
       "failed": "Rewind failed: {error}",
       "cannot": "Cannot rewind: {error}",
       "unavailableStreaming": "Cannot rewind while streaming",
-      "unavailableNoUuid": "Cannot rewind: missing message identifiers"
+      "unavailableNoUuid": "Cannot rewind: missing message identifiers",
+      "errorProviderNotSupported": "Rewind is not supported by this provider.",
+      "errorMessageNotFound": "Message not found",
+      "errorAgentUnavailable": "Agent service not available",
+      "errorUnknown": "Unknown error",
+      "saveFailedGeneric": "Failed to save"
     },
     "fork": {
       "ariaLabel": "Fork conversation",
@@ -69,6 +76,149 @@
     },
     "tabs": {
       "maxAllowedNotice": "Maximum {maxTabs} tabs allowed"
+    },
+    "history": {
+      "header": "Conversations",
+      "empty": "No conversations",
+      "currentSession": "Current session",
+      "openInNewTab": "Open in New Tab",
+      "openInBackgroundTab": "Open in Background Tab",
+      "switchToOpenSession": "Switch to Open Session",
+      "rename": "Rename",
+      "delete": "Delete",
+      "generatingTitleAria": "Generating title...",
+      "regenerateTitleAria": "Regenerate title",
+      "renameAria": "Rename",
+      "deleteAria": "Delete",
+      "failedLoadConversation": "Failed to load conversation",
+      "failedDeleteConversation": "Failed to delete conversation"
+    },
+    "image": {
+      "exceedsLimit": "Image exceeds {limit} limit.",
+      "unsupportedType": "Unsupported image type.",
+      "attachFailed": "Failed to attach image.",
+      "suffixFileNotFound": " (File not found)",
+      "suffixPermissionDenied": " (Permission denied)",
+      "removeAria": "Remove image",
+      "dropHere": "Drop image here"
+    },
+    "accessibility": {
+      "statusWithValue": "Status: {status}"
+    },
+    "instructionModal": {
+      "title": "Add Custom Instruction",
+      "yourInput": "Your input:",
+      "processing": "Processing your instruction...",
+      "yourResponse": "Your response:",
+      "responsePlaceholder": "Provide more details...",
+      "refinedSnippet": "Refined snippet:",
+      "processingShort": "Processing...",
+      "submit": "Submit",
+      "edit": "Edit",
+      "accept": "Accept",
+      "preview": "Preview",
+      "ariaSubmitResponse": "Submit response",
+      "ariaEditInstruction": "Edit instruction",
+      "ariaAcceptInstruction": "Accept instruction"
+    },
+    "askQuestion": {
+      "defaultTitle": "Question",
+      "hintsNavigate": "Enter to select · Tab/Arrow keys to navigate · Esc to cancel",
+      "hintsImmediate": "Enter to select · Arrow keys to navigate · Esc to cancel",
+      "hintsPlanNav": "Arrow keys to navigate · Enter to select · Esc to cancel",
+      "submitTab": "Submit",
+      "reviewTitle": "Review your answers",
+      "readyPrompt": "Ready to submit your answers?",
+      "submitAnswers": "Submit answers",
+      "notAnswered": "Not answered",
+      "placeholderSecret": "Enter secret.",
+      "placeholderCustom": "Type something."
+    },
+    "plan": {
+      "complete": "Plan complete",
+      "implement": "Implement",
+      "feedbackRevisePlaceholder": "Enter feedback to revise plan...",
+      "exitFeedbackPlaceholder": "Enter feedback to continue planning...",
+      "permissionsLabel": "Requested permissions:",
+      "approveNewSession": "Approve (new session)",
+      "approveCurrentSession": "Approve (current session)",
+      "readError": "Could not read plan file: {error}. \"Approve (new session)\" will not include plan details.",
+      "errorPathOutside": "path outside allowed plan directory",
+      "implementPlanBlock": "Implement this plan:\n\n{content}",
+      "implementPlanFallback": "Implement the approved plan."
+    },
+    "compact": {
+      "conversationCompacted": "Conversation compacted"
+    },
+    "resume": {
+      "header": "Resume conversation",
+      "empty": "No conversations"
+    },
+    "slashCommands": {
+      "noMatching": "No matching commands"
+    },
+    "message": {
+      "renderFailed": "Failed to render message content.",
+      "copied": "Copied!"
+    },
+    "thinking": {
+      "elapsed": "Thinking {seconds}s...",
+      "doneSeconds": "Thought for {seconds}s",
+      "storedLabel": "Thought",
+      "ariaHeader": "Extended thinking - click to expand"
+    },
+    "writeEdit": {
+      "writing": "Writing...",
+      "done": "DONE",
+      "errorFallback": "Error",
+      "headerAria": "{tool}: {path} — click to expand",
+      "errorCaps": "ERROR"
+    },
+    "diff": {
+      "noChanges": "No changes",
+      "moreLinesOmitted": "... {count} more lines"
+    },
+    "tool": {
+      "openPage": "Open page",
+      "urlUnavailable": "URL unavailable",
+      "findInPage": "Find in page",
+      "pattern": "Pattern: {pattern}",
+      "altQuery": "Alt query: {query}",
+      "moreQueries": "... {count} more queries",
+      "query": "Query: {query}",
+      "searchWeb": "Search web",
+      "noResult": "No result",
+      "noMatches": "No matches found",
+      "moreLines": "... {count} more lines",
+      "moreChars": "... {count} more characters",
+      "fileDeleted": "File deleted",
+      "noTextualDiff": "No textual diff available",
+      "tasksUpdated": "Tasks updated",
+      "waitingForAnswer": "Waiting for answer...",
+      "noOptionsRecorded": "No options recorded",
+      "todoStatusCompleted": "Status: completed",
+      "todoStatusInProgress": "Status: in progress"
+    },
+    "subagent": {
+      "runningShort": "Running...",
+      "initializing": "Initializing",
+      "runningInBackground": "Running in background",
+      "orphaned": "Orphaned",
+      "error": "Error",
+      "completedShort": "Completed",
+      "conversationEndedBeforeTask": "Conversation ended before task completed",
+      "ariaBackgroundInitializing": "Background task: {description} — Initializing — click to expand",
+      "ariaBackgroundHeader": "Background task: {description} — {status} — click to expand",
+      "ariaTask": "Subagent task: {description} — {count} tool uses — Status: {status} — click to expand",
+      "defaultTaskTitle": "Subagent task",
+      "noPromptProvided": "No prompt provided",
+      "toolUses": "{count} tool uses",
+      "sectionPrompt": "Prompt",
+      "sectionResult": "Result",
+      "backgroundTaskDefault": "Background task"
+    },
+    "approval": {
+      "agentLabel": "Agent: {id}"
     },
     "welcome": {
       "happySunday": "Happy Sunday",
@@ -116,6 +266,123 @@
       "whatsNewNamed": "What's new, {name}?",
       "nameReturns": "{name} returns!",
       "youAreAbsolutelyRight": "You are absolutely right!"
+    },
+    "ribbon": {
+      "effortLabel": "Effort:",
+      "thinkingLabel": "Thinking:",
+      "fallbackHigh": "High",
+      "fallbackOff": "Off",
+      "unknownModel": "Unknown",
+      "tokenCount": "{count} tokens",
+      "tokenDisabled": "Disabled",
+      "permission": {
+        "safe": "Safe",
+        "yolo": "YOLO",
+        "plan": "PLAN",
+        "planCodex": "Plan"
+      },
+      "serviceTier": {
+        "fastModeTitle": "Toggle on/off fast mode"
+      },
+      "send": "Send message",
+      "stop": "Stop generation",
+      "effort": {
+        "low": "Low",
+        "medium": "Med",
+        "high": "High",
+        "xhigh": "XHigh",
+        "max": "Max"
+      },
+      "budget": {
+        "off": "Off",
+        "low": "Low",
+        "medium": "Med",
+        "high": "High",
+        "xhigh": "Ultra"
+      },
+      "contextMeter": {
+        "summary": "{used} / {total}",
+        "approachingSuffix": " (Approaching limit, run `/compact` to continue)"
+      },
+      "externalContext": {
+        "dialogTitle": "Select External Context",
+        "duplicateFolder": "This folder is already added as an external context.",
+        "folderPickerFailed": "Unable to open folder picker.",
+        "removedInvalid": "Removed {count} invalid external context path(s): {paths}",
+        "persistFailed": "Cannot persist \"{path}\" - directory no longer exists",
+        "conflictParent": "Cannot add \"{newPath}\" - it's inside existing path \"{existingPath}\"",
+        "conflictChild": "Cannot add \"{newPath}\" - it contains existing path \"{existingPath}\"",
+        "header": "External Contexts",
+        "emptyHint": "Click folder icon to add",
+        "lockPersistent": "Persistent (click to make session-only)",
+        "lockSession": "Session-only (click to persist)",
+        "removePath": "Remove path",
+        "iconTitleWithCount": "{count} external contexts (click to add more)",
+        "iconTitleWithCountOne": "1 external context (click to add more)",
+        "iconTitleEmpty": "Add external contexts (click)",
+        "addDirNoPath": "No path provided. Usage: /add-dir /absolute/path",
+        "addDirNotAbsolute": "Path must be absolute. Usage: /add-dir /absolute/path"
+      },
+      "mcpSelector": {
+        "header": "MCP Servers",
+        "emptyNone": "No MCP servers configured",
+        "emptyAllDisabled": "All MCP servers disabled",
+        "contextSavingBadge": "Context-saving: can also enable via @{name}",
+        "iconTitleEnabled": "{count} MCP servers enabled (click to manage)",
+        "iconTitleEnabledOne": "1 MCP server enabled (click to manage)",
+        "iconTitleIdle": "MCP servers (click to enable)"
+      }
+    },
+    "notices": {
+      "cannotSwitchProviderBound": "Cannot switch provider on a bound session. Start a new tab instead.",
+      "forkNotSupportedProvider": "Fork is not supported by this provider.",
+      "imageAttachmentsNotSupported": "Image attachments are not supported by this provider.",
+      "failedSaveTabLayout": "Failed to save tab layout",
+      "agentInitFailed": "Failed to initialize agent service. Please try again.",
+      "agentServiceUnavailable": "Agent service not available. Please reload the plugin.",
+      "steerCodexQueuedFailed": "Failed to steer the queued Codex message. It is still available.",
+      "instructionAddedToSystemPrompt": "Instruction added to custom system prompt",
+      "noInstructionReceived": "No instruction received",
+      "errorWithDetail": "Error: {detail}",
+      "unexpectedApprovalSelection": "Unexpected approval selection: \"{value}\"",
+      "slashNotSupportedByProvider": "/{name} is not supported by this provider.",
+      "externalContextSelectorUnavailable": "External context selector not available.",
+      "externalContextAdded": "Added external context: {path}",
+      "forkNotAvailable": "Fork not available.",
+      "unknownSlashAction": "Unknown command: {action}",
+      "noConversationsToResume": "No conversations to resume",
+      "failedOpenConversation": "Failed to open conversation: {message}",
+      "failedRegenerateResponse": "Failed to regenerate response",
+      "failedRenameConversation": "Failed to rename conversation",
+      "backgroundTaskRenderFailed": "Background task completed, but the result could not be rendered.",
+      "inlineEditNoEditor": "Inline edit unavailable: could not access the active editor. Try reopening the note.",
+      "inlineEditVaultLoadFailed": "Failed to load vault files. Vault @-mentions may be unavailable.",
+      "inlineEditAttachInvalidPath": "Failed to attach file: invalid path",
+      "couldNotOpenFile": "Could not open file: {path}",
+      "failedOpenFile": "Failed to open file: {message}",
+      "bangBashCommandFailed": "Command failed: {message}",
+      "mcpVerificationFailed": "Verification failed",
+      "pluginMalformedEntry": "Claudian: plugin \"{id}\" has malformed entry in installed_plugins.json (expected array, got {type})",
+      "envSnippetInsertFailed": "Failed to insert snippet",
+      "envSnippetDeleteFailed": "Failed to delete snippet",
+      "envSnippetSaved": "Environment snippet \"{name}\" saved",
+      "envSnippetUpdated": "Environment snippet \"{name}\" updated",
+      "envSnippetDeleted": "Environment snippet \"{name}\" deleted",
+      "subagentLoadFailed": "Failed to load subagent \"{name}\": {message}",
+      "failedProcessResponse": "Failed to process response",
+      "failedRefineInstruction": "Failed to refine instruction",
+      "chatServiceInitFailed": "Failed to initialize chat service",
+      "inlineEditNoMarkdownView": "Inline edit unavailable: could not access the active markdown view.",
+      "inlineEditInserted": "Inserted",
+      "inlineEditApplied": "Edit applied",
+      "envPartialTabRestart": "Environment changes applied, but {count} affected tab(s) failed to restart.",
+      "envAppliedRebuild": "Environment variables applied. Sessions will be rebuilt on next message.",
+      "envApplied": "Environment variables applied.",
+      "dynamicUpdateModelFailed": "Failed to update model",
+      "dynamicUpdateThinkingFailed": "Failed to update thinking budget",
+      "dynamicUpdateEffortFailed": "Failed to update effort level",
+      "dynamicUpdatePermissionFailed": "Failed to update permission mode",
+      "dynamicUpdateMcpFailed": "Failed to update MCP servers"
     }
   },
   "settings": {
@@ -263,11 +530,19 @@
     },
     "claudeSafeMode": {
       "name": "Safe mode",
-      "desc": "Permission mode used when the Safe toggle is active."
+      "desc": "Permission mode used when the Safe toggle is active.",
+      "optionAcceptEdits": "Accept edits",
+      "optionDefault": "Default"
     },
     "codexSafeMode": {
       "name": "Safe mode",
-      "desc": "Sandbox mode used when the Safe toggle is active."
+      "desc": "Sandbox mode used when the Safe toggle is active.",
+      "optionWorkspaceWrite": "Workspace write",
+      "optionReadOnly": "Read-only"
+    },
+    "claudeEnv": {
+      "desc": "Claude-owned runtime variables only. Use this for ANTHROPIC_* and Claude-specific toggles.",
+      "placeholder": "ANTHROPIC_API_KEY=your-key\nANTHROPIC_BASE_URL=https://api.example.com\nANTHROPIC_MODEL=custom-model\nCLAUDE_CODE_USE_BEDROCK=1"
     },
     "environment": "Environment",
     "customVariables": {
@@ -279,6 +554,10 @@
       "addBtn": "Add snippet",
       "noSnippets": "No saved environment snippets yet. Click + to save your current environment configuration.",
       "nameRequired": "Please enter a name for the snippet",
+      "confirmDelete": "Delete environment snippet \"{name}\"?",
+      "insertAria": "Insert snippet",
+      "editAria": "Edit snippet",
+      "deleteAria": "Delete snippet",
       "modal": {
         "titleEdit": "Edit snippet",
         "titleSave": "Save snippet",
@@ -354,11 +633,334 @@
     "language": {
       "name": "Language",
       "desc": "Change the display language of the plugin interface"
+    },
+    "envReview": {
+      "warning": "Review environment ownership for: {keys}"
+    },
+    "mcpServerModal": {
+      "titleEdit": "Edit MCP Server",
+      "titleAdd": "Add MCP Server",
+      "serverName": {
+        "name": "Server name",
+        "desc": "Unique identifier for this server",
+        "placeholder": "my-mcp-server"
+      },
+      "serverType": {
+        "name": "Type",
+        "desc": "Server connection type",
+        "stdio": "stdio (local command)",
+        "sse": "sse (Server-Sent Events)",
+        "http": "http (HTTP endpoint)"
+      },
+      "enabled": {
+        "name": "Enabled",
+        "desc": "Whether this server is active"
+      },
+      "contextSaving": {
+        "name": "Context-saving mode",
+        "desc": "Hide tools from agent unless @-mentioned (saves context window)"
+      },
+      "command": {
+        "name": "Command",
+        "desc": "Full command with arguments",
+        "placeholder": "docker exec -i mcp-server python -m src.server"
+      },
+      "envVars": {
+        "name": "Environment variables",
+        "desc": "KEY=VALUE per line (optional)",
+        "placeholder": "API_KEY=your-key"
+      },
+      "url": {
+        "name": "URL",
+        "descSse": "SSE endpoint URL",
+        "descHttp": "HTTP endpoint URL",
+        "placeholder": "http://localhost:3000/sse"
+      },
+      "headers": {
+        "name": "Headers",
+        "desc": "HTTP headers (KEY=VALUE per line)",
+        "placeholder": "Authorization=Bearer token\nContent-Type=application/json"
+      },
+      "btnAdd": "Add",
+      "btnUpdate": "Update",
+      "validation": {
+        "nameRequired": "Please enter a server name",
+        "nameInvalid": "Server name can only contain letters, numbers, dots, hyphens, and underscores",
+        "commandRequired": "Please enter a command",
+        "urlRequired": "Please enter a URL"
+      }
+    },
+    "mcpTest": {
+      "titleVerify": "Verify: {name}",
+      "connecting": "Connecting to MCP server...",
+      "connectedOk": "Connected successfully",
+      "connectedOkTo": "Connected successfully to {server}",
+      "connectedOkToVersion": "Connected successfully to {server} v{version}",
+      "connectionFailed": "Connection failed",
+      "availableTools": "Available Tools ({count})",
+      "noToolsHint": "No tools information available. Tools will be loaded when used in chat.",
+      "close": "Close",
+      "enableAll": "Enable All",
+      "disableAll": "Disable All",
+      "toggleErrorGeneric": "Failed to update tool setting",
+      "toggleErrorPermission": "Permission denied. Check .claude/ folder permissions.",
+      "toggleErrorDiskFull": "Disk full. Free up space and try again.",
+      "toggleErrorJson": "Config file corrupted. Check .claude/mcp.json"
+    },
+    "mcpList": {
+      "headerLabel": "MCP Servers",
+      "addStdio": "stdio (local command)",
+      "addRemote": "http / sse (remote)",
+      "importClipboard": "Import from clipboard",
+      "empty": "No MCP servers configured. Click \"Add\" to add one.",
+      "contextSavingTitle": "Context-saving: mention with @{name} to enable",
+      "verifyAria": "Verify (show tools)",
+      "enableAria": "Enable",
+      "disableAria": "Disable",
+      "editAria": "Edit",
+      "deleteAria": "Delete",
+      "addAria": "Add",
+      "noticeReloadFailed": "Setting saved but reload failed. Changes will apply on next session.",
+      "clipboardEmpty": "Clipboard is empty",
+      "clipboardInvalid": "No valid MCP configuration found in clipboard",
+      "clipboardNamePrompt": "Enter a name for the server",
+      "clipboardReadFailed": "Failed to read clipboard",
+      "serverExists": "Server \"{name}\" already exists",
+      "serverUpdated": "MCP server \"{name}\" updated",
+      "serverAdded": "MCP server \"{name}\" added",
+      "importNone": "No new MCP servers imported",
+      "imported": "Imported {count} MCP server(s)",
+      "importedWithSkipped": "Imported {count} MCP server(s) ({skipped} skipped)",
+      "serverToggled": "MCP server \"{name}\" {state}",
+      "serverEnabled": "enabled",
+      "serverDisabled": "disabled",
+      "serverDeleted": "MCP server \"{name}\" deleted",
+      "deleteConfirm": "Delete MCP server \"{name}\"?"
+    },
+    "slashCommandModal": {
+      "typeName": "Type",
+      "typeDesc": "Command or skill",
+      "typeCommand": "Command",
+      "typeSkill": "Skill",
+      "commandName": "Command name",
+      "commandNameDesc": "The name used after / (e.g., \"review\" for /review)",
+      "description": "Description",
+      "descriptionDesc": "Optional description shown in dropdown",
+      "argumentHint": "Argument hint",
+      "argumentHintDesc": "Placeholder text for arguments (e.g., \"[file] [focus]\")",
+      "modelOverride": "Model override",
+      "modelOverrideDesc": "Optional model to use for this command",
+      "allowedTools": "Allowed tools",
+      "allowedToolsDesc": "Comma-separated list of tools to allow (empty = all)",
+      "disableModelInvocation": "Disable model invocation",
+      "disableModelInvocationDesc": "Prevent the model from invoking this command itself",
+      "disableUserInvocation": "Disable user invocation",
+      "disableUserInvocationDesc": "Prevent the user from invoking this skill directly",
+      "context": "Context",
+      "contextDesc": "Run in a subagent (fork)",
+      "agent": "Agent",
+      "agentDesc": "Subagent type when context is fork",
+      "promptTemplate": "Prompt template",
+      "promptTemplateDesc": "Use $ARGUMENTS, $1, $2, @file, !`bash`",
+      "promptRequired": "Prompt template is required",
+      "commandExists": "A command named \"/{name}\" already exists",
+      "skillExists": "A skill named \"/{name}\" already exists",
+      "saveFailedCommand": "Failed to save command",
+      "saveFailedSkill": "Failed to save skill",
+      "convertToSkillFailed": "Failed to convert to skill",
+      "deleteFailedCommand": "Failed to delete command",
+      "deleteFailedSkill": "Failed to delete skill",
+      "savedCommand": "Command \"/{name}\" {action}",
+      "savedSkill": "Skill \"/{name}\" {action}",
+      "deletedCommand": "Command \"/{name}\" deleted",
+      "deletedSkill": "Skill \"/{name}\" deleted",
+      "convertedToSkill": "Converted \"/{name}\" to skill",
+      "created": "created",
+      "updated": "updated",
+      "catalogUnavailable": "Claude command catalog is unavailable.",
+      "emptyList": "No commands or skills configured. Click + to create one.",
+      "convertToSkillAria": "Convert to skill",
+      "modalTitleEditCommand": "Edit Slash Command",
+      "modalTitleAddCommand": "Add Slash Command",
+      "modalTitleEditSkill": "Edit Skill",
+      "modalTitleAddSkill": "Add Skill"
+    },
+    "codex": {
+      "providerEnabled": {
+        "name": "Enable Codex provider",
+        "desc": "When enabled, Codex models appear in the model selector for new conversations. Existing Codex sessions are preserved."
+      },
+      "installationMethod": {
+        "name": "Installation method",
+        "desc": "How Claudian should launch Codex on Windows. Native Windows uses a Windows executable path. WSL launches the Linux CLI inside a selected distro."
+      },
+      "installation": {
+        "nativeWindows": "Native Windows",
+        "wsl": "WSL"
+      },
+      "cliPath": {
+        "name": "Codex CLI path ({host})",
+        "descGeneric": "Custom path to the local Codex CLI. Leave empty for auto-detection from PATH.",
+        "descWsl": "Linux-side Codex command or absolute path to run inside WSL. Leave empty for PATH lookup inside the selected distro.",
+        "descWindowsNative": "Custom path to the local Codex CLI. Leave empty for auto-detection from PATH. Use the native Windows executable path, usually `codex.exe`."
+      },
+      "cliPathValidation": {
+        "wslExpectsLinuxPath": "WSL mode expects a Linux command or Linux absolute path, not a Windows executable path."
+      },
+      "wslDistro": {
+        "name": "WSL distro override",
+        "desc": "Optional advanced override. Leave empty to infer the distro from a \\\\wsl$ workspace path when possible, otherwise use the default WSL distro.",
+        "placeholder": "Ubuntu"
+      },
+      "reasoningSummary": {
+        "name": "Reasoning summary",
+        "desc": "Show a summary of the model's reasoning process in the thinking block.",
+        "optionAuto": "Auto",
+        "optionConcise": "Concise",
+        "optionDetailed": "Detailed",
+        "optionOff": "Off"
+      },
+      "skillsSection": {
+        "heading": "Codex Skills",
+        "desc": "Manage vault-level Codex skills stored in .codex/skills/ or .agents/skills/. Home-level skills are excluded here."
+      },
+      "hiddenSkills": {
+        "name": "Hidden Skills",
+        "desc": "Hide specific Codex skills from the dropdown. Enter skill names without the leading $, one per line.",
+        "placeholder": "analyze\nexplain\nfix"
+      },
+      "subagentsSection": {
+        "heading": "Codex Subagents",
+        "desc": "Manage vault-level Codex subagents stored in .codex/agents/. Each TOML file defines one custom agent."
+      },
+      "mcpNotice": {
+        "beforeCmd": "Codex manages MCP servers via its own CLI. Configure with ",
+        "afterCmd": " and they will be available in Claudian. "
+      },
+      "env": {
+        "name": "Codex environment",
+        "desc": "Codex-owned runtime variables only. Use this for OPENAI_* and CODEX_* settings. If Codex auto-detection needs help, add its install directory to shared PATH instead of this provider section.",
+        "placeholder": "OPENAI_API_KEY=your-key\nOPENAI_BASE_URL=https://api.openai.com/v1\nOPENAI_MODEL=gpt-5.4\nCODEX_SANDBOX=workspace-write"
+      }
+    },
+    "pluginsUi": {
+      "listLabel": "Claude Code Plugins",
+      "verbEnable": "Enable",
+      "verbDisable": "Disable",
+      "empty": "No Claude Code plugins found. Enable plugins via the Claude CLI.",
+      "projectSection": "Project plugins",
+      "userSection": "User plugins",
+      "noticeTogglePartialFail": "Plugin toggled, but some tabs failed to restart.",
+      "noticePluginEnabled": "Plugin \"{id}\" enabled",
+      "noticePluginDisabled": "Plugin \"{id}\" disabled",
+      "noticeToggleFailed": "Failed to toggle plugin: {message}",
+      "noticeListRefreshed": "Plugin list refreshed",
+      "noticeRefreshFailed": "Failed to refresh plugins: {message}"
+    },
+    "codexSkills": {
+      "listLabel": "Codex Skills",
+      "empty": "No Codex skills in vault. Click + to create one.",
+      "badgeSkill": "skill",
+      "modalTitleEdit": "Edit Codex Skill",
+      "modalTitleAdd": "Add Codex Skill",
+      "directory": {
+        "name": "Directory",
+        "desc": "Where to store the skill"
+      },
+      "skillName": {
+        "name": "Skill name",
+        "desc": "The name used after $ (e.g., \"analyze\" for $analyze)",
+        "placeholder": "analyze-code"
+      },
+      "description": {
+        "name": "Description",
+        "desc": "Optional description shown in dropdown"
+      },
+      "instructions": {
+        "name": "Instructions",
+        "desc": "The skill instructions (SKILL.md content)",
+        "placeholder": "Analyze the code for...",
+        "required": "Instructions are required"
+      },
+      "saveFailed": "Failed to save Codex skill",
+      "deleted": "Codex skill \"{name}\" deleted",
+      "deleteFailed": "Failed to delete Codex skill",
+      "saved": "Codex skill \"{name}\" {action}",
+      "savedCreated": "created",
+      "savedUpdated": "updated"
+    },
+    "codexSubagents": {
+      "listLabel": "Codex Subagents",
+      "empty": "No Codex subagents in vault. Click + to create one.",
+      "modalTitleEdit": "Edit Codex Subagent",
+      "modalTitleAdd": "Add Codex Subagent",
+      "name": {
+        "name": "Name",
+        "desc": "Agent name Codex uses when spawning (lowercase, hyphens, underscores)",
+        "placeholder": "code_reviewer"
+      },
+      "description": {
+        "name": "Description",
+        "desc": "When Codex should use this agent",
+        "placeholder": "Reviews code for correctness and security",
+        "required": "Description is required"
+      },
+      "advancedOptions": "Advanced options",
+      "model": {
+        "name": "Model",
+        "desc": "Model override (leave empty to inherit)",
+        "placeholder": "gpt-5.4"
+      },
+      "reasoningEffort": {
+        "name": "Reasoning effort",
+        "desc": "Model reasoning effort level",
+        "inherit": "Inherit",
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High",
+        "xhigh": "Extra High"
+      },
+      "sandboxMode": {
+        "name": "Sandbox mode",
+        "desc": "Sandbox restriction for this agent",
+        "inherit": "Inherit",
+        "readOnly": "Read-only",
+        "dangerFullAccess": "Danger full access",
+        "workspaceWrite": "Workspace write"
+      },
+      "nicknameCandidates": {
+        "name": "Nickname candidates",
+        "desc": "Comma-separated display nicknames (e.g., Atlas, Delta, Echo)"
+      },
+      "developerInstructions": {
+        "name": "Developer instructions",
+        "desc": "Core instructions that define the agent's behavior",
+        "placeholder": "Review code like an owner.\nPrioritize correctness, security, and missing test coverage.",
+        "required": "Developer instructions are required"
+      },
+      "saveFailed": "Failed to save subagent: {message}",
+      "deleteConfirm": "Delete subagent \"{name}\"?",
+      "deleted": "Subagent \"{name}\" deleted",
+      "deleteFailed": "Failed to delete subagent",
+      "created": "Subagent \"{name}\" created",
+      "updated": "Subagent \"{name}\" updated",
+      "duplicateName": "A subagent named \"{name}\" already exists",
+      "validation": {
+        "nameRequired": "Subagent name is required",
+        "nameTooLong": "Subagent name must be {max} characters or fewer",
+        "nameInvalidChars": "Subagent name can only contain lowercase letters, numbers, hyphens, and underscores",
+        "nicknameInvalidChars": "Nickname candidates can only contain ASCII letters, numbers, spaces, hyphens, and underscores",
+        "nicknameDuplicate": "Nickname candidates must be unique"
+      }
     }
   },
   "commands": {
     "openChatView": "Open chat view",
-    "toggleChatView": "Toggle chat view"
+    "toggleChatView": "Toggle chat view",
+    "inlineEdit": "Inline edit",
+    "newTab": "New tab",
+    "newSession": "New session (in current tab)",
+    "closeCurrentTab": "Close current tab"
   },
   "ribbon": {
     "toggleClaudian": "Toggle Claudian chat panel"

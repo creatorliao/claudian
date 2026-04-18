@@ -270,7 +270,7 @@ export class ConversationController {
 
     const agentServiceForCheck = this.getAgentService();
     if (agentServiceForCheck && !agentServiceForCheck.getCapabilities().supportsRewind) {
-      new Notice(t('chat.rewind.failed', { error: 'Rewind is not supported by this provider.' }));
+      new Notice(t('chat.rewind.failed', { error: t('chat.rewind.errorProviderNotSupported') }));
       return;
     }
 
@@ -282,7 +282,7 @@ export class ConversationController {
     const msgs = state.messages;
     const userIdx = msgs.findIndex(m => m.id === userMessageId);
     if (userIdx === -1) {
-      new Notice(t('chat.rewind.failed', { error: 'Message not found' }));
+      new Notice(t('chat.rewind.failed', { error: t('chat.rewind.errorMessageNotFound') }));
       return;
     }
     const userMsg = msgs[userIdx];
@@ -312,7 +312,7 @@ export class ConversationController {
 
     const agentService = this.getAgentService();
     if (!agentService) {
-      new Notice(t('chat.rewind.failed', { error: 'Agent service not available' }));
+      new Notice(t('chat.rewind.failed', { error: t('chat.rewind.errorAgentUnavailable') }));
       return;
     }
 
@@ -320,11 +320,11 @@ export class ConversationController {
     try {
       result = await agentService.rewind(userMsg.userMessageId, prevAssistantUuid);
     } catch (e) {
-      new Notice(t('chat.rewind.failed', { error: e instanceof Error ? e.message : 'Unknown error' }));
+      new Notice(t('chat.rewind.failed', { error: e instanceof Error ? e.message : t('common.unknownError') }));
       return;
     }
     if (!result.canRewind) {
-      new Notice(t('chat.rewind.cannot', { error: result.error ?? 'Unknown error' }));
+      new Notice(t('chat.rewind.cannot', { error: result.error ?? t('common.unknownError') }));
       return;
     }
 
@@ -343,7 +343,7 @@ export class ConversationController {
     try {
       await this.save(false, { resumeAtMessageId: prevAssistantUuid });
     } catch (e) {
-      saveError = e instanceof Error ? e.message : 'Failed to save';
+      saveError = e instanceof Error ? e.message : t('chat.rewind.saveFailedGeneric');
     }
 
     if (saveError) {
@@ -539,13 +539,13 @@ export class ConversationController {
     container.empty();
 
     const dropdownHeader = container.createDiv({ cls: 'claudian-history-header' });
-    dropdownHeader.createSpan({ text: 'Conversations' });
+    dropdownHeader.createSpan({ text: t('chat.history.header') });
 
     const list = container.createDiv({ cls: 'claudian-history-list' });
     const allConversations = plugin.getConversationList();
 
     if (allConversations.length === 0) {
-      list.createDiv({ cls: 'claudian-history-empty', text: 'No conversations' });
+      list.createDiv({ cls: 'claudian-history-empty', text: t('chat.history.empty') });
       return;
     }
 
@@ -568,7 +568,7 @@ export class ConversationController {
       titleEl.setAttribute('title', conv.title);
       content.createDiv({
         cls: 'claudian-history-item-date',
-        text: isCurrent ? 'Current session' : this.formatDate(conv.lastResponseAt ?? conv.createdAt),
+        text: isCurrent ? t('chat.history.currentSession') : this.formatDate(conv.lastResponseAt ?? conv.createdAt),
       });
 
       if (!isCurrent) {
@@ -578,14 +578,14 @@ export class ConversationController {
             e.preventDefault();
             await this.runHistoryAction(
               () => options.onOpenConversationInNewTab?.(conv.id, true),
-              'Failed to load conversation',
+              t('chat.history.failedLoadConversation'),
             );
             return;
           }
 
           await this.runHistoryAction(
             () => options.onSelectConversation(conv.id),
-            'Failed to load conversation',
+            t('chat.history.failedLoadConversation'),
           );
         });
 
@@ -596,7 +596,7 @@ export class ConversationController {
             e.stopPropagation();
             await this.runHistoryAction(
               () => options.onOpenConversationInNewTab?.(conv.id, true),
-              'Failed to load conversation',
+              t('chat.history.failedLoadConversation'),
             );
           });
         }
@@ -614,24 +614,24 @@ export class ConversationController {
       if (conv.titleGenerationStatus === 'pending') {
         const loadingEl = actions.createEl('span', { cls: 'claudian-action-btn claudian-action-loading' });
         setIcon(loadingEl, 'loader-2');
-        loadingEl.setAttribute('aria-label', 'Generating title...');
+        loadingEl.setAttribute('aria-label', t('chat.history.generatingTitleAria'));
       } else if (conv.titleGenerationStatus === 'failed') {
         const regenerateBtn = actions.createEl('button', { cls: 'claudian-action-btn' });
         setIcon(regenerateBtn, 'refresh-cw');
-        regenerateBtn.setAttribute('aria-label', 'Regenerate title');
+        regenerateBtn.setAttribute('aria-label', t('chat.history.regenerateTitleAria'));
         regenerateBtn.addEventListener('click', async (e) => {
           e.stopPropagation();
           try {
             await this.regenerateTitle(conv.id);
           } catch {
-            new Notice('Failed to regenerate response');
+            new Notice(t('chat.notices.failedRegenerateResponse'));
           }
         });
       }
 
       const renameBtn = actions.createEl('button', { cls: 'claudian-action-btn' });
       setIcon(renameBtn, 'pencil');
-      renameBtn.setAttribute('aria-label', 'Rename');
+      renameBtn.setAttribute('aria-label', t('chat.history.renameAria'));
       renameBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         this.showRenameInput(item, conv.id, conv.title);
@@ -639,12 +639,12 @@ export class ConversationController {
 
       const deleteBtn = actions.createEl('button', { cls: 'claudian-action-btn claudian-delete-btn' });
       setIcon(deleteBtn, 'trash-2');
-      deleteBtn.setAttribute('aria-label', 'Delete');
+      deleteBtn.setAttribute('aria-label', t('chat.history.deleteAria'));
       deleteBtn.addEventListener('click', async (e) => {
         e.stopPropagation();
         await this.runHistoryAction(
           () => this.deleteHistoryConversation(conv.id, options),
-          'Failed to delete conversation',
+          t('chat.history.failedDeleteConversation'),
         );
       });
     }
@@ -679,44 +679,44 @@ export class ConversationController {
     if (!isCurrent) {
       if (openState === 'closed' && options.onOpenConversationInNewTab) {
         menu.addItem((menuItem) => menuItem
-          .setTitle('Open in New Tab')
+          .setTitle(t('chat.history.openInNewTab'))
           .onClick(() => {
             void this.runHistoryAction(
               () => options.onOpenConversationInNewTab?.(conversationId, true),
-              'Failed to load conversation',
+              t('chat.history.failedLoadConversation'),
             );
           }));
         menu.addItem((menuItem) => menuItem
-          .setTitle('Open in Background Tab')
+          .setTitle(t('chat.history.openInBackgroundTab'))
           .onClick(() => {
             void this.runHistoryAction(
               () => options.onOpenConversationInNewTab?.(conversationId, false),
-              'Failed to load conversation',
+              t('chat.history.failedLoadConversation'),
             );
           }));
       } else if (openState === 'open') {
         menu.addItem((menuItem) => menuItem
-          .setTitle('Switch to Open Session')
+          .setTitle(t('chat.history.switchToOpenSession'))
           .onClick(() => {
             void this.runHistoryAction(
               () => options.onSelectConversation(conversationId),
-              'Failed to load conversation',
+              t('chat.history.failedLoadConversation'),
             );
           }));
       }
     }
 
     menu.addItem((menuItem) => menuItem
-      .setTitle('Rename')
+      .setTitle(t('chat.history.rename'))
       .onClick(() => {
         this.showRenameInput(item, conversationId, title);
       }));
     menu.addItem((menuItem) => menuItem
-      .setTitle('Delete')
+      .setTitle(t('chat.history.delete'))
       .onClick(() => {
         void this.runHistoryAction(
           () => this.deleteHistoryConversation(conversationId, options),
-          'Failed to delete conversation',
+          t('chat.history.failedDeleteConversation'),
         );
       }));
 
@@ -758,7 +758,7 @@ export class ConversationController {
         await this.deps.plugin.renameConversation(convId, newTitle);
         this.updateHistoryDropdown();
       } catch {
-        new Notice('Failed to rename conversation');
+        new Notice(t('chat.notices.failedRenameConversation'));
       }
     };
 

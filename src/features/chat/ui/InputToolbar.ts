@@ -14,6 +14,8 @@ import type {
   ManagedMcpServer,
   UsageInfo,
 } from '../../../core/types';
+import { t } from '../../../i18n/i18n';
+import type { TranslationKey } from '../../../i18n/types';
 import { CHECK_ICON_SVG, MCP_ICON_SVG } from '../../../shared/icons';
 import { filterValidPaths, findConflictingPath, isDuplicatePath, isValidDirectoryPath, validateDirectoryPath } from '../../../utils/externalContext';
 import { expandHomePath, normalizePathForFilesystem } from '../../../utils/path';
@@ -37,6 +39,33 @@ export interface ToolbarCallbacks {
   getEnvironmentVariables?: () => string;
   getUIConfig: () => ProviderChatUIConfig;
   getCapabilities: () => ProviderCapabilities;
+}
+
+/** 将权限拨杆文案映射为当前界面语言（提供商仍返回英文标识值）。 */
+function translatePermissionToggleLabel(label: string): string {
+  if (label === 'Safe') return t('chat.ribbon.permission.safe');
+  if (label === 'YOLO') return t('chat.ribbon.permission.yolo');
+  return label;
+}
+
+/** Plan 模式标签：Claude 为 PLAN，Codex 为 Plan。 */
+function translatePermissionPlanLabel(label: string): string {
+  if (label === 'PLAN') return t('chat.ribbon.permission.plan');
+  if (label === 'Plan') return t('chat.ribbon.permission.planCodex');
+  return label;
+}
+
+/** 推理档位 / 思考预算：按 value 取译名，缺失时回退提供商 label。 */
+function translateReasoningGearLabel(
+  value: string,
+  fallbackLabel: string,
+  mode: 'effort' | 'budget',
+): string {
+  const prefix: 'chat.ribbon.effort.' | 'chat.ribbon.budget.' =
+    mode === 'effort' ? 'chat.ribbon.effort.' : 'chat.ribbon.budget.';
+  const key = `${prefix}${value}` as TranslationKey;
+  const translated = t(key);
+  return translated !== key ? translated : fallbackLabel;
 }
 
 export class ModelSelector {
@@ -80,7 +109,7 @@ export class ModelSelector {
     this.buttonEl.empty();
 
     const labelEl = this.buttonEl.createSpan({ cls: 'claudian-model-label' });
-    labelEl.setText(displayModel?.label || 'Unknown');
+    labelEl.setText(displayModel?.label || t('chat.ribbon.unknownModel'));
   }
 
   renderOptions() {
@@ -157,13 +186,13 @@ export class ThinkingBudgetSelector {
     // Effort selector (for adaptive thinking models)
     this.effortEl = this.container.createDiv({ cls: 'claudian-thinking-effort' });
     const effortLabel = this.effortEl.createSpan({ cls: 'claudian-thinking-label-text' });
-    effortLabel.setText('Effort:');
+    effortLabel.setText(t('chat.ribbon.effortLabel'));
     this.effortGearsEl = this.effortEl.createDiv({ cls: 'claudian-thinking-gears' });
 
     // Legacy budget selector (for custom models)
     this.budgetEl = this.container.createDiv({ cls: 'claudian-thinking-budget' });
     const budgetLabel = this.budgetEl.createSpan({ cls: 'claudian-thinking-label-text' });
-    budgetLabel.setText('Thinking:');
+    budgetLabel.setText(t('chat.ribbon.thinkingLabel'));
     this.budgetGearsEl = this.budgetEl.createDiv({ cls: 'claudian-thinking-gears' });
 
     this.updateDisplay();
@@ -180,13 +209,19 @@ export class ThinkingBudgetSelector {
     const currentInfo = options.find(e => e.value === currentEffort);
 
     const currentEl = this.effortGearsEl.createDiv({ cls: 'claudian-thinking-current' });
-    currentEl.setText(currentInfo?.label || 'High');
+    currentEl.setText(
+      translateReasoningGearLabel(
+        currentEffort,
+        currentInfo?.label || t('chat.ribbon.fallbackHigh'),
+        'effort',
+      ),
+    );
 
     const optionsEl = this.effortGearsEl.createDiv({ cls: 'claudian-thinking-options' });
 
     for (const effort of [...options].reverse()) {
       const gearEl = optionsEl.createDiv({ cls: 'claudian-thinking-gear' });
-      gearEl.setText(effort.label);
+      gearEl.setText(translateReasoningGearLabel(effort.value, effort.label, 'effort'));
 
       if (effort.value === currentEffort) {
         gearEl.addClass('selected');
@@ -211,15 +246,26 @@ export class ThinkingBudgetSelector {
     const currentBudgetInfo = options.find(b => b.value === currentBudget);
 
     const currentEl = this.budgetGearsEl.createDiv({ cls: 'claudian-thinking-current' });
-    currentEl.setText(currentBudgetInfo?.label || 'Off');
+    currentEl.setText(
+      translateReasoningGearLabel(
+        currentBudget,
+        currentBudgetInfo?.label || t('chat.ribbon.fallbackOff'),
+        'budget',
+      ),
+    );
 
     const optionsEl = this.budgetGearsEl.createDiv({ cls: 'claudian-thinking-options' });
 
     for (const budget of [...options].reverse()) {
       const gearEl = optionsEl.createDiv({ cls: 'claudian-thinking-gear' });
-      gearEl.setText(budget.label);
+      gearEl.setText(translateReasoningGearLabel(budget.value, budget.label, 'budget'));
       const tokens = budget.tokens ?? 0;
-      gearEl.setAttribute('title', tokens > 0 ? `${tokens.toLocaleString()} tokens` : 'Disabled');
+      gearEl.setAttribute(
+        'title',
+        tokens > 0
+          ? t('chat.ribbon.tokenCount', { count: tokens.toLocaleString() })
+          : t('chat.ribbon.tokenDisabled'),
+      );
 
       if (budget.value === currentBudget) {
         gearEl.addClass('selected');
@@ -309,7 +355,7 @@ export class PermissionToggle {
     if (canShowPlan && planValue && mode === planValue) {
       this.container.addClass('claudian-permission-toggle--plan');
       this.toggleEl.style.display = 'none';
-      this.labelEl.setText(planLabel);
+      this.labelEl.setText(translatePermissionPlanLabel(planLabel));
       this.labelEl.addClass('plan-active');
     } else {
       this.container.removeClass('claudian-permission-toggle--plan');
@@ -317,10 +363,10 @@ export class PermissionToggle {
       this.labelEl.removeClass('plan-active');
       if (mode === toggleConfig.activeValue) {
         this.toggleEl.addClass('active');
-        this.labelEl.setText(toggleConfig.activeLabel);
+        this.labelEl.setText(translatePermissionToggleLabel(toggleConfig.activeLabel));
       } else {
         this.toggleEl.removeClass('active');
-        this.labelEl.setText(toggleConfig.inactiveLabel);
+        this.labelEl.setText(translatePermissionToggleLabel(toggleConfig.inactiveLabel));
       }
     }
   }
@@ -385,7 +431,7 @@ export class ServiceTierToggle {
       this.buttonEl.removeClass('active');
     }
 
-    this.container.setAttribute('title', 'Toggle on/off fast mode');
+    this.container.setAttribute('title', t('chat.ribbon.serviceTier.fastModeTitle'));
   }
 
   private async toggle() {
@@ -459,7 +505,10 @@ export class ExternalContextSelector {
     // If invalid paths were removed, notify user and save updated list
     if (invalidPaths.length > 0) {
       const pathNames = invalidPaths.map(p => this.shortenPath(p)).join(', ');
-      new Notice(`Removed ${invalidPaths.length} invalid external context path(s): ${pathNames}`, 5000);
+      new Notice(
+        t('chat.ribbon.externalContext.removedInvalid', { count: invalidPaths.length, paths: pathNames }),
+        5000,
+      );
       this.onPersistenceChangeCallback?.([...this.persistentPaths]);
     }
   }
@@ -470,7 +519,10 @@ export class ExternalContextSelector {
     } else {
       // Validate path still exists before persisting
       if (!isValidDirectoryPath(path)) {
-        new Notice(`Cannot persist "${this.shortenPath(path)}" - directory no longer exists`, 4000);
+        new Notice(
+          t('chat.ribbon.externalContext.persistFailed', { path: this.shortenPath(path) }),
+          4000,
+        );
         return;
       }
       this.persistentPaths.add(path);
@@ -523,7 +575,7 @@ export class ExternalContextSelector {
   addExternalContext(pathInput: string): AddExternalContextResult {
     const trimmed = pathInput?.trim();
     if (!trimmed) {
-      return { success: false, error: 'No path provided. Usage: /add-dir /absolute/path' };
+      return { success: false, error: t('chat.ribbon.externalContext.addDirNoPath') };
     }
 
     // Strip surrounding quotes if present (e.g., "/path/with spaces")
@@ -538,7 +590,7 @@ export class ExternalContextSelector {
     const normalizedPath = normalizePathForFilesystem(expandedPath);
 
     if (!path.isAbsolute(normalizedPath)) {
-      return { success: false, error: 'Path must be absolute. Usage: /add-dir /absolute/path' };
+      return { success: false, error: t('chat.ribbon.externalContext.addDirNotAbsolute') };
     }
 
     // Validate path exists and is a directory with specific error messages
@@ -549,7 +601,7 @@ export class ExternalContextSelector {
 
     // Check for duplicate (normalized comparison for cross-platform support)
     if (isDuplicatePath(normalizedPath, this.externalContextPaths)) {
-      return { success: false, error: 'This folder is already added as an external context.' };
+      return { success: false, error: t('chat.ribbon.externalContext.duplicateFolder') };
     }
 
     // Check for nested/overlapping paths
@@ -613,7 +665,7 @@ export class ExternalContextSelector {
       const { remote } = require('electron');
       const result = await remote.dialog.showOpenDialog({
         properties: ['openDirectory'],
-        title: 'Select External Context',
+        title: t('chat.ribbon.externalContext.dialogTitle'),
       });
 
       if (!result.canceled && result.filePaths.length > 0) {
@@ -621,7 +673,7 @@ export class ExternalContextSelector {
 
         // Check for duplicate (normalized comparison for cross-platform support)
         if (isDuplicatePath(selectedPath, this.externalContextPaths)) {
-          new Notice('This folder is already added as an external context.', 3000);
+          new Notice(t('chat.ribbon.externalContext.duplicateFolder'), 3000);
           return;
         }
 
@@ -638,7 +690,7 @@ export class ExternalContextSelector {
         this.renderDropdown();
       }
     } catch {
-      new Notice('Unable to open folder picker.', 5000);
+      new Notice(t('chat.ribbon.externalContext.folderPickerFailed'), 5000);
     }
   }
 
@@ -647,8 +699,8 @@ export class ExternalContextSelector {
     const shortNew = this.shortenPath(newPath);
     const shortExisting = this.shortenPath(conflict.path);
     return conflict.type === 'parent'
-      ? `Cannot add "${shortNew}" - it's inside existing path "${shortExisting}"`
-      : `Cannot add "${shortNew}" - it contains existing path "${shortExisting}"`;
+      ? t('chat.ribbon.externalContext.conflictParent', { newPath: shortNew, existingPath: shortExisting })
+      : t('chat.ribbon.externalContext.conflictChild', { newPath: shortNew, existingPath: shortExisting });
   }
 
   private renderDropdown() {
@@ -658,14 +710,14 @@ export class ExternalContextSelector {
 
     // Header
     const headerEl = this.dropdownEl.createDiv({ cls: 'claudian-external-context-header' });
-    headerEl.setText('External Contexts');
+    headerEl.setText(t('chat.ribbon.externalContext.header'));
 
     // Path list
     const listEl = this.dropdownEl.createDiv({ cls: 'claudian-external-context-list' });
 
     if (this.externalContextPaths.length === 0) {
       const emptyEl = listEl.createDiv({ cls: 'claudian-external-context-empty' });
-      emptyEl.setText('Click folder icon to add');
+      emptyEl.setText(t('chat.ribbon.externalContext.emptyHint'));
     } else {
       for (const pathStr of this.externalContextPaths) {
         const itemEl = listEl.createDiv({ cls: 'claudian-external-context-item' });
@@ -683,7 +735,12 @@ export class ExternalContextSelector {
           lockBtn.addClass('locked');
         }
         setIcon(lockBtn, isPersistent ? 'lock' : 'unlock');
-        lockBtn.setAttribute('title', isPersistent ? 'Persistent (click to make session-only)' : 'Session-only (click to persist)');
+        lockBtn.setAttribute(
+          'title',
+          isPersistent
+            ? t('chat.ribbon.externalContext.lockPersistent')
+            : t('chat.ribbon.externalContext.lockSession'),
+        );
         lockBtn.addEventListener('click', (e) => {
           e.stopPropagation();
           this.togglePersistence(pathStr);
@@ -691,7 +748,7 @@ export class ExternalContextSelector {
 
         const removeBtn = itemEl.createSpan({ cls: 'claudian-external-context-remove' });
         setIcon(removeBtn, 'x');
-        removeBtn.setAttribute('title', 'Remove path');
+        removeBtn.setAttribute('title', t('chat.ribbon.externalContext.removePath'));
         removeBtn.addEventListener('click', (e) => {
           e.stopPropagation();
           this.removePath(pathStr);
@@ -733,7 +790,12 @@ export class ExternalContextSelector {
 
     if (count > 0) {
       this.iconEl.addClass('active');
-      this.iconEl.setAttribute('title', `${count} external context${count > 1 ? 's' : ''} (click to add more)`);
+      this.iconEl.setAttribute(
+        'title',
+        count > 1
+          ? t('chat.ribbon.externalContext.iconTitleWithCount', { count })
+          : t('chat.ribbon.externalContext.iconTitleWithCountOne'),
+      );
 
       // Show badge only when more than 1 path
       if (count > 1) {
@@ -744,7 +806,7 @@ export class ExternalContextSelector {
       }
     } else {
       this.iconEl.removeClass('active');
-      this.iconEl.setAttribute('title', 'Add external contexts (click)');
+      this.iconEl.setAttribute('title', t('chat.ribbon.externalContext.iconTitleEmpty'));
       this.badgeEl.removeClass('visible');
     }
   }
@@ -863,7 +925,7 @@ export class McpServerSelector {
 
     // Header
     const headerEl = this.dropdownEl.createDiv({ cls: 'claudian-mcp-selector-header' });
-    headerEl.setText('MCP Servers');
+    headerEl.setText(t('chat.ribbon.mcpSelector.header'));
 
     // Server list
     const listEl = this.dropdownEl.createDiv({ cls: 'claudian-mcp-selector-list' });
@@ -873,7 +935,11 @@ export class McpServerSelector {
 
     if (servers.length === 0) {
       const emptyEl = listEl.createDiv({ cls: 'claudian-mcp-selector-empty' });
-      emptyEl.setText(allServers.length === 0 ? 'No MCP servers configured' : 'All MCP servers disabled');
+      emptyEl.setText(
+        allServers.length === 0
+          ? t('chat.ribbon.mcpSelector.emptyNone')
+          : t('chat.ribbon.mcpSelector.emptyAllDisabled'),
+      );
       return;
     }
 
@@ -907,7 +973,7 @@ export class McpServerSelector {
     if (server.contextSaving) {
       const csEl = infoEl.createSpan({ cls: 'claudian-mcp-selector-cs-badge' });
       csEl.setText('@');
-      csEl.setAttribute('title', 'Context-saving: can also enable via @' + server.name);
+      csEl.setAttribute('title', t('chat.ribbon.mcpSelector.contextSavingBadge', { name: server.name }));
     }
 
     // Click to toggle (use mousedown for more reliable capture)
@@ -957,7 +1023,12 @@ export class McpServerSelector {
 
     if (count > 0) {
       this.iconEl.addClass('active');
-      this.iconEl.setAttribute('title', `${count} MCP server${count > 1 ? 's' : ''} enabled (click to manage)`);
+      this.iconEl.setAttribute(
+        'title',
+        count > 1
+          ? t('chat.ribbon.mcpSelector.iconTitleEnabled', { count })
+          : t('chat.ribbon.mcpSelector.iconTitleEnabledOne'),
+      );
 
       // Show badge only when more than 1
       if (count > 1) {
@@ -968,7 +1039,7 @@ export class McpServerSelector {
       }
     } else {
       this.iconEl.removeClass('active');
-      this.iconEl.setAttribute('title', 'MCP servers (click to enable)');
+      this.iconEl.setAttribute('title', t('chat.ribbon.mcpSelector.iconTitleIdle'));
       this.badgeEl.removeClass('visible');
     }
   }
@@ -1052,9 +1123,12 @@ export class ContextUsageMeter {
     }
 
     // Set tooltip with detailed usage
-    let tooltip = `${this.formatTokens(usage.contextTokens)} / ${this.formatTokens(usage.contextWindow)}`;
+    let tooltip = t('chat.ribbon.contextMeter.summary', {
+      used: this.formatTokens(usage.contextTokens),
+      total: this.formatTokens(usage.contextWindow),
+    });
     if (usage.percentage > 80) {
-      tooltip += ' (Approaching limit, run `/compact` to continue)';
+      tooltip += t('chat.ribbon.contextMeter.approachingSuffix');
     }
     this.container.setAttribute('data-tooltip', tooltip);
   }
@@ -1083,6 +1157,7 @@ export class SendStopButton {
     this.container = parentEl.createDiv({ cls: 'claudian-send-stop-container' });
     this.btnEl = this.container.createDiv({ cls: 'claudian-send-stop-btn' });
     setIcon(this.btnEl, 'arrow-up');
+    this.btnEl.setAttribute('aria-label', t('chat.ribbon.send'));
     this.btnEl.addEventListener('click', () => {
       if (this.streaming) {
         this.callbacks.onStop();
@@ -1097,9 +1172,11 @@ export class SendStopButton {
     if (streaming) {
       this.btnEl.addClass('claudian-send-stop-btn--streaming');
       setIcon(this.btnEl, 'square');
+      this.btnEl.setAttribute('aria-label', t('chat.ribbon.stop'));
     } else {
       this.btnEl.removeClass('claudian-send-stop-btn--streaming');
       setIcon(this.btnEl, 'arrow-up');
+      this.btnEl.setAttribute('aria-label', t('chat.ribbon.send'));
     }
   }
 }

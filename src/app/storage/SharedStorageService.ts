@@ -5,6 +5,7 @@ import { SESSIONS_PATH, SessionStorage } from '../../core/bootstrap/SessionStora
 import type { SharedAppStorage } from '../../core/bootstrap/storage';
 import { CLAUDIAN_STORAGE_PATH } from '../../core/bootstrap/StoragePaths';
 import { VaultFileAdapter } from '../../core/storage/VaultFileAdapter';
+import { t } from '../../i18n/i18n';
 import { ClaudianSettingsStorage, type StoredClaudianSettings } from '../settings/ClaudianSettingsStorage';
 
 export class SharedStorageService implements SharedAppStorage {
@@ -37,7 +38,7 @@ export class SharedStorageService implements SharedAppStorage {
       data.tabManagerState = state;
       await this.plugin.saveData(data);
     } catch {
-      new Notice('Failed to save tab layout');
+      new Notice(t('chat.notices.failedSaveTabLayout'));
     }
   }
 

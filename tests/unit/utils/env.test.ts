@@ -1138,7 +1138,12 @@ describe('Obsidian CLI path integration', () => {
   const originalEnv = { ...process.env };
 
   afterEach(() => {
-    Object.defineProperty(process, 'platform', { value: originalPlatform });
+    Object.defineProperty(process, 'platform', {
+      value: originalPlatform,
+      writable: true,
+      configurable: true,
+      enumerable: true,
+    });
     Object.defineProperty(process, 'execPath', { value: originalExecPath });
     Object.keys(process.env).forEach(key => delete process.env[key]);
     Object.assign(process.env, originalEnv);
@@ -1147,7 +1152,13 @@ describe('Obsidian CLI path integration', () => {
 
   function loadWithPlatform(platform: NodeJS.Platform, execPath: string): typeof env {
     jest.resetModules();
-    Object.defineProperty(process, 'platform', { value: platform, writable: true });
+    // 须 configurable，否则在部分 Node 版本上无法覆盖只读的 process.platform，导致仍按 win32 走 PATH/额外目录逻辑
+    Object.defineProperty(process, 'platform', {
+      value: platform,
+      writable: true,
+      configurable: true,
+      enumerable: true,
+    });
     Object.defineProperty(process, 'execPath', { value: execPath, configurable: true });
     // Dynamic require needed to re-evaluate module with mocked platform/execPath
     // eslint-disable-next-line @typescript-eslint/no-require-imports

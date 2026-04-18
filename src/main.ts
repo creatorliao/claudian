@@ -89,16 +89,14 @@ export default class ClaudianPlugin extends Plugin {
 
     this.addCommand({
       id: "inline-edit",
-      name: "Inline edit",
+      name: t("commands.inlineEdit"),
       editorCallback: async (editor: Editor, ctx) => {
         const view =
           ctx instanceof MarkdownView
             ? ctx
             : this.app.workspace.getActiveViewOfType(MarkdownView);
         if (!view) {
-          new Notice(
-            "Inline edit unavailable: could not access the active markdown view."
-          );
+          new Notice(t("chat.notices.inlineEditNoMarkdownView"));
           return;
         }
 
@@ -135,7 +133,9 @@ export default class ClaudianPlugin extends Plugin {
 
         if (result.decision === "accept" && result.editedText !== undefined) {
           new Notice(
-            editContext.mode === "cursor" ? "Inserted" : "Edit applied"
+            editContext.mode === "cursor"
+              ? t("chat.notices.inlineEditInserted")
+              : t("chat.notices.inlineEditApplied"),
           );
         }
       },
@@ -143,7 +143,7 @@ export default class ClaudianPlugin extends Plugin {
 
     this.addCommand({
       id: "new-tab",
-      name: "New tab",
+      name: t("commands.newTab"),
       checkCallback: (checking: boolean) => {
         if (!this.canCreateNewTab()) return false;
 
@@ -156,7 +156,7 @@ export default class ClaudianPlugin extends Plugin {
 
     this.addCommand({
       id: "new-session",
-      name: "New session (in current tab)",
+      name: t("commands.newSession"),
       checkCallback: (checking: boolean) => {
         const leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE_CLAUDIAN)[0];
         if (!leaf) return false;
@@ -179,7 +179,7 @@ export default class ClaudianPlugin extends Plugin {
 
     this.addCommand({
       id: "close-current-tab",
-      name: "Close current tab",
+      name: t("commands.closeCurrentTab"),
       checkCallback: (checking: boolean) => {
         const leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE_CLAUDIAN)[0];
         if (!leaf) return false;
@@ -564,9 +564,7 @@ export default class ClaudianPlugin extends Plugin {
         }
       }
       if (failedTabs > 0) {
-        new Notice(
-          `Environment changes applied, but ${failedTabs} affected tab(s) failed to restart.`
-        );
+        new Notice(t("chat.notices.envPartialTabRestart", { count: String(failedTabs) }));
       }
     }
 
@@ -574,10 +572,9 @@ export default class ClaudianPlugin extends Plugin {
       openView.refreshModelSelector();
     }
 
-    const noticeText = changed
-      ? "Environment variables applied. Sessions will be rebuilt on next message."
-      : "Environment variables applied.";
-    new Notice(noticeText);
+    new Notice(
+      changed ? t("chat.notices.envAppliedRebuild") : t("chat.notices.envApplied"),
+    );
   }
 
   /** Returns the runtime environment variables (fixed at plugin load). */

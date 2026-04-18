@@ -10,6 +10,7 @@ import type {
   ChatRuntimeQueryOptions,
 } from '../../../core/runtime/types';
 import type { ClaudianSettings, PermissionMode } from '../../../core/types/settings';
+import { t } from '../../../i18n/i18n';
 import {
   isAdaptiveThinkingModel,
   normalizeEffortLevel,
@@ -74,7 +75,7 @@ export async function applyClaudeDynamicUpdates(
         config.model = selectedModel;
       });
     } catch {
-      deps.notifyFailure('Failed to update model');
+      deps.notifyFailure(t('chat.notices.dynamicUpdateModelFailed'));
     }
   }
 
@@ -93,7 +94,7 @@ export async function applyClaudeDynamicUpdates(
           config.thinkingTokens = thinkingTokens;
         });
       } catch {
-        deps.notifyFailure('Failed to update thinking budget');
+        deps.notifyFailure(t('chat.notices.dynamicUpdateThinkingFailed'));
       }
     }
   }
@@ -114,7 +115,7 @@ export async function applyClaudeDynamicUpdates(
           config.effortLevel = effortLevel;
         });
       } catch {
-        deps.notifyFailure('Failed to update effort level');
+        deps.notifyFailure(t('chat.notices.dynamicUpdateEffortFailed'));
       }
     }
   }
@@ -131,7 +132,7 @@ export async function applyClaudeDynamicUpdates(
           config.sdkPermissionMode = sdkMode;
         });
       } catch {
-        deps.notifyFailure('Failed to update permission mode');
+        deps.notifyFailure(t('chat.notices.dynamicUpdatePermissionFailed'));
       }
     } else {
       deps.mutateCurrentConfig(config => {
@@ -159,7 +160,7 @@ export async function applyClaudeDynamicUpdates(
         config.mcpServersKey = mcpServersKey;
       });
     } catch {
-      deps.notifyFailure('Failed to update MCP servers');
+      deps.notifyFailure(t('chat.notices.dynamicUpdateMcpFailed'));
     }
   }
 

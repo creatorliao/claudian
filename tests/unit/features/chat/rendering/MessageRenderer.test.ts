@@ -1072,7 +1072,7 @@ describe('MessageRenderer', () => {
       await clickHandlers![0]({ stopPropagation: jest.fn() });
 
       expect(writeTextMock).toHaveBeenCalledWith('markdown content');
-      expect(copyBtn.textContent).toBe('copied!');
+      expect(copyBtn.textContent).toBe('Copied!');
       expect(copyBtn.classList.contains('copied')).toBe(true);
     });
 
@@ -1096,7 +1096,7 @@ describe('MessageRenderer', () => {
       await clickHandlers![0]({ stopPropagation: jest.fn() });
 
       // Should not show feedback on error
-      expect(copyBtn.textContent).not.toBe('copied!');
+      expect(copyBtn.textContent).not.toBe('Copied!');
     });
   });
 
@@ -1480,14 +1480,14 @@ describe('MessageRenderer', () => {
 
       // First click
       await clickHandlers![0]({ stopPropagation: jest.fn() });
-      expect(copyBtn.textContent).toBe('copied!');
+      expect(copyBtn.textContent).toBe('Copied!');
 
       // Second rapid click before timeout expires
       await clickHandlers![0]({ stopPropagation: jest.fn() });
 
       // clearTimeout should have been called for the first pending timeout
       expect(clearTimeoutSpy).toHaveBeenCalled();
-      expect(copyBtn.textContent).toBe('copied!');
+      expect(copyBtn.textContent).toBe('Copied!');
 
       clearTimeoutSpy.mockRestore();
     });
@@ -1504,7 +1504,7 @@ describe('MessageRenderer', () => {
 
       // Click to copy
       await clickHandlers![0]({ stopPropagation: jest.fn() });
-      expect(copyBtn.textContent).toBe('copied!');
+      expect(copyBtn.textContent).toBe('Copied!');
       expect(copyBtn.classList.contains('copied')).toBe(true);
 
       // Advance timers by 1500ms (the feedback duration)

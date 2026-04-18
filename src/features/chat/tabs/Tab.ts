@@ -807,7 +807,7 @@ function initializeInputToolbar(
       const boundProvider = tab.providerId;
       const modelProvider = getProviderForModel(model, plugin.settings as unknown as Record<string, unknown>);
       if (modelProvider !== boundProvider) {
-        new Notice('Cannot switch provider on a bound session. Start a new tab instead.');
+        new Notice(t('chat.notices.cannotSwitchProviderBound'));
         tab.ui.modelSelector?.updateDisplay();
         return;
       }
@@ -1037,7 +1037,7 @@ async function handleForkRequest(
   const { state } = tab;
 
   if (!getTabCapabilities(tab, plugin).supportsFork) {
-    new Notice('Fork is not supported by this provider.');
+    new Notice(t('chat.notices.forkNotSupportedProvider'));
     return;
   }
 
@@ -1087,7 +1087,7 @@ async function handleForkAll(
   const { state } = tab;
 
   if (!getTabCapabilities(tab, plugin).supportsFork) {
-    new Notice('Fork is not supported by this provider.');
+    new Notice(t('chat.notices.forkNotSupportedProvider'));
     return;
   }
 
@@ -1354,7 +1354,9 @@ export function initializeTabControllers(
         applyProviderUIGating(tab, plugin);
         return true;
       } catch (error) {
-        new Notice(error instanceof Error ? error.message : 'Failed to initialize chat service');
+        new Notice(
+          error instanceof Error ? error.message : t('chat.notices.chatServiceInitFailed'),
+        );
         return false;
       }
     },

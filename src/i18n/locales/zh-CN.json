@@ -19,7 +19,9 @@
     "disabled": "已禁用",
     "platform": "平台",
     "refresh": "刷新",
-    "rewind": "回退"
+    "rewind": "回退",
+    "learnMore": "了解更多",
+    "unknownError": "未知错误"
   },
   "chat": {
     "rewind": {
@@ -31,7 +33,12 @@
       "failed": "回退失败：{error}",
       "cannot": "无法回退：{error}",
       "unavailableStreaming": "流式响应中无法回退",
-      "unavailableNoUuid": "无法回退：缺少消息标识符"
+      "unavailableNoUuid": "无法回退：缺少消息标识符",
+      "errorProviderNotSupported": "当前提供商不支持回退。",
+      "errorMessageNotFound": "未找到消息",
+      "errorAgentUnavailable": "智能体服务不可用",
+      "errorUnknown": "未知错误",
+      "saveFailedGeneric": "保存失败"
     },
     "fork": {
       "ariaLabel": "分叉对话",
@@ -69,6 +76,149 @@
     },
     "tabs": {
       "maxAllowedNotice": "最多允许 {maxTabs} 个标签页"
+    },
+    "history": {
+      "header": "对话",
+      "empty": "暂无对话",
+      "currentSession": "当前会话",
+      "openInNewTab": "在新标签页打开",
+      "openInBackgroundTab": "在后台标签页打开",
+      "switchToOpenSession": "切换到已打开的会话",
+      "rename": "重命名",
+      "delete": "删除",
+      "generatingTitleAria": "正在生成标题…",
+      "regenerateTitleAria": "重新生成标题",
+      "renameAria": "重命名",
+      "deleteAria": "删除",
+      "failedLoadConversation": "加载对话失败",
+      "failedDeleteConversation": "删除对话失败"
+    },
+    "image": {
+      "exceedsLimit": "图片超过 {limit} 限制。",
+      "unsupportedType": "不支持的图片类型。",
+      "attachFailed": "附加图片失败。",
+      "suffixFileNotFound": "（文件不存在）",
+      "suffixPermissionDenied": "（权限被拒绝）",
+      "removeAria": "移除图片",
+      "dropHere": "将图片拖放到此处"
+    },
+    "accessibility": {
+      "statusWithValue": "状态：{status}"
+    },
+    "instructionModal": {
+      "title": "添加自定义指令",
+      "yourInput": "你的输入：",
+      "processing": "正在处理你的指令…",
+      "yourResponse": "你的回复：",
+      "responsePlaceholder": "请补充更多细节…",
+      "refinedSnippet": "精炼片段：",
+      "processingShort": "处理中…",
+      "submit": "提交",
+      "edit": "编辑",
+      "accept": "接受",
+      "preview": "预览",
+      "ariaSubmitResponse": "提交回复",
+      "ariaEditInstruction": "编辑指令",
+      "ariaAcceptInstruction": "接受指令"
+    },
+    "askQuestion": {
+      "defaultTitle": "问题",
+      "hintsNavigate": "Enter 选择 · Tab/方向键移动 · Esc 取消",
+      "hintsImmediate": "Enter 选择 · 方向键移动 · Esc 取消",
+      "hintsPlanNav": "方向键移动 · Enter 选择 · Esc 取消",
+      "submitTab": "提交",
+      "reviewTitle": "检查你的答案",
+      "readyPrompt": "确定提交这些答案？",
+      "submitAnswers": "提交答案",
+      "notAnswered": "未作答",
+      "placeholderSecret": "输入密钥。",
+      "placeholderCustom": "输入内容。"
+    },
+    "plan": {
+      "complete": "计划已完成",
+      "implement": "执行",
+      "feedbackRevisePlaceholder": "输入反馈以修订计划…",
+      "exitFeedbackPlaceholder": "输入反馈以继续规划…",
+      "permissionsLabel": "请求的权限：",
+      "approveNewSession": "批准（新会话）",
+      "approveCurrentSession": "批准（当前会话）",
+      "readError": "无法读取计划文件：{error}。「批准（新会话）」将不包含计划详情。",
+      "errorPathOutside": "路径不在允许的计划目录内",
+      "implementPlanBlock": "执行以下计划：\n\n{content}",
+      "implementPlanFallback": "执行已批准的计划。"
+    },
+    "compact": {
+      "conversationCompacted": "对话已压缩"
+    },
+    "resume": {
+      "header": "恢复对话",
+      "empty": "暂无对话"
+    },
+    "slashCommands": {
+      "noMatching": "没有匹配的命令"
+    },
+    "message": {
+      "renderFailed": "无法渲染消息内容。",
+      "copied": "已复制！"
+    },
+    "thinking": {
+      "elapsed": "思考中 {seconds} 秒…",
+      "doneSeconds": "思考了 {seconds} 秒",
+      "storedLabel": "思考",
+      "ariaHeader": "扩展思考 — 点击展开"
+    },
+    "writeEdit": {
+      "writing": "写入中…",
+      "done": "完成",
+      "errorFallback": "错误",
+      "headerAria": "{tool}：{path} — 点击展开",
+      "errorCaps": "错误"
+    },
+    "diff": {
+      "noChanges": "无变更",
+      "moreLinesOmitted": "… 另有 {count} 行"
+    },
+    "tool": {
+      "openPage": "打开页面",
+      "urlUnavailable": "URL 不可用",
+      "findInPage": "在页面中查找",
+      "pattern": "模式：{pattern}",
+      "altQuery": "备用查询：{query}",
+      "moreQueries": "… 另有 {count} 条查询",
+      "query": "查询：{query}",
+      "searchWeb": "网页搜索",
+      "noResult": "无结果",
+      "noMatches": "无匹配项",
+      "moreLines": "… 另有 {count} 行",
+      "moreChars": "… 另有 {count} 个字符",
+      "fileDeleted": "文件已删除",
+      "noTextualDiff": "无可显示的文本差异",
+      "tasksUpdated": "任务已更新",
+      "waitingForAnswer": "等待回答…",
+      "noOptionsRecorded": "未记录选项",
+      "todoStatusCompleted": "状态：已完成",
+      "todoStatusInProgress": "状态：进行中"
+    },
+    "subagent": {
+      "runningShort": "运行中…",
+      "initializing": "初始化中",
+      "runningInBackground": "后台运行中",
+      "orphaned": "已孤立",
+      "error": "错误",
+      "completedShort": "已完成",
+      "conversationEndedBeforeTask": "对话在任务完成前已结束",
+      "ariaBackgroundInitializing": "后台任务：{description} — 初始化中 — 点击展开",
+      "ariaBackgroundHeader": "后台任务：{description} — {status} — 点击展开",
+      "ariaTask": "子代理任务：{description} — {count} 次工具调用 — 状态：{status} — 点击展开",
+      "defaultTaskTitle": "子代理任务",
+      "noPromptProvided": "未提供提示",
+      "toolUses": "{count} 次工具调用",
+      "sectionPrompt": "提示",
+      "sectionResult": "结果",
+      "backgroundTaskDefault": "后台任务"
+    },
+    "approval": {
+      "agentLabel": "智能体：{id}"
     },
     "welcome": {
       "happySunday": "周日愉快",
@@ -116,6 +266,123 @@
       "whatsNewNamed": "{name}，有什么新鲜事？",
       "nameReturns": "{name} 回来了！",
       "youAreAbsolutelyRight": "你说得完全对！"
+    },
+    "ribbon": {
+      "effortLabel": "推理档位：",
+      "thinkingLabel": "思考预算：",
+      "fallbackHigh": "高",
+      "fallbackOff": "关闭",
+      "unknownModel": "未知",
+      "tokenCount": "{count} 个 token",
+      "tokenDisabled": "已关闭",
+      "permission": {
+        "safe": "安全",
+        "yolo": "YOLO",
+        "plan": "计划",
+        "planCodex": "计划"
+      },
+      "serviceTier": {
+        "fastModeTitle": "切换快速模式开/关"
+      },
+      "send": "发送消息",
+      "stop": "停止生成",
+      "effort": {
+        "low": "低",
+        "medium": "中",
+        "high": "高",
+        "xhigh": "极高",
+        "max": "最大"
+      },
+      "budget": {
+        "off": "关闭",
+        "low": "低",
+        "medium": "中",
+        "high": "高",
+        "xhigh": "超高"
+      },
+      "contextMeter": {
+        "summary": "{used} / {total}",
+        "approachingSuffix": "（接近上限，可运行 `/compact` 继续）"
+      },
+      "externalContext": {
+        "dialogTitle": "选择外部上下文文件夹",
+        "duplicateFolder": "该文件夹已添加为外部上下文。",
+        "folderPickerFailed": "无法打开文件夹选择器。",
+        "removedInvalid": "已移除 {count} 个无效的外部上下文路径：{paths}",
+        "persistFailed": "无法持久化「{path}」——目录已不存在",
+        "conflictParent": "无法添加「{newPath}」——它位于已有路径「{existingPath}」之内",
+        "conflictChild": "无法添加「{newPath}」——它包含已有路径「{existingPath}」",
+        "header": "外部上下文",
+        "emptyHint": "点击文件夹图标添加",
+        "lockPersistent": "持久（点击改为仅本会话）",
+        "lockSession": "仅本会话（点击改为持久）",
+        "removePath": "移除路径",
+        "iconTitleWithCount": "{count} 个外部上下文（点击继续添加）",
+        "iconTitleWithCountOne": "1 个外部上下文（点击继续添加）",
+        "iconTitleEmpty": "添加外部上下文（点击）",
+        "addDirNoPath": "未提供路径。用法：/add-dir /绝对路径",
+        "addDirNotAbsolute": "路径必须为绝对路径。用法：/add-dir /绝对路径"
+      },
+      "mcpSelector": {
+        "header": "MCP 服务器",
+        "emptyNone": "尚未配置 MCP 服务器",
+        "emptyAllDisabled": "所有 MCP 服务器已禁用",
+        "contextSavingBadge": "上下文节省：也可通过 @{name} 启用",
+        "iconTitleEnabled": "已启用 {count} 个 MCP 服务器（点击管理）",
+        "iconTitleEnabledOne": "已启用 1 个 MCP 服务器（点击管理）",
+        "iconTitleIdle": "MCP 服务器（点击启用）"
+      }
+    },
+    "notices": {
+      "cannotSwitchProviderBound": "已绑定会话无法切换提供商，请新开标签页。",
+      "forkNotSupportedProvider": "当前提供商不支持分叉会话。",
+      "imageAttachmentsNotSupported": "当前提供商不支持图片附件。",
+      "failedSaveTabLayout": "保存标签布局失败",
+      "agentInitFailed": "初始化智能体服务失败，请重试。",
+      "agentServiceUnavailable": "智能体服务不可用，请重新加载插件。",
+      "steerCodexQueuedFailed": "调整队列中的 Codex 消息失败，消息仍保留。",
+      "instructionAddedToSystemPrompt": "已写入自定义系统提示词",
+      "noInstructionReceived": "未收到指令内容",
+      "errorWithDetail": "错误：{detail}",
+      "unexpectedApprovalSelection": "意外的审批选项：「{value}」",
+      "slashNotSupportedByProvider": "当前提供商不支持 /{name}。",
+      "externalContextSelectorUnavailable": "外部上下文选择器不可用。",
+      "externalContextAdded": "已添加外部上下文：{path}",
+      "forkNotAvailable": "无法分叉。",
+      "unknownSlashAction": "未知命令：{action}",
+      "noConversationsToResume": "没有可恢复的对话",
+      "failedOpenConversation": "打开对话失败：{message}",
+      "failedRegenerateResponse": "重新生成回复失败",
+      "failedRenameConversation": "重命名对话失败",
+      "backgroundTaskRenderFailed": "后台任务已完成，但无法渲染结果。",
+      "inlineEditNoEditor": "内联编辑不可用：无法访问当前编辑器，请尝试重新打开笔记。",
+      "inlineEditVaultLoadFailed": "加载仓库文件失败，@-提及可能不可用。",
+      "inlineEditAttachInvalidPath": "附加文件失败：路径无效",
+      "couldNotOpenFile": "无法打开文件：{path}",
+      "failedOpenFile": "打开文件失败：{message}",
+      "bangBashCommandFailed": "命令执行失败：{message}",
+      "mcpVerificationFailed": "验证失败",
+      "pluginMalformedEntry": "Claudian：插件「{id}」在 installed_plugins.json 中格式错误（期望数组，实际为 {type}）",
+      "envSnippetInsertFailed": "插入片段失败",
+      "envSnippetDeleteFailed": "删除片段失败",
+      "envSnippetSaved": "已保存环境片段「{name}」",
+      "envSnippetUpdated": "已更新环境片段「{name}」",
+      "envSnippetDeleted": "已删除环境片段「{name}」",
+      "subagentLoadFailed": "加载子代理「{name}」失败：{message}",
+      "failedProcessResponse": "处理回复失败",
+      "failedRefineInstruction": "精炼指令失败",
+      "chatServiceInitFailed": "初始化聊天服务失败",
+      "inlineEditNoMarkdownView": "内联编辑不可用：无法访问当前 Markdown 视图。",
+      "inlineEditInserted": "已插入",
+      "inlineEditApplied": "已应用编辑",
+      "envPartialTabRestart": "环境已更新，但有 {count} 个受影响标签页未能重启。",
+      "envAppliedRebuild": "环境变量已应用。下次发送消息时将重建会话。",
+      "envApplied": "环境变量已应用。",
+      "dynamicUpdateModelFailed": "更新模型失败",
+      "dynamicUpdateThinkingFailed": "更新推理预算失败",
+      "dynamicUpdateEffortFailed": "更新 Effort 档位失败",
+      "dynamicUpdatePermissionFailed": "更新权限模式失败",
+      "dynamicUpdateMcpFailed": "更新 MCP 服务器失败"
     }
   },
   "settings": {
@@ -262,12 +529,20 @@
       "desc": "加载 ~/.claude/settings.json。启用后，用户的 Claude Code 权限规则可能绕过安全模式。"
     },
     "claudeSafeMode": {
-      "name": "Safe mode",
-      "desc": "Permission mode used when the Safe toggle is active."
+      "name": "安全模式",
+      "desc": "开启 Ribbon 上 Safe 开关时使用的权限模式。",
+      "optionAcceptEdits": "接受编辑",
+      "optionDefault": "默认"
     },
     "codexSafeMode": {
-      "name": "Safe mode",
-      "desc": "Sandbox mode used when the Safe toggle is active."
+      "name": "安全模式",
+      "desc": "开启 Ribbon 上 Safe 开关时使用的沙箱模式。",
+      "optionWorkspaceWrite": "可写工作区",
+      "optionReadOnly": "只读"
+    },
+    "claudeEnv": {
+      "desc": "仅填写 Claude 运行时变量。用于 ANTHROPIC_* 及 Claude 相关开关。",
+      "placeholder": "ANTHROPIC_API_KEY=your-key\nANTHROPIC_BASE_URL=https://api.example.com\nANTHROPIC_MODEL=custom-model\nCLAUDE_CODE_USE_BEDROCK=1"
     },
     "environment": "环境",
     "customVariables": {
@@ -279,6 +554,10 @@
       "addBtn": "添加片段",
       "noSnippets": "尚无保存的环境变量片段。点击 + 保存当前配置。",
       "nameRequired": "请输入片段名称",
+      "confirmDelete": "删除环境片段「{name}」？",
+      "insertAria": "插入片段",
+      "editAria": "编辑片段",
+      "deleteAria": "删除片段",
       "modal": {
         "titleEdit": "编辑片段",
         "titleSave": "保存片段",
@@ -307,8 +586,8 @@
       "desc": "在模型选择器中显示 Sonnet 1M。Max、Team 和 Enterprise 计划需要额外用量。API 和 Pro 用户需要额外用量。"
     },
     "customModels": {
-      "name": "Custom models",
-      "desc": "Append additional Claude model IDs to the picker, one per line. Environment model overrides still replace the picker.",
+      "name": "自定义模型",
+      "desc": "每行追加一个 Claude 模型 ID 到选择器。环境变量中的模型覆盖仍会替换选择器列表。",
       "placeholder": "claude-opus-4-6\nclaude-opus-4-6[1m]\nclaude-opus-4-5-20251101"
     },
     "enableChrome": {
@@ -354,11 +633,334 @@
     "language": {
       "name": "语言",
       "desc": "更改插件界面的显示语言"
+    },
+    "envReview": {
+      "warning": "请核对以下环境变量的归属：{keys}"
+    },
+    "mcpServerModal": {
+      "titleEdit": "编辑 MCP 服务器",
+      "titleAdd": "添加 MCP 服务器",
+      "serverName": {
+        "name": "服务器名称",
+        "desc": "该服务器的唯一标识",
+        "placeholder": "my-mcp-server"
+      },
+      "serverType": {
+        "name": "类型",
+        "desc": "连接类型",
+        "stdio": "stdio（本地命令）",
+        "sse": "sse（服务器推送事件）",
+        "http": "http（HTTP 端点）"
+      },
+      "enabled": {
+        "name": "启用",
+        "desc": "是否激活该服务器"
+      },
+      "contextSaving": {
+        "name": "上下文节省模式",
+        "desc": "除非 @ 提及，否则对智能体隐藏工具（节省上下文窗口）"
+      },
+      "command": {
+        "name": "命令",
+        "desc": "完整命令及参数",
+        "placeholder": "docker exec -i mcp-server python -m src.server"
+      },
+      "envVars": {
+        "name": "环境变量",
+        "desc": "每行一个 KEY=VALUE（可选）",
+        "placeholder": "API_KEY=your-key"
+      },
+      "url": {
+        "name": "URL",
+        "descSse": "SSE 端点 URL",
+        "descHttp": "HTTP 端点 URL",
+        "placeholder": "http://localhost:3000/sse"
+      },
+      "headers": {
+        "name": "请求头",
+        "desc": "HTTP 头，每行 KEY=VALUE",
+        "placeholder": "Authorization=Bearer token\nContent-Type=application/json"
+      },
+      "btnAdd": "添加",
+      "btnUpdate": "更新",
+      "validation": {
+        "nameRequired": "请输入服务器名称",
+        "nameInvalid": "名称只能包含字母、数字、点、连字符和下划线",
+        "commandRequired": "请输入命令",
+        "urlRequired": "请输入 URL"
+      }
+    },
+    "mcpTest": {
+      "titleVerify": "验证：{name}",
+      "connecting": "正在连接 MCP 服务器…",
+      "connectedOk": "连接成功",
+      "connectedOkTo": "已成功连接至 {server}",
+      "connectedOkToVersion": "已成功连接至 {server} v{version}",
+      "connectionFailed": "连接失败",
+      "availableTools": "可用工具（{count}）",
+      "noToolsHint": "暂无工具信息，首次在聊天中使用时会加载。",
+      "close": "关闭",
+      "enableAll": "全部启用",
+      "disableAll": "全部禁用",
+      "toggleErrorGeneric": "更新工具设置失败",
+      "toggleErrorPermission": "权限被拒绝，请检查 .claude/ 目录权限。",
+      "toggleErrorDiskFull": "磁盘已满，请释放空间后重试。",
+      "toggleErrorJson": "配置文件损坏，请检查 .claude/mcp.json"
+    },
+    "mcpList": {
+      "headerLabel": "MCP 服务器",
+      "addStdio": "stdio（本地命令）",
+      "addRemote": "http / sse（远程）",
+      "importClipboard": "从剪贴板导入",
+      "empty": "尚未配置 MCP 服务器。点击「添加」进行配置。",
+      "contextSavingTitle": "上下文节省：使用 @{name} 提及以启用",
+      "verifyAria": "验证（查看工具）",
+      "enableAria": "启用",
+      "disableAria": "禁用",
+      "editAria": "编辑",
+      "deleteAria": "删除",
+      "addAria": "添加",
+      "noticeReloadFailed": "已保存设置但重载失败，更改将在下次会话生效。",
+      "clipboardEmpty": "剪贴板为空",
+      "clipboardInvalid": "剪贴板中未找到有效的 MCP 配置",
+      "clipboardNamePrompt": "请输入服务器名称",
+      "clipboardReadFailed": "读取剪贴板失败",
+      "serverExists": "服务器「{name}」已存在",
+      "serverUpdated": "已更新 MCP 服务器「{name}」",
+      "serverAdded": "已添加 MCP 服务器「{name}」",
+      "importNone": "没有导入新的 MCP 服务器",
+      "imported": "已导入 {count} 个 MCP 服务器",
+      "importedWithSkipped": "已导入 {count} 个 MCP 服务器（跳过 {skipped} 个）",
+      "serverToggled": "MCP 服务器「{name}」已{state}",
+      "serverEnabled": "启用",
+      "serverDisabled": "禁用",
+      "serverDeleted": "已删除 MCP 服务器「{name}」",
+      "deleteConfirm": "删除 MCP 服务器「{name}」？"
+    },
+    "slashCommandModal": {
+      "typeName": "类型",
+      "typeDesc": "命令或技能",
+      "typeCommand": "命令",
+      "typeSkill": "技能",
+      "commandName": "命令名称",
+      "commandNameDesc": "在 / 后使用的名称（例如 /review 填 review）",
+      "description": "描述",
+      "descriptionDesc": "下拉中显示的描述（可选）",
+      "argumentHint": "参数提示",
+      "argumentHintDesc": "参数的占位提示（例如 \"[file] [focus]\"）",
+      "modelOverride": "模型覆盖",
+      "modelOverrideDesc": "该命令可选使用的模型",
+      "allowedTools": "允许的工具",
+      "allowedToolsDesc": "允许的工具列表，逗号分隔（留空表示全部）",
+      "disableModelInvocation": "禁止模型调用",
+      "disableModelInvocationDesc": "阻止模型自行调用此命令",
+      "disableUserInvocation": "禁止用户调用",
+      "disableUserInvocationDesc": "阻止用户直接调用此技能",
+      "context": "上下文",
+      "contextDesc": "在子代理中运行（分叉）",
+      "agent": "代理",
+      "agentDesc": "上下文为分叉时使用的子代理类型",
+      "promptTemplate": "提示模板",
+      "promptTemplateDesc": "可使用 $ARGUMENTS、$1、$2、@file、!`bash`",
+      "promptRequired": "提示模板为必填项",
+      "commandExists": "已存在名为「/{name}」的命令",
+      "skillExists": "已存在名为「/{name}」的技能",
+      "saveFailedCommand": "保存命令失败",
+      "saveFailedSkill": "保存技能失败",
+      "convertToSkillFailed": "转换为技能失败",
+      "deleteFailedCommand": "删除命令失败",
+      "deleteFailedSkill": "删除技能失败",
+      "savedCommand": "命令「/{name}」已{action}",
+      "savedSkill": "技能「/{name}」已{action}",
+      "deletedCommand": "已删除命令「/{name}」",
+      "deletedSkill": "已删除技能「/{name}」",
+      "convertedToSkill": "已将「/{name}」转为技能",
+      "created": "创建",
+      "updated": "更新",
+      "catalogUnavailable": "Claude 命令目录不可用。",
+      "emptyList": "尚未配置命令或技能。点击 + 新建。",
+      "convertToSkillAria": "转为技能",
+      "modalTitleEditCommand": "编辑斜杠命令",
+      "modalTitleAddCommand": "新建斜杠命令",
+      "modalTitleEditSkill": "编辑技能",
+      "modalTitleAddSkill": "新建技能"
+    },
+    "codex": {
+      "providerEnabled": {
+        "name": "启用 Codex 提供商",
+        "desc": "启用后，新对话的模型选择器中会出现 Codex 模型。已有的 Codex 会话会保留。"
+      },
+      "installationMethod": {
+        "name": "安装方式",
+        "desc": "在 Windows 上 Claudian 如何启动 Codex。本机 Windows 使用 Windows 可执行路径；WSL 则在所选发行版内启动 Linux CLI。"
+      },
+      "installation": {
+        "nativeWindows": "本机 Windows",
+        "wsl": "WSL"
+      },
+      "cliPath": {
+        "name": "Codex CLI 路径（{host}）",
+        "descGeneric": "本地 Codex CLI 的自定义路径。留空则从 PATH 自动检测。",
+        "descWsl": "在 WSL 内运行的 Linux 侧 Codex 命令或绝对路径。留空则在所选发行版内查 PATH。",
+        "descWindowsNative": "本地 Codex CLI 的自定义路径。留空则从 PATH 自动检测。请使用本机 Windows 可执行路径，一般为 `codex.exe`。"
+      },
+      "cliPathValidation": {
+        "wslExpectsLinuxPath": "WSL 模式下应填写 Linux 命令或 Linux 绝对路径，不能使用 Windows 可执行路径。"
+      },
+      "wslDistro": {
+        "name": "WSL 发行版覆盖",
+        "desc": "可选的高级覆盖。留空时尽量从 \\\\wsl$ 工作区路径推断发行版，否则使用 WSL 默认发行版。",
+        "placeholder": "Ubuntu"
+      },
+      "reasoningSummary": {
+        "name": "推理摘要",
+        "desc": "在思考块中显示模型推理过程的摘要。",
+        "optionAuto": "自动",
+        "optionConcise": "简略",
+        "optionDetailed": "详细",
+        "optionOff": "关闭"
+      },
+      "skillsSection": {
+        "heading": "Codex 技能",
+        "desc": "管理存放在 .codex/skills/ 或 .agents/skills/ 的 Vault 级 Codex 技能。此处不包含用户主目录级技能。"
+      },
+      "hiddenSkills": {
+        "name": "隐藏技能",
+        "desc": "从下拉中隐藏指定 Codex 技能。每行一个技能名，不要带前导 $。",
+        "placeholder": "analyze\nexplain\nfix"
+      },
+      "subagentsSection": {
+        "heading": "Codex 子代理",
+        "desc": "管理存放在 .codex/agents/ 的 Vault 级 Codex 子代理。每个 TOML 文件定义一个自定义代理。"
+      },
+      "mcpNotice": {
+        "beforeCmd": "Codex 通过自有 CLI 管理 MCP 服务器。使用 ",
+        "afterCmd": " 配置后，即可在 Claudian 中使用。"
+      },
+      "env": {
+        "name": "Codex 环境变量",
+        "desc": "仅填写 Codex 运行时变量。用于 OPENAI_* 与 CODEX_*。若自动检测不到 Codex，请把安装目录加入共享 PATH，而不是仅写在此处。",
+        "placeholder": "OPENAI_API_KEY=your-key\nOPENAI_BASE_URL=https://api.openai.com/v1\nOPENAI_MODEL=gpt-5.4\nCODEX_SANDBOX=workspace-write"
+      }
+    },
+    "pluginsUi": {
+      "listLabel": "Claude Code 插件",
+      "verbEnable": "启用",
+      "verbDisable": "禁用",
+      "empty": "未发现 Claude Code 插件。请通过 Claude CLI 启用插件。",
+      "projectSection": "项目插件",
+      "userSection": "用户插件",
+      "noticeTogglePartialFail": "插件已切换，但部分标签页重启失败。",
+      "noticePluginEnabled": "已启用插件「{id}」",
+      "noticePluginDisabled": "已禁用插件「{id}」",
+      "noticeToggleFailed": "切换插件失败：{message}",
+      "noticeListRefreshed": "插件列表已刷新",
+      "noticeRefreshFailed": "刷新插件列表失败：{message}"
+    },
+    "codexSkills": {
+      "listLabel": "Codex 技能",
+      "empty": "当前 Vault 中尚无 Codex 技能。点击 + 新建。",
+      "badgeSkill": "技能",
+      "modalTitleEdit": "编辑 Codex 技能",
+      "modalTitleAdd": "新建 Codex 技能",
+      "directory": {
+        "name": "目录",
+        "desc": "保存技能的位置"
+      },
+      "skillName": {
+        "name": "技能名称",
+        "desc": "在 $ 后使用的名称（例如 $analyze 填 analyze）",
+        "placeholder": "analyze-code"
+      },
+      "description": {
+        "name": "描述",
+        "desc": "下拉中显示的描述（可选）"
+      },
+      "instructions": {
+        "name": "说明",
+        "desc": "技能说明（SKILL.md 内容）",
+        "placeholder": "Analyze the code for...",
+        "required": "说明为必填项"
+      },
+      "saveFailed": "保存 Codex 技能失败",
+      "deleted": "已删除 Codex 技能「{name}」",
+      "deleteFailed": "删除 Codex 技能失败",
+      "saved": "Codex 技能「{name}」已{action}",
+      "savedCreated": "创建",
+      "savedUpdated": "更新"
+    },
+    "codexSubagents": {
+      "listLabel": "Codex 子代理",
+      "empty": "当前 Vault 中尚无 Codex 子代理。点击 + 新建。",
+      "modalTitleEdit": "编辑 Codex 子代理",
+      "modalTitleAdd": "新建 Codex 子代理",
+      "name": {
+        "name": "名称",
+        "desc": "Codex 拉起代理时使用的名称（小写、连字符、下划线）",
+        "placeholder": "code_reviewer"
+      },
+      "description": {
+        "name": "描述",
+        "desc": "何时应使用该代理",
+        "placeholder": "Reviews code for correctness and security",
+        "required": "描述为必填项"
+      },
+      "advancedOptions": "高级选项",
+      "model": {
+        "name": "模型",
+        "desc": "模型覆盖（留空则继承）",
+        "placeholder": "gpt-5.4"
+      },
+      "reasoningEffort": {
+        "name": "推理力度",
+        "desc": "模型推理力度档位",
+        "inherit": "继承",
+        "low": "低",
+        "medium": "中",
+        "high": "高",
+        "xhigh": "极高"
+      },
+      "sandboxMode": {
+        "name": "沙箱模式",
+        "desc": "该代理的沙箱限制",
+        "inherit": "继承",
+        "readOnly": "只读",
+        "dangerFullAccess": "危险：完全访问",
+        "workspaceWrite": "工作区可写"
+      },
+      "nicknameCandidates": {
+        "name": "昵称候选",
+        "desc": "逗号分隔的展示昵称（如 Atlas、Delta、Echo）"
+      },
+      "developerInstructions": {
+        "name": "开发者说明",
+        "desc": "定义代理行为的核心说明",
+        "placeholder": "Review code like an owner.\nPrioritize correctness, security, and missing test coverage.",
+        "required": "开发者说明为必填项"
+      },
+      "saveFailed": "保存子代理失败：{message}",
+      "deleteConfirm": "删除子代理「{name}」？",
+      "deleted": "已删除子代理「{name}」",
+      "deleteFailed": "删除子代理失败",
+      "created": "已创建子代理「{name}」",
+      "updated": "已更新子代理「{name}」",
+      "duplicateName": "已存在名为「{name}」的子代理",
+      "validation": {
+        "nameRequired": "子代理名称为必填项",
+        "nameTooLong": "子代理名称不能超过 {max} 个字符",
+        "nameInvalidChars": "子代理名称只能包含小写字母、数字、连字符和下划线",
+        "nicknameInvalidChars": "昵称候选只能包含 ASCII 字母、数字、空格、连字符和下划线",
+        "nicknameDuplicate": "昵称候选不能重复"
+      }
     }
   },
   "commands": {
     "openChatView": "打开聊天视图",
-    "toggleChatView": "切换聊天视图"
+    "toggleChatView": "切换聊天视图",
+    "inlineEdit": "内联编辑",
+    "newTab": "新建标签页",
+    "newSession": "新会话（当前标签页）",
+    "closeCurrentTab": "关闭当前标签页"
   },
   "ribbon": {
     "toggleClaudian": "切换 Claudian 聊天面板"

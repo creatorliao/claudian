@@ -147,8 +147,8 @@ export const claudeSettingsTabRenderer: ProviderSettingsTabRenderer = {
       .setDesc(t('settings.claudeSafeMode.desc'))
       .addDropdown((dropdown) => {
         dropdown
-          .addOption('acceptEdits', 'acceptEdits')
-          .addOption('default', 'default')
+          .addOption('acceptEdits', t('settings.claudeSafeMode.optionAcceptEdits'))
+          .addOption('default', t('settings.claudeSafeMode.optionDefault'))
           .setValue(claudeSettings.safeMode)
           .onChange(async (value) => {
             updateClaudeProviderSettings(
@@ -262,7 +262,7 @@ export const claudeSettingsTabRenderer: ProviderSettingsTabRenderer = {
     const descP = slashCommandsDesc.createEl('p', { cls: 'setting-item-description' });
     descP.appendText(t('settings.slashCommands.desc') + ' ');
     descP.createEl('a', {
-      text: 'Learn more',
+      text: t('common.learnMore'),
       href: 'https://code.claude.com/docs/en/skills',
     });
 
@@ -354,8 +354,8 @@ export const claudeSettingsTabRenderer: ProviderSettingsTabRenderer = {
       scope: 'provider:claude',
       heading: t('settings.environment'),
       name: t('settings.customVariables.name'),
-      desc: 'Claude-owned runtime variables only. Use this for ANTHROPIC_* and Claude-specific toggles.',
-      placeholder: 'ANTHROPIC_API_KEY=your-key\nANTHROPIC_BASE_URL=https://api.example.com\nANTHROPIC_MODEL=custom-model\nCLAUDE_CODE_USE_BEDROCK=1',
+      desc: t('settings.claudeEnv.desc'),
+      placeholder: t('settings.claudeEnv.placeholder'),
       renderCustomContextLimits: (target) => context.renderCustomContextLimits(target, 'claude'),
     });
 

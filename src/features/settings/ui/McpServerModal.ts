@@ -10,6 +10,7 @@ import type {
   McpStdioServerConfig,
 } from '../../../core/types';
 import { DEFAULT_MCP_SERVER, getMcpServerType } from '../../../core/types';
+import { t } from '../../../i18n/i18n';
 import { parseCommand } from '../../../utils/mcp';
 
 export class McpServerModal extends Modal {
@@ -71,18 +72,20 @@ export class McpServerModal extends Modal {
   }
 
   onOpen() {
-    this.setTitle(this.existingServer ? 'Edit MCP Server' : 'Add MCP Server');
+    this.setTitle(
+      this.existingServer ? t('settings.mcpServerModal.titleEdit') : t('settings.mcpServerModal.titleAdd'),
+    );
     this.modalEl.addClass('claudian-mcp-modal');
 
     const { contentEl } = this;
 
     new Setting(contentEl)
-      .setName('Server name')
-      .setDesc('Unique identifier for this server')
+      .setName(t('settings.mcpServerModal.serverName.name'))
+      .setDesc(t('settings.mcpServerModal.serverName.desc'))
       .addText((text) => {
         this.nameInputEl = text.inputEl;
         text.setValue(this.serverName);
-        text.setPlaceholder('my-mcp-server');
+        text.setPlaceholder(t('settings.mcpServerModal.serverName.placeholder'));
         text.onChange((value) => {
           this.serverName = value;
         });
@@ -90,12 +93,12 @@ export class McpServerModal extends Modal {
       });
 
     new Setting(contentEl)
-      .setName('Type')
-      .setDesc('Server connection type')
+      .setName(t('settings.mcpServerModal.serverType.name'))
+      .setDesc(t('settings.mcpServerModal.serverType.desc'))
       .addDropdown((dropdown) => {
-        dropdown.addOption('stdio', 'stdio (local command)');
-        dropdown.addOption('sse', 'sse (Server-Sent Events)');
-        dropdown.addOption('http', 'http (HTTP endpoint)');
+        dropdown.addOption('stdio', t('settings.mcpServerModal.serverType.stdio'));
+        dropdown.addOption('sse', t('settings.mcpServerModal.serverType.sse'));
+        dropdown.addOption('http', t('settings.mcpServerModal.serverType.http'));
         dropdown.setValue(this.serverType);
         dropdown.onChange((value) => {
           this.serverType = value as McpServerType;
@@ -107,8 +110,8 @@ export class McpServerModal extends Modal {
     this.renderTypeFields();
 
     new Setting(contentEl)
-      .setName('Enabled')
-      .setDesc('Whether this server is active')
+      .setName(t('settings.mcpServerModal.enabled.name'))
+      .setDesc(t('settings.mcpServerModal.enabled.desc'))
       .addToggle((toggle) => {
         toggle.setValue(this.enabled);
         toggle.onChange((value) => {
@@ -117,8 +120,8 @@ export class McpServerModal extends Modal {
       });
 
     new Setting(contentEl)
-      .setName('Context-saving mode')
-      .setDesc('Hide tools from agent unless @-mentioned (saves context window)')
+      .setName(t('settings.mcpServerModal.contextSaving.name'))
+      .setDesc(t('settings.mcpServerModal.contextSaving.desc'))
       .addToggle((toggle) => {
         toggle.setValue(this.contextSaving);
         toggle.onChange((value) => {
@@ -129,13 +132,13 @@ export class McpServerModal extends Modal {
     const buttonContainer = contentEl.createDiv({ cls: 'claudian-mcp-buttons' });
 
     const cancelBtn = buttonContainer.createEl('button', {
-      text: 'Cancel',
+      text: t('common.cancel'),
       cls: 'claudian-cancel-btn',
     });
     cancelBtn.addEventListener('click', () => this.close());
 
     const saveBtn = buttonContainer.createEl('button', {
-      text: this.existingServer ? 'Update' : 'Add',
+      text: this.existingServer ? t('settings.mcpServerModal.btnUpdate') : t('settings.mcpServerModal.btnAdd'),
       cls: 'claudian-save-btn mod-cta',
     });
     saveBtn.addEventListener('click', () => this.save());
@@ -156,30 +159,30 @@ export class McpServerModal extends Modal {
     if (!this.typeFieldsEl) return;
 
     const cmdSetting = new Setting(this.typeFieldsEl)
-      .setName('Command')
-      .setDesc('Full command with arguments');
+      .setName(t('settings.mcpServerModal.command.name'))
+      .setDesc(t('settings.mcpServerModal.command.desc'));
     cmdSetting.settingEl.addClass('claudian-mcp-cmd-setting');
 
     const cmdTextarea = cmdSetting.controlEl.createEl('textarea', {
       cls: 'claudian-mcp-cmd-textarea',
     });
     cmdTextarea.value = this.command;
-    cmdTextarea.placeholder = 'docker exec -i mcp-server python -m src.server';
+    cmdTextarea.placeholder = t('settings.mcpServerModal.command.placeholder');
     cmdTextarea.rows = 2;
     cmdTextarea.addEventListener('input', () => {
       this.command = cmdTextarea.value;
     });
 
     const envSetting = new Setting(this.typeFieldsEl)
-      .setName('Environment variables')
-      .setDesc('KEY=VALUE per line (optional)');
+      .setName(t('settings.mcpServerModal.envVars.name'))
+      .setDesc(t('settings.mcpServerModal.envVars.desc'));
     envSetting.settingEl.addClass('claudian-mcp-env-setting');
 
     const envTextarea = envSetting.controlEl.createEl('textarea', {
       cls: 'claudian-mcp-env-textarea',
     });
     envTextarea.value = this.env;
-    envTextarea.placeholder = 'API_KEY=your-key';
+    envTextarea.placeholder = t('settings.mcpServerModal.envVars.placeholder');
     envTextarea.rows = 2;
     envTextarea.addEventListener('input', () => {
       this.env = envTextarea.value;
@@ -190,11 +193,15 @@ export class McpServerModal extends Modal {
     if (!this.typeFieldsEl) return;
 
     new Setting(this.typeFieldsEl)
-      .setName('URL')
-      .setDesc(this.serverType === 'sse' ? 'SSE endpoint URL' : 'HTTP endpoint URL')
+      .setName(t('settings.mcpServerModal.url.name'))
+      .setDesc(
+        this.serverType === 'sse'
+          ? t('settings.mcpServerModal.url.descSse')
+          : t('settings.mcpServerModal.url.descHttp'),
+      )
       .addText((text) => {
         text.setValue(this.url);
-        text.setPlaceholder('http://localhost:3000/sse');
+        text.setPlaceholder(t('settings.mcpServerModal.url.placeholder'));
         text.onChange((value) => {
           this.url = value;
         });
@@ -202,15 +209,15 @@ export class McpServerModal extends Modal {
       });
 
     const headersSetting = new Setting(this.typeFieldsEl)
-      .setName('Headers')
-      .setDesc('HTTP headers (KEY=VALUE per line)');
+      .setName(t('settings.mcpServerModal.headers.name'))
+      .setDesc(t('settings.mcpServerModal.headers.desc'));
     headersSetting.settingEl.addClass('claudian-mcp-env-setting');
 
     const headersTextarea = headersSetting.controlEl.createEl('textarea', {
       cls: 'claudian-mcp-env-textarea',
     });
     headersTextarea.value = this.headers;
-    headersTextarea.placeholder = 'Authorization=Bearer token\nContent-Type=application/json';
+    headersTextarea.placeholder = t('settings.mcpServerModal.headers.placeholder');
     headersTextarea.rows = 3;
     headersTextarea.addEventListener('input', () => {
       this.headers = headersTextarea.value;
@@ -231,13 +238,13 @@ export class McpServerModal extends Modal {
   private save() {
     const name = this.serverName.trim();
     if (!name) {
-      new Notice('Please enter a server name');
+      new Notice(t('settings.mcpServerModal.validation.nameRequired'));
       this.nameInputEl?.focus();
       return;
     }
 
     if (!/^[a-zA-Z0-9._-]+$/.test(name)) {
-      new Notice('Server name can only contain letters, numbers, dots, hyphens, and underscores');
+      new Notice(t('settings.mcpServerModal.validation.nameInvalid'));
       this.nameInputEl?.focus();
       return;
     }
@@ -247,7 +254,7 @@ export class McpServerModal extends Modal {
     if (this.serverType === 'stdio') {
       const fullCommand = this.command.trim();
       if (!fullCommand) {
-        new Notice('Please enter a command');
+        new Notice(t('settings.mcpServerModal.validation.commandRequired'));
         return;
       }
 
@@ -267,7 +274,7 @@ export class McpServerModal extends Modal {
     } else {
       const url = this.url.trim();
       if (!url) {
-        new Notice('Please enter a URL');
+        new Notice(t('settings.mcpServerModal.validation.urlRequired'));
         return;
       }
 

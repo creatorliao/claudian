@@ -5,6 +5,7 @@ import type {
   AppPluginManager,
 } from '../../../core/providers/types';
 import type { PluginInfo } from '../../../core/types';
+import { t } from '../../../i18n/i18n';
 
 export interface PluginSettingsManagerDeps {
   pluginManager: AppPluginManager;
@@ -30,11 +31,11 @@ export class PluginSettingsManager {
     this.containerEl.empty();
 
     const headerEl = this.containerEl.createDiv({ cls: 'claudian-plugin-header' });
-    headerEl.createSpan({ text: 'Claude Code Plugins', cls: 'claudian-plugin-label' });
+    headerEl.createSpan({ text: t('settings.pluginsUi.listLabel'), cls: 'claudian-plugin-label' });
 
     const refreshBtn = headerEl.createEl('button', {
       cls: 'claudian-settings-action-btn',
-      attr: { 'aria-label': 'Refresh' },
+      attr: { 'aria-label': t('common.refresh') },
     });
     setIcon(refreshBtn, 'refresh-cw');
     refreshBtn.addEventListener('click', () => this.refreshPlugins());
@@ -43,7 +44,7 @@ export class PluginSettingsManager {
 
     if (plugins.length === 0) {
       const emptyEl = this.containerEl.createDiv({ cls: 'claudian-plugin-empty' });
-      emptyEl.setText('No Claude Code plugins found. Enable plugins via the Claude CLI.');
+      emptyEl.setText(t('settings.pluginsUi.empty'));
       return;
     }
 
@@ -54,7 +55,7 @@ export class PluginSettingsManager {
 
     if (projectPlugins.length > 0) {
       const sectionHeader = listEl.createDiv({ cls: 'claudian-plugin-section-header' });
-      sectionHeader.setText('Project Plugins');
+      sectionHeader.setText(t('settings.pluginsUi.projectSection'));
 
       for (const plugin of projectPlugins) {
         this.renderPluginItem(listEl, plugin);
@@ -63,7 +64,7 @@ export class PluginSettingsManager {
 
     if (userPlugins.length > 0) {
       const sectionHeader = listEl.createDiv({ cls: 'claudian-plugin-section-header' });
-      sectionHeader.setText('User Plugins');
+      sectionHeader.setText(t('settings.pluginsUi.userSection'));
 
       for (const plugin of userPlugins) {
         this.renderPluginItem(listEl, plugin);
@@ -95,7 +96,11 @@ export class PluginSettingsManager {
 
     const toggleBtn = actionsEl.createEl('button', {
       cls: 'claudian-plugin-action-btn',
-      attr: { 'aria-label': plugin.enabled ? 'Disable' : 'Enable' },
+      attr: {
+        'aria-label': plugin.enabled
+          ? t('settings.pluginsUi.verbDisable')
+          : t('settings.pluginsUi.verbEnable'),
+      },
     });
     setIcon(toggleBtn, plugin.enabled ? 'toggle-right' : 'toggle-left');
     toggleBtn.addEventListener('click', () => this.togglePlugin(plugin.id));
@@ -112,14 +117,18 @@ export class PluginSettingsManager {
       try {
         await this.restartTabs();
       } catch {
-        new Notice('Plugin toggled, but some tabs failed to restart.');
+        new Notice(t('settings.pluginsUi.noticeTogglePartialFail'));
       }
 
-      new Notice(`Plugin "${pluginId}" ${wasEnabled ? 'disabled' : 'enabled'}`);
+      new Notice(
+        wasEnabled
+          ? t('settings.pluginsUi.noticePluginDisabled', { id: pluginId })
+          : t('settings.pluginsUi.noticePluginEnabled', { id: pluginId }),
+      );
     } catch (err) {
       await this.pluginManager.togglePlugin(pluginId);
       const message = err instanceof Error ? err.message : 'Unknown error';
-      new Notice(`Failed to toggle plugin: ${message}`);
+      new Notice(t('settings.pluginsUi.noticeToggleFailed', { message }));
     } finally {
       this.render();
     }
@@ -130,10 +139,10 @@ export class PluginSettingsManager {
       await this.pluginManager.loadPlugins();
       await this.agentManager.loadAgents();
 
-      new Notice('Plugin list refreshed');
+      new Notice(t('settings.pluginsUi.noticeListRefreshed'));
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
-      new Notice(`Failed to refresh plugins: ${message}`);
+      new Notice(t('settings.pluginsUi.noticeRefreshFailed', { message }));
     } finally {
       this.render();
     }

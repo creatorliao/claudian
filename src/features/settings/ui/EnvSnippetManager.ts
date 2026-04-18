@@ -247,20 +247,20 @@ export class EnvSnippetManager {
 
       const restoreBtn = actionsEl.createEl('button', {
         cls: 'claudian-settings-action-btn',
-        attr: { 'aria-label': 'Insert' },
+        attr: { 'aria-label': t('settings.envSnippets.insertAria') },
       });
       setIcon(restoreBtn, 'clipboard-paste');
       restoreBtn.addEventListener('click', async () => {
         try {
           await this.insertSnippet(snippet);
         } catch {
-          new Notice('Failed to insert snippet');
+          new Notice(t('chat.notices.envSnippetInsertFailed'));
         }
       });
 
       const editBtn = actionsEl.createEl('button', {
         cls: 'claudian-settings-action-btn',
-        attr: { 'aria-label': 'Edit' },
+        attr: { 'aria-label': t('settings.envSnippets.editAria') },
       });
       setIcon(editBtn, 'pencil');
       editBtn.addEventListener('click', () => {
@@ -269,16 +269,16 @@ export class EnvSnippetManager {
 
       const deleteBtn = actionsEl.createEl('button', {
         cls: 'claudian-settings-action-btn claudian-settings-delete-btn',
-        attr: { 'aria-label': 'Delete' },
+        attr: { 'aria-label': t('settings.envSnippets.deleteAria') },
       });
       setIcon(deleteBtn, 'trash-2');
       deleteBtn.addEventListener('click', async () => {
         try {
-          if (confirm(`Delete environment snippet "${snippet.name}"?`)) {
+          if (confirm(t('settings.envSnippets.confirmDelete', { name: snippet.name }))) {
             await this.deleteSnippet(snippet);
           }
         } catch {
-          new Notice('Failed to delete snippet');
+          new Notice(t('chat.notices.envSnippetDeleteFailed'));
         }
       });
     }
@@ -294,7 +294,7 @@ export class EnvSnippetManager {
         this.plugin.settings.envSnippets.push(snippet);
         await this.plugin.saveSettings();
         this.render();
-        new Notice(`Environment snippet "${snippet.name}" saved`);
+        new Notice(t('chat.notices.envSnippetSaved', { name: snippet.name }));
       }
     );
     modal.open();
@@ -344,7 +344,7 @@ export class EnvSnippetManager {
           this.plugin.settings.envSnippets[index] = updatedSnippet;
           await this.plugin.saveSettings();
           this.render();
-          new Notice(`Environment snippet "${updatedSnippet.name}" updated`);
+          new Notice(t('chat.notices.envSnippetUpdated', { name: updatedSnippet.name }));
         }
       }
     );
@@ -355,7 +355,7 @@ export class EnvSnippetManager {
     this.plugin.settings.envSnippets = this.plugin.settings.envSnippets.filter(s => s.id !== snippet.id);
     await this.plugin.saveSettings();
     this.render();
-    new Notice(`Environment snippet "${snippet.name}" deleted`);
+    new Notice(t('chat.notices.envSnippetDeleted', { name: snippet.name }));
   }
 
   public refresh() {

@@ -4,9 +4,18 @@ import * as path from 'path';
 
 import { parsePathEntries, resolveNvmDefaultBin } from './path';
 
-const isWindows = process.platform === 'win32';
-const PATH_SEPARATOR = isWindows ? ';' : ':';
-const NODE_EXECUTABLE = isWindows ? 'node.exe' : 'node';
+/** 运行时读取平台，便于单测在 resetModules 后 mock process.platform（模块级常量会在首次加载时钉死） */
+function isWindowsPlatform(): boolean {
+  return process.platform === 'win32';
+}
+
+function getPathSeparator(): string {
+  return isWindowsPlatform() ? ';' : ':';
+}
+
+function getNodeExecutableName(): string {
+  return isWindowsPlatform() ? 'node.exe' : 'node';
+}
 
 function getHomeDir(): string {
   return process.env.HOME || process.env.USERPROFILE || '';
@@ -18,13 +27,14 @@ function getAppProvidedCliPaths(): string[] {
   if (process.platform === 'darwin') {
     const appBundleMatch = process.execPath.match(/^(.+?\.app)\//);
     if (appBundleMatch) {
-      return [path.join(appBundleMatch[1], 'Contents', 'MacOS')];
+      // posix：在 Windows 主机上跑「模拟 darwin」单测时避免 path.join 产生盘符路径
+      return [path.posix.join(appBundleMatch[1], 'Contents', 'MacOS')];
     }
-    return [path.dirname(process.execPath)];
+    return [path.posix.dirname(process.execPath.replace(/\\/g, '/'))];
   }
 
   if (process.platform === 'win32') {
-    return [path.dirname(process.execPath)];
+    return [path.win32.dirname(process.execPath)];
   }
 
   return [];
@@ -34,7 +44,7 @@ function getAppProvidedCliPaths(): string[] {
 function getExtraBinaryPaths(): string[] {
   const home = getHomeDir();
 
-  if (isWindows) {
+  if (isWindowsPlatform()) {
     const paths: string[] = [];
     const localAppData = process.env.LOCALAPPDATA;
     const appData = process.env.APPDATA;
@@ -134,33 +144,35 @@ function getExtraBinaryPaths(): string[] {
 
     const voltaHome = process.env.VOLTA_HOME;
     if (voltaHome) {
-      paths.push(path.join(voltaHome, 'bin'));
+      paths.push(path.posix.join(voltaHome.replace(/\\/g, '/'), 'bin'));
     }
 
     const asdfRoot = process.env.ASDF_DATA_DIR || process.env.ASDF_DIR;
     if (asdfRoot) {
-      paths.push(path.join(asdfRoot, 'shims'));
-      paths.push(path.join(asdfRoot, 'bin'));
+      const root = asdfRoot.replace(/\\/g, '/');
+      paths.push(path.posix.join(root, 'shims'));
+      paths.push(path.posix.join(root, 'bin'));
     }
 
     const fnmMultishell = process.env.FNM_MULTISHELL_PATH;
     if (fnmMultishell) {
-      paths.push(fnmMultishell);
+      paths.push(fnmMultishell.replace(/\\/g, '/'));
     }
 
     const fnmDir = process.env.FNM_DIR;
     if (fnmDir) {
-      paths.push(fnmDir);
+      paths.push(fnmDir.replace(/\\/g, '/'));
     }
 
     if (home) {
-      paths.push(path.join(home, '.local', 'bin'));
-      paths.push(path.join(home, '.bun', 'bin'));
-      paths.push(path.join(home, '.docker', 'bin'));
-      paths.push(path.join(home, '.volta', 'bin'));
-      paths.push(path.join(home, '.asdf', 'shims'));
-      paths.push(path.join(home, '.asdf', 'bin'));
-      paths.push(path.join(home, '.fnm'));
+      const h = home.replace(/\\/g, '/');
+      paths.push(path.posix.join(h, '.local', 'bin'));
+      paths.push(path.posix.join(h, '.bun', 'bin'));
+      paths.push(path.posix.join(h, '.docker', 'bin'));
+      paths.push(path.posix.join(h, '.volta', 'bin'));
+      paths.push(path.posix.join(h, '.asdf', 'shims'));
+      paths.push(path.posix.join(h, '.asdf', 'bin'));
+      paths.push(path.posix.join(h, '.fnm'));
 
       // NVM: use NVM_BIN if set, otherwise resolve default version from filesystem
       const nvmBin = process.env.NVM_BIN;
@@ -191,7 +203,7 @@ export function findNodeDirectory(additionalPaths?: string): string | null {
   for (const dir of allPaths) {
     if (!dir) continue;
     try {
-      const nodePath = path.join(dir, NODE_EXECUTABLE);
+      const nodePath = path.join(dir, getNodeExecutableName());
       if (fs.existsSync(nodePath)) {
         const stat = fs.statSync(nodePath);
         if (stat.isFile()) {
@@ -209,7 +221,7 @@ export function findNodeDirectory(additionalPaths?: string): string | null {
 export function findNodeExecutable(additionalPaths?: string): string | null {
   const nodeDir = findNodeDirectory(additionalPaths);
   if (nodeDir) {
-    return path.join(nodeDir, NODE_EXECUTABLE);
+    return path.join(nodeDir, getNodeExecutableName());
   }
   return null;
 }
@@ -279,7 +291,7 @@ export function getEnhancedPath(additionalPaths?: string, cliPath?: string): str
   if (cliPath) {
     try {
       const cliDir = path.dirname(cliPath);
-      const nodeInCliDir = path.join(cliDir, NODE_EXECUTABLE);
+      const nodeInCliDir = path.join(cliDir, getNodeExecutableName());
       if (fs.existsSync(nodeInCliDir)) {
         const stat = fs.statSync(nodeInCliDir);
         if (stat.isFile()) {
@@ -307,13 +319,13 @@ export function getEnhancedPath(additionalPaths?: string, cliPath?: string): str
 
   const seen = new Set<string>();
   const unique = segments.filter(p => {
-    const normalized = isWindows ? p.toLowerCase() : p;
+    const normalized = isWindowsPlatform() ? p.toLowerCase() : p;
     if (seen.has(normalized)) return false;
     seen.add(normalized);
     return true;
   });
 
-  return unique.join(PATH_SEPARATOR);
+  return unique.join(getPathSeparator());
 }
 
 export function parseEnvironmentVariables(input: string): Record<string, string> {

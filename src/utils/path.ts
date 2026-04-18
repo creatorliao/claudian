@@ -256,11 +256,10 @@ export function normalizePathForFilesystem(value: string): string {
     return '';
   }
   const expanded = normalizePathBeforeResolution(value);
+  const pathImpl = process.platform === 'win32' ? path.win32 : path.posix;
   const normalized = (() => {
     try {
-      return process.platform === 'win32'
-        ? path.win32.normalize(expanded)
-        : path.normalize(expanded);
+      return pathImpl.normalize(expanded);
     } catch {
       return expanded;
     }
@@ -275,23 +274,27 @@ export function normalizePathForComparison(value: string): string {
   }
 
   const expanded = normalizePathBeforeResolution(value);
+  const pathImpl = process.platform === 'win32' ? path.win32 : path.posix;
   const normalized = (() => {
     try {
-      return process.platform === 'win32'
-        ? path.win32.normalize(expanded)
-        : path.normalize(expanded);
+      return pathImpl.normalize(expanded);
     } catch {
       return expanded;
     }
   })();
 
-  const normalizedWithPrefix = normalizeWindowsPathPrefix(normalized)
+  let normalizedWithPrefix = normalizeWindowsPathPrefix(normalized)
     .replace(/\\/g, '/')
     .replace(/\/+$/, '');
 
-  return process.platform === 'win32'
-    ? normalizedWithPrefix.toLowerCase()
-    : normalizedWithPrefix;
+  // Windows：path.win32.normalize 会把单独的盘符 "A:" 变成 "A:."（当前目录语义），
+  // 导致与 MSYS 风格的 "/a" 不一致，父路径前缀判断（如 externalContext）在 jest 于 win32 上跑 Unix 用例时失败。
+  if (process.platform === 'win32') {
+    normalizedWithPrefix = normalizedWithPrefix.replace(/^([a-zA-Z]):\.$/, '$1:');
+    normalizedWithPrefix = normalizedWithPrefix.toLowerCase();
+  }
+
+  return normalizedWithPrefix;
 }
 
 export function isPathWithinDirectory(

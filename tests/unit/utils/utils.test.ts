@@ -191,6 +191,11 @@ describe('utils.ts', () => {
   describe('normalizePathForFilesystem', () => {
     const originalPlatform = process.platform;
 
+    beforeEach(() => {
+      // 在 Windows 上跑 jest 时，POSIX 风格用例需模拟非 win32，否则 MSYS 会把 /tmp 等译成盘符路径
+      Object.defineProperty(process, 'platform', { value: 'darwin' });
+    });
+
     afterEach(() => {
       Object.defineProperty(process, 'platform', { value: originalPlatform });
     });

@@ -2,6 +2,7 @@ import type { App, EventRef } from 'obsidian';
 import { Notice, TFile } from 'obsidian';
 
 import type { McpServerManager } from '../../../core/mcp/McpServerManager';
+import { t } from '../../../i18n/i18n';
 import type { AgentMentionProvider } from '../../../shared/mention/MentionDropdownController';
 import { MentionDropdownController } from '../../../shared/mention/MentionDropdownController';
 import { VaultMentionDataProvider } from '../../../shared/mention/VaultMentionDataProvider';
@@ -76,13 +77,17 @@ export class FileContextManager {
       onOpenFile: async (filePath) => {
         const file = this.app.vault.getAbstractFileByPath(filePath);
         if (!(file instanceof TFile)) {
-          new Notice(`Could not open file: ${filePath}`);
+          new Notice(t('chat.notices.couldNotOpenFile', { path: filePath }));
           return;
         }
         try {
           await this.app.workspace.getLeaf().openFile(file);
         } catch (error) {
-          new Notice(`Failed to open file: ${error instanceof Error ? error.message : String(error)}`);
+          new Notice(
+            t('chat.notices.failedOpenFile', {
+              message: error instanceof Error ? error.message : String(error),
+            }),
+          );
         }
       },
     });

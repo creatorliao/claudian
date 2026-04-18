@@ -4,6 +4,19 @@ import * as path from 'path';
 
 import { parsePathEntries, resolveNvmDefaultBin } from '../../../utils/path';
 
+/** 与逻辑平台一致地拼接路径：jest 在 Windows 上把 platform mock 成 darwin 时，须用 posix.join 才能与 Unix 风格桩路径一致 */
+function joinPath(isWindows: boolean, ...segments: string[]): string {
+  return (isWindows ? path.win32 : path.posix).join(...segments);
+}
+
+function pathBasename(isWindows: boolean, p: string): string {
+  return (isWindows ? path.win32 : path.posix).basename(p);
+}
+
+function pathDirname(isWindows: boolean, p: string): string {
+  return (isWindows ? path.win32 : path.posix).dirname(p);
+}
+
 function getEnvValue(name: string): string | undefined {
   return process.env[name];
 }
@@ -18,11 +31,11 @@ function dedupePaths(entries: string[]): string[] {
   });
 }
 
-function findFirstExistingPath(entries: string[], candidates: string[]): string | null {
+function findFirstExistingPath(entries: string[], candidates: string[], isWindows: boolean): string | null {
   for (const dir of entries) {
     if (!dir) continue;
     for (const candidate of candidates) {
-      const fullPath = path.join(dir, candidate);
+      const fullPath = joinPath(isWindows, dir, candidate);
       if (isExistingFile(fullPath)) {
         return fullPath;
       }
@@ -44,17 +57,17 @@ function isExistingFile(filePath: string): boolean {
 }
 
 function resolveCliJsNearPathEntry(entry: string, isWindows: boolean): string | null {
-  const directCandidate = path.join(entry, 'node_modules', '@anthropic-ai', 'claude-code', 'cli.js');
+  const directCandidate = joinPath(isWindows, entry, 'node_modules', '@anthropic-ai', 'claude-code', 'cli.js');
   if (isExistingFile(directCandidate)) {
     return directCandidate;
   }
 
-  const baseName = path.basename(entry).toLowerCase();
+  const baseName = pathBasename(isWindows, entry).toLowerCase();
   if (baseName === 'bin') {
-    const prefix = path.dirname(entry);
+    const prefix = pathDirname(isWindows, entry);
     const candidate = isWindows
-      ? path.join(prefix, 'node_modules', '@anthropic-ai', 'claude-code', 'cli.js')
-      : path.join(prefix, 'lib', 'node_modules', '@anthropic-ai', 'claude-code', 'cli.js');
+      ? joinPath(isWindows, prefix, 'node_modules', '@anthropic-ai', 'claude-code', 'cli.js')
+      : joinPath(isWindows, prefix, 'lib', 'node_modules', '@anthropic-ai', 'claude-code', 'cli.js');
     if (isExistingFile(candidate)) {
       return candidate;
     }
@@ -82,11 +95,11 @@ function resolveClaudeFromPathEntries(
   }
 
   if (!isWindows) {
-    const unixCandidate = findFirstExistingPath(entries, ['claude']);
+    const unixCandidate = findFirstExistingPath(entries, ['claude'], false);
     return unixCandidate;
   }
 
-  const exeCandidate = findFirstExistingPath(entries, ['claude.exe', 'claude']);
+  const exeCandidate = findFirstExistingPath(entries, ['claude.exe', 'claude'], true);
   if (exeCandidate) {
     return exeCandidate;
   }
@@ -106,7 +119,7 @@ function getNpmGlobalPrefix(): string | null {
 
   if (process.platform === 'win32') {
     const appDataNpm = process.env.APPDATA
-      ? path.join(process.env.APPDATA, 'npm')
+      ? path.win32.join(process.env.APPDATA, 'npm')
       : null;
     if (appDataNpm && fs.existsSync(appDataNpm)) {
       return appDataNpm;
@@ -123,13 +136,13 @@ function getNpmCliJsPaths(): string[] {
 
   if (isWindows) {
     cliJsPaths.push(
-      path.join(homeDir, 'AppData', 'Roaming', 'npm', 'node_modules', '@anthropic-ai', 'claude-code', 'cli.js')
+      joinPath(true, homeDir, 'AppData', 'Roaming', 'npm', 'node_modules', '@anthropic-ai', 'claude-code', 'cli.js')
     );
 
     const npmPrefix = getNpmGlobalPrefix();
     if (npmPrefix) {
       cliJsPaths.push(
-        path.join(npmPrefix, 'node_modules', '@anthropic-ai', 'claude-code', 'cli.js')
+        joinPath(true, npmPrefix, 'node_modules', '@anthropic-ai', 'claude-code', 'cli.js')
       );
     }
 
@@ -137,23 +150,23 @@ function getNpmCliJsPaths(): string[] {
     const programFilesX86 = process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)';
 
     cliJsPaths.push(
-      path.join(programFiles, 'nodejs', 'node_global', 'node_modules', '@anthropic-ai', 'claude-code', 'cli.js'),
-      path.join(programFilesX86, 'nodejs', 'node_global', 'node_modules', '@anthropic-ai', 'claude-code', 'cli.js')
+      joinPath(true, programFiles, 'nodejs', 'node_global', 'node_modules', '@anthropic-ai', 'claude-code', 'cli.js'),
+      joinPath(true, programFilesX86, 'nodejs', 'node_global', 'node_modules', '@anthropic-ai', 'claude-code', 'cli.js')
     );
 
     cliJsPaths.push(
-      path.join('D:', 'Program Files', 'nodejs', 'node_global', 'node_modules', '@anthropic-ai', 'claude-code', 'cli.js')
+      joinPath(true, 'D:', 'Program Files', 'nodejs', 'node_global', 'node_modules', '@anthropic-ai', 'claude-code', 'cli.js')
     );
   } else {
     cliJsPaths.push(
-      path.join(homeDir, '.npm-global', 'lib', 'node_modules', '@anthropic-ai', 'claude-code', 'cli.js'),
+      joinPath(false, homeDir, '.npm-global', 'lib', 'node_modules', '@anthropic-ai', 'claude-code', 'cli.js'),
       '/usr/local/lib/node_modules/@anthropic-ai/claude-code/cli.js',
       '/usr/lib/node_modules/@anthropic-ai/claude-code/cli.js'
     );
 
     if (process.env.npm_config_prefix) {
       cliJsPaths.push(
-        path.join(process.env.npm_config_prefix, 'lib', 'node_modules', '@anthropic-ai', 'claude-code', 'cli.js')
+        joinPath(false, process.env.npm_config_prefix, 'lib', 'node_modules', '@anthropic-ai', 'claude-code', 'cli.js')
       );
     }
   }
@@ -178,11 +191,11 @@ export function findClaudeCLIPath(pathValue?: string): string | null {
   // because it requires shell: true and breaks SDK stdio streaming.
   if (isWindows) {
     const exePaths: string[] = [
-      path.join(homeDir, '.claude', 'local', 'claude.exe'),
-      path.join(homeDir, 'AppData', 'Local', 'Claude', 'claude.exe'),
-      path.join(process.env.ProgramFiles || 'C:\\Program Files', 'Claude', 'claude.exe'),
-      path.join(process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)', 'Claude', 'claude.exe'),
-      path.join(homeDir, '.local', 'bin', 'claude.exe'),
+      joinPath(true, homeDir, '.claude', 'local', 'claude.exe'),
+      joinPath(true, homeDir, 'AppData', 'Local', 'Claude', 'claude.exe'),
+      joinPath(true, process.env.ProgramFiles || 'C:\\Program Files', 'Claude', 'claude.exe'),
+      joinPath(true, process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)', 'Claude', 'claude.exe'),
+      joinPath(true, homeDir, '.local', 'bin', 'claude.exe'),
     ];
 
     for (const p of exePaths) {
@@ -201,26 +214,26 @@ export function findClaudeCLIPath(pathValue?: string): string | null {
   }
 
   const commonPaths: string[] = [
-    path.join(homeDir, '.claude', 'local', 'claude'),
-    path.join(homeDir, '.local', 'bin', 'claude'),
-    path.join(homeDir, '.volta', 'bin', 'claude'),
-    path.join(homeDir, '.asdf', 'shims', 'claude'),
-    path.join(homeDir, '.asdf', 'bin', 'claude'),
+    joinPath(isWindows, homeDir, '.claude', 'local', 'claude'),
+    joinPath(isWindows, homeDir, '.local', 'bin', 'claude'),
+    joinPath(isWindows, homeDir, '.volta', 'bin', 'claude'),
+    joinPath(isWindows, homeDir, '.asdf', 'shims', 'claude'),
+    joinPath(isWindows, homeDir, '.asdf', 'bin', 'claude'),
     '/usr/local/bin/claude',
     '/opt/homebrew/bin/claude',
-    path.join(homeDir, 'bin', 'claude'),
-    path.join(homeDir, '.npm-global', 'bin', 'claude'),
+    joinPath(isWindows, homeDir, 'bin', 'claude'),
+    joinPath(isWindows, homeDir, '.npm-global', 'bin', 'claude'),
   ];
 
   const npmPrefix = getNpmGlobalPrefix();
   if (npmPrefix) {
-    commonPaths.push(path.join(npmPrefix, 'bin', 'claude'));
+    commonPaths.push(joinPath(isWindows, npmPrefix, 'bin', 'claude'));
   }
 
   // NVM: resolve default version bin when NVM_BIN env var is not available (GUI apps)
   const nvmBin = resolveNvmDefaultBin(homeDir);
   if (nvmBin) {
-    commonPaths.push(path.join(nvmBin, 'claude'));
+    commonPaths.push(joinPath(isWindows, nvmBin, 'claude'));
   }
 
   for (const p of commonPaths) {

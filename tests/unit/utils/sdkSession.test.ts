@@ -1,6 +1,7 @@
 import { existsSync } from 'fs';
 import * as fsPromises from 'fs/promises';
 import * as os from 'os';
+import * as path from 'path';
 
 import {
   collectAsyncSubagentResults,
@@ -40,28 +41,29 @@ describe('sdkSession', () => {
 
   describe('encodeVaultPathForSDK', () => {
     it('encodes vault path by replacing all non-alphanumeric chars with dash', () => {
-      const encoded = encodeVaultPathForSDK('/Users/test/vault');
-      // SDK replaces ALL non-alphanumeric characters with `-`
-      expect(encoded).toBe('-Users-test-vault');
+      const vault = '/Users/test/vault';
+      const encoded = encodeVaultPathForSDK(vault);
+      // 与实现一致：先 path.resolve（主机相关），再抹除非字母数字；单测在 Windows 上会得到盘符前缀
+      expect(encoded).toBe(path.resolve(vault).replace(/[^a-zA-Z0-9]/g, '-'));
     });
 
     it('handles paths with spaces and special characters', () => {
-      const encoded = encodeVaultPathForSDK("/Users/test/My Vault's~Data");
-      expect(encoded).toBe('-Users-test-My-Vault-s-Data');
+      const vault = "/Users/test/My Vault's~Data";
+      const encoded = encodeVaultPathForSDK(vault);
+      expect(encoded).toBe(path.resolve(vault).replace(/[^a-zA-Z0-9]/g, '-'));
     });
 
     it('handles Unicode characters (Chinese, Japanese, etc.)', () => {
-      // Unicode characters should be replaced with `-` to match SDK behavior
-      const encoded = encodeVaultPathForSDK('/Volumes/[Work]弘毅之鹰/学习/东京大学/2025年 秋');
-      // All non-alphanumeric (including Chinese, brackets) become `-`
-      expect(encoded).toBe('-Volumes--Work--------------2025---');
-      // Verify only ASCII alphanumeric and dash remain
+      const vault = '/Volumes/[Work]弘毅之鹰/学习/东京大学/2025年 秋';
+      const encoded = encodeVaultPathForSDK(vault);
+      expect(encoded).toBe(path.resolve(vault).replace(/[^a-zA-Z0-9]/g, '-'));
       expect(encoded).toMatch(/^[a-zA-Z0-9-]+$/);
     });
 
     it('handles brackets and other special characters', () => {
-      const encoded = encodeVaultPathForSDK('/Users/test/[my-vault](notes)');
-      expect(encoded).toBe('-Users-test--my-vault--notes-');
+      const vault = '/Users/test/[my-vault](notes)';
+      const encoded = encodeVaultPathForSDK(vault);
+      expect(encoded).toBe(path.resolve(vault).replace(/[^a-zA-Z0-9]/g, '-'));
       expect(encoded).not.toContain('[');
       expect(encoded).not.toContain(']');
       expect(encoded).not.toContain('(');
@@ -82,15 +84,13 @@ describe('sdkSession', () => {
     });
 
     it('handles backslashes for Windows compatibility', () => {
-      // Test that backslashes are replaced (Windows path separators)
-      // Note: path.resolve may modify the input, so we check the output contains no backslashes
-      const encoded = encodeVaultPathForSDK('C:\\Users\\test\\vault');
+      const vault = 'C:\\Users\\test\\vault';
+      const encoded = encodeVaultPathForSDK(vault);
       expect(encoded).not.toContain('\\');
-      expect(encoded).toContain('-Users-test-vault');
+      expect(encoded).toBe(path.resolve(vault).replace(/[^a-zA-Z0-9]/g, '-'));
     });
 
     it('replaces colons for Windows drive letters', () => {
-      // Windows paths have colons after drive letter
       const encoded = encodeVaultPathForSDK('C:\\Users\\test\\vault');
       expect(encoded).not.toContain(':');
     });
@@ -99,7 +99,7 @@ describe('sdkSession', () => {
   describe('getSDKProjectsPath', () => {
     it('returns path under home directory', () => {
       const projectsPath = getSDKProjectsPath();
-      expect(projectsPath).toBe('/Users/test/.claude/projects');
+      expect(projectsPath).toBe(path.join('/Users/test', '.claude', 'projects'));
     });
   });
 
@@ -133,9 +133,11 @@ describe('sdkSession', () => {
 
   describe('getSDKSessionPath', () => {
     it('constructs correct session file path', () => {
-      const sessionPath = getSDKSessionPath('/Users/test/vault', 'session-123');
-      expect(sessionPath).toContain('.claude/projects');
-      expect(sessionPath).toContain('session-123.jsonl');
+      const vault = '/Users/test/vault';
+      const sessionPath = getSDKSessionPath(vault, 'session-123');
+      expect(sessionPath).toBe(
+        path.join(getSDKProjectsPath(), encodeVaultPathForSDK(vault), 'session-123.jsonl')
+      );
     });
 
     it('throws error for path traversal attempts', () => {
@@ -184,9 +186,7 @@ describe('sdkSession', () => {
 
       await deleteSDKSession('/Users/test/vault', 'session-abc');
 
-      expect(mockFsPromises.unlink).toHaveBeenCalledWith(
-        '/Users/test/.claude/projects/-Users-test-vault/session-abc.jsonl'
-      );
+      expect(mockFsPromises.unlink).toHaveBeenCalledWith(getSDKSessionPath('/Users/test/vault', 'session-abc'));
     });
 
     it('does nothing when session file does not exist', async () => {
@@ -292,7 +292,13 @@ describe('sdkSession', () => {
       );
 
       expect(mockFsPromises.readFile).toHaveBeenCalledWith(
-        '/Users/test/.claude/projects/-Users-test-vault/session-abc/subagents/agent-a123.jsonl',
+        path.join(
+          getSDKProjectsPath(),
+          encodeVaultPathForSDK('/Users/test/vault'),
+          'session-abc',
+          'subagents',
+          'agent-a123.jsonl'
+        ),
         'utf-8'
       );
       expect(toolCalls).toHaveLength(1);
@@ -350,7 +356,13 @@ describe('sdkSession', () => {
 
       expect(result).toBe('Final answer');
       expect(mockFsPromises.readFile).toHaveBeenCalledWith(
-        '/Users/test/.claude/projects/-Users-test-vault/session-abc/subagents/agent-a123.jsonl',
+        path.join(
+          getSDKProjectsPath(),
+          encodeVaultPathForSDK('/Users/test/vault'),
+          'session-abc',
+          'subagents',
+          'agent-a123.jsonl'
+        ),
         'utf-8'
       );
     });
@@ -2321,7 +2333,7 @@ describe('sdkSession', () => {
     it('loads subagent tool calls from sidecar JSONL', async () => {
       mockExistsSync.mockReturnValue(true);
       mockFsPromises.readFile.mockImplementation(async (filePath: any) => {
-        const p = String(filePath);
+        const p = String(filePath).replace(/\\/g, '/');
         if (p.includes('subagents/agent-ae5eb9a.jsonl')) {
           return [
             '{"type":"assistant","timestamp":"2024-01-15T10:02:00Z","message":{"content":[{"type":"tool_use","id":"sub-tool-1","name":"Grep","input":{"pattern":"TODO"}}]}}',

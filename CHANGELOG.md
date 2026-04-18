@@ -2,6 +2,21 @@
 
 本文档记录 Claudian（Obsidian 插件）的版本变更；格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，版本号遵循语义化版本意图（主版本.次版本.修订号）。
 
+## [2.0.14] - 2026-04-19
+
+### 修复
+
+- **路径工具**：`normalizePathForComparison` 在 Windows 上将 `path.win32.normalize("A:")` 得到的 `A:.` 规范为 `A:`，避免 MSYS 风格 `/a` 与嵌套路径冲突检测在单测/边界场景下误判。
+- **`path` / `env`**：非 Windows 逻辑使用 `path.posix` 与运行时 `process.platform` 判断，避免在 Windows 开发机跑 Jest（mock 为 darwin/linux）时出现错误分隔符或反斜杠路径片段。
+- **`findClaudeCLIPath`**：按逻辑平台使用 `path.posix.join` / `path.win32.join`，与 `process.platform` mock 一致，便于跨平台单测。
+
+### 测试与工程
+
+- **Jest**：新增 `tests/jest-setup.ts`，默认 `setLocale('en')`，避免默认 `zh-CN` 导致大量英文 UI 断言失败。
+- **单测**：修正 `sdkSession`、`path`、`utils`、`Codex`、`MessageRenderer` 等在 Windows 下的路径与 i18n 期望值；`sdkSession` 侧车路径匹配统一归一化斜杠。
+
+---
+
 ## [2.0.13] - 2026-04-19
 
 ### 变更

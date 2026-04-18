@@ -42,9 +42,22 @@ export class SlashCommandModal extends Modal {
     const existingIsSkill = this.existingEntry ? isSkillEntry(this.existingEntry) : false;
     let selectedType: 'command' | 'skill' = existingIsSkill ? 'skill' : 'command';
 
-    const typeLabel = () => selectedType === 'skill' ? 'Skill' : 'Slash Command';
-
-    this.setTitle(this.existingEntry ? `Edit ${typeLabel()}` : `Add ${typeLabel()}`);
+    const refreshTitle = () => {
+      if (this.existingEntry) {
+        this.setTitle(
+          selectedType === 'skill'
+            ? t('settings.slashCommandModal.modalTitleEditSkill')
+            : t('settings.slashCommandModal.modalTitleEditCommand'),
+        );
+      } else {
+        this.setTitle(
+          selectedType === 'skill'
+            ? t('settings.slashCommandModal.modalTitleAddSkill')
+            : t('settings.slashCommandModal.modalTitleAddCommand'),
+        );
+      }
+    };
+    refreshTitle();
     this.modalEl.addClass('claudian-sp-modal');
 
     const { contentEl } = this;
@@ -74,16 +87,16 @@ export class SlashCommandModal extends Modal {
     };
 
     new Setting(contentEl)
-      .setName('Type')
-      .setDesc('Command or skill')
+      .setName(t('settings.slashCommandModal.typeName'))
+      .setDesc(t('settings.slashCommandModal.typeDesc'))
       .addDropdown(dropdown => {
         dropdown
-          .addOption('command', 'Command')
-          .addOption('skill', 'Skill')
+          .addOption('command', t('settings.slashCommandModal.typeCommand'))
+          .addOption('skill', t('settings.slashCommandModal.typeSkill'))
           .setValue(selectedType)
           .onChange(value => {
             selectedType = value as 'command' | 'skill';
-            this.setTitle(this.existingEntry ? `Edit ${typeLabel()}` : `Add ${typeLabel()}`);
+            refreshTitle();
             updateSkillOnlyFields();
           });
         if (this.existingEntry) {
@@ -92,8 +105,8 @@ export class SlashCommandModal extends Modal {
       });
 
     new Setting(contentEl)
-      .setName('Command name')
-      .setDesc('The name used after / (e.g., "review" for /review)')
+      .setName(t('settings.slashCommandModal.commandName'))
+      .setDesc(t('settings.slashCommandModal.commandNameDesc'))
       .addText(text => {
         nameInput = text.inputEl;
         text.setValue(this.existingEntry?.name || '')
@@ -101,8 +114,8 @@ export class SlashCommandModal extends Modal {
       });
 
     new Setting(contentEl)
-      .setName('Description')
-      .setDesc('Optional description shown in dropdown')
+      .setName(t('settings.slashCommandModal.description'))
+      .setDesc(t('settings.slashCommandModal.descriptionDesc'))
       .addText(text => {
         descInput = text.inputEl;
         text.setValue(this.existingEntry?.description || '');
@@ -110,7 +123,7 @@ export class SlashCommandModal extends Modal {
 
     const details = contentEl.createEl('details', { cls: 'claudian-sp-advanced-section' });
     details.createEl('summary', {
-      text: 'Advanced options',
+      text: t('settings.subagents.modal.advancedOptions'),
       cls: 'claudian-sp-advanced-summary',
     });
     if (
@@ -126,16 +139,16 @@ export class SlashCommandModal extends Modal {
     }
 
     new Setting(details)
-      .setName('Argument hint')
-      .setDesc('Placeholder text for arguments (e.g., "[file] [focus]")')
+      .setName(t('settings.slashCommandModal.argumentHint'))
+      .setDesc(t('settings.slashCommandModal.argumentHintDesc'))
       .addText(text => {
         hintInput = text.inputEl;
         text.setValue(this.existingEntry?.argumentHint || '');
       });
 
     new Setting(details)
-      .setName('Model override')
-      .setDesc('Optional model to use for this command')
+      .setName(t('settings.slashCommandModal.modelOverride'))
+      .setDesc(t('settings.slashCommandModal.modelOverrideDesc'))
       .addText(text => {
         modelInput = text.inputEl;
         text.setValue(this.existingEntry?.model || '')
@@ -143,24 +156,24 @@ export class SlashCommandModal extends Modal {
       });
 
     new Setting(details)
-      .setName('Allowed tools')
-      .setDesc('Comma-separated list of tools to allow (empty = all)')
+      .setName(t('settings.slashCommandModal.allowedTools'))
+      .setDesc(t('settings.slashCommandModal.allowedToolsDesc'))
       .addText(text => {
         toolsInput = text.inputEl;
         text.setValue(this.existingEntry?.allowedTools?.join(', ') || '');
       });
 
     new Setting(details)
-      .setName('Disable model invocation')
-      .setDesc('Prevent the model from invoking this command itself')
+      .setName(t('settings.slashCommandModal.disableModelInvocation'))
+      .setDesc(t('settings.slashCommandModal.disableModelInvocationDesc'))
       .addToggle(toggle => {
         toggle.setValue(disableModelToggle)
           .onChange(value => { disableModelToggle = value; });
       });
 
     disableUserSetting = new Setting(details)
-      .setName('Disable user invocation')
-      .setDesc('Prevent the user from invoking this skill directly')
+      .setName(t('settings.slashCommandModal.disableUserInvocation'))
+      .setDesc(t('settings.slashCommandModal.disableUserInvocationDesc'))
       .addToggle(toggle => {
         disableUserToggle = toggle;
         toggle.setValue(disableUserInvocation)
@@ -170,8 +183,8 @@ export class SlashCommandModal extends Modal {
     updateSkillOnlyFields();
 
     new Setting(details)
-      .setName('Context')
-      .setDesc('Run in a subagent (fork)')
+      .setName(t('settings.slashCommandModal.context'))
+      .setDesc(t('settings.slashCommandModal.contextDesc'))
       .addToggle(toggle => {
         toggle.setValue(contextValue === 'fork')
           .onChange(value => {
@@ -181,8 +194,8 @@ export class SlashCommandModal extends Modal {
       });
 
     const agentSetting = new Setting(details)
-      .setName('Agent')
-      .setDesc('Subagent type when context is fork')
+      .setName(t('settings.slashCommandModal.agent'))
+      .setDesc(t('settings.slashCommandModal.agentDesc'))
       .addText(text => {
         agentInput = text.inputEl;
         text.setValue(this.existingEntry?.agent || '')
@@ -191,8 +204,8 @@ export class SlashCommandModal extends Modal {
     agentSetting.settingEl.style.display = contextValue === 'fork' ? '' : 'none';
 
     new Setting(contentEl)
-      .setName('Prompt template')
-      .setDesc('Use $ARGUMENTS, $1, $2, @file, !`bash`');
+      .setName(t('settings.slashCommandModal.promptTemplate'))
+      .setDesc(t('settings.slashCommandModal.promptTemplateDesc'));
 
     const contentArea = contentEl.createEl('textarea', {
       cls: 'claudian-sp-content-area',
@@ -209,13 +222,13 @@ export class SlashCommandModal extends Modal {
     const buttonContainer = contentEl.createDiv({ cls: 'claudian-sp-modal-buttons' });
 
     const cancelBtn = buttonContainer.createEl('button', {
-      text: 'Cancel',
+      text: t('common.cancel'),
       cls: 'claudian-cancel-btn',
     });
     cancelBtn.addEventListener('click', () => this.close());
 
     const saveBtn = buttonContainer.createEl('button', {
-      text: 'Save',
+      text: t('common.save'),
       cls: 'claudian-save-btn',
     });
     saveBtn.addEventListener('click', async () => {
@@ -228,7 +241,7 @@ export class SlashCommandModal extends Modal {
 
       const content = contentArea.value;
       if (!content.trim()) {
-        new Notice('Prompt template is required');
+        new Notice(t('settings.slashCommandModal.promptRequired'));
         return;
       }
 
@@ -237,7 +250,11 @@ export class SlashCommandModal extends Modal {
           && entry.id !== this.existingEntry?.id,
       );
       if (existing) {
-        new Notice(`A command named "/${name}" already exists`);
+        new Notice(
+          isSkillEntry(existing)
+            ? t('settings.slashCommandModal.skillExists', { name })
+            : t('settings.slashCommandModal.commandExists', { name }),
+        );
         return;
       }
 
@@ -276,8 +293,11 @@ export class SlashCommandModal extends Modal {
       try {
         await this.onSave(entry);
       } catch {
-        const label = isSkillType ? 'skill' : 'slash command';
-        new Notice(`Failed to save ${label}`);
+        new Notice(
+          isSkillType
+            ? t('settings.slashCommandModal.saveFailedSkill')
+            : t('settings.slashCommandModal.saveFailedCommand'),
+        );
         return;
       }
       this.close();
@@ -327,7 +347,7 @@ export class SlashCommandSettings {
   private renderUnavailable(): void {
     this.containerEl.empty();
     const emptyEl = this.containerEl.createDiv({ cls: 'claudian-sp-empty-state' });
-    emptyEl.setText('Claude command catalog is unavailable.');
+    emptyEl.setText(t('settings.slashCommandModal.catalogUnavailable'));
   }
 
   private render(): void {
@@ -340,14 +360,14 @@ export class SlashCommandSettings {
 
     const addBtn = actionsEl.createEl('button', {
       cls: 'claudian-settings-action-btn',
-      attr: { 'aria-label': 'Add' },
+      attr: { 'aria-label': t('common.add') },
     });
     setIcon(addBtn, 'plus');
     addBtn.addEventListener('click', () => this.openCommandModal(null));
 
     if (this.commands.length === 0) {
       const emptyEl = this.containerEl.createDiv({ cls: 'claudian-sp-empty-state' });
-      emptyEl.setText('No commands or skills configured. Click + to create one.');
+      emptyEl.setText(t('settings.slashCommandModal.emptyList'));
       return;
     }
 
@@ -369,7 +389,7 @@ export class SlashCommandSettings {
     nameEl.setText(`/${cmd.name}`);
 
     if (isSkillEntry(cmd)) {
-      headerRow.createSpan({ text: 'skill', cls: 'claudian-slash-item-badge' });
+      headerRow.createSpan({ text: t('settings.codexSkills.badgeSkill'), cls: 'claudian-slash-item-badge' });
     }
 
     if (cmd.argumentHint) {
@@ -387,7 +407,7 @@ export class SlashCommandSettings {
     if (cmd.isEditable) {
       const editBtn = actionsEl.createEl('button', {
         cls: 'claudian-settings-action-btn',
-        attr: { 'aria-label': 'Edit' },
+        attr: { 'aria-label': t('common.edit') },
       });
       setIcon(editBtn, 'pencil');
       editBtn.addEventListener('click', () => this.openCommandModal(cmd));
@@ -396,14 +416,14 @@ export class SlashCommandSettings {
     if (!isSkillEntry(cmd) && cmd.isEditable) {
       const convertBtn = actionsEl.createEl('button', {
         cls: 'claudian-settings-action-btn',
-        attr: { 'aria-label': 'Convert to skill' },
+        attr: { 'aria-label': t('settings.slashCommandModal.convertToSkillAria') },
       });
       setIcon(convertBtn, 'package');
       convertBtn.addEventListener('click', async () => {
         try {
           await this.transformToSkill(cmd);
         } catch {
-          new Notice('Failed to convert to skill');
+          new Notice(t('settings.slashCommandModal.convertToSkillFailed'));
         }
       });
     }
@@ -411,15 +431,18 @@ export class SlashCommandSettings {
     if (cmd.isDeletable) {
       const deleteBtn = actionsEl.createEl('button', {
         cls: 'claudian-settings-action-btn claudian-settings-delete-btn',
-        attr: { 'aria-label': 'Delete' },
+        attr: { 'aria-label': t('common.delete') },
       });
       setIcon(deleteBtn, 'trash-2');
       deleteBtn.addEventListener('click', async () => {
         try {
           await this.deleteCommand(cmd);
         } catch {
-          const label = isSkillEntry(cmd) ? 'skill' : 'slash command';
-          new Notice(`Failed to delete ${label}`);
+          new Notice(
+            isSkillEntry(cmd)
+              ? t('settings.slashCommandModal.deleteFailedSkill')
+              : t('settings.slashCommandModal.deleteFailedCommand'),
+          );
         }
       });
     }
@@ -451,8 +474,12 @@ export class SlashCommandSettings {
     await this.reloadCommands();
 
     this.render();
-    const label = isSkillEntry(cmd) ? 'Skill' : 'Slash command';
-    new Notice(`${label} "/${cmd.name}" ${existing ? 'updated' : 'created'}`);
+    const action = existing ? t('settings.slashCommandModal.updated') : t('settings.slashCommandModal.created');
+    new Notice(
+      isSkillEntry(cmd)
+        ? t('settings.slashCommandModal.savedSkill', { name: cmd.name, action })
+        : t('settings.slashCommandModal.savedCommand', { name: cmd.name, action }),
+    );
   }
 
   private async deleteCommand(cmd: ProviderCommandEntry): Promise<void> {
@@ -465,8 +492,11 @@ export class SlashCommandSettings {
     await this.reloadCommands();
 
     this.render();
-    const label = isSkillEntry(cmd) ? 'Skill' : 'Slash command';
-    new Notice(`${label} "/${cmd.name}" deleted`);
+    new Notice(
+      isSkillEntry(cmd)
+        ? t('settings.slashCommandModal.deletedSkill', { name: cmd.name })
+        : t('settings.slashCommandModal.deletedCommand', { name: cmd.name }),
+    );
   }
 
   private async transformToSkill(cmd: ProviderCommandEntry): Promise<void> {
@@ -480,7 +510,7 @@ export class SlashCommandSettings {
       entry => isSkillEntry(entry) && entry.name === skillName,
     );
     if (existingSkill) {
-      new Notice(`A skill named "/${skillName}" already exists`);
+      new Notice(t('settings.slashCommandModal.skillExists', { name: skillName }));
       return;
     }
 
@@ -503,7 +533,7 @@ export class SlashCommandSettings {
 
     await this.reloadCommands();
     this.render();
-    new Notice(`Converted "/${cmd.name}" to skill`);
+    new Notice(t('settings.slashCommandModal.convertedToSkill', { name: cmd.name }));
   }
 
   private async reloadCommands(): Promise<void> {

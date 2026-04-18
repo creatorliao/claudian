@@ -8,6 +8,7 @@
 import { setIcon } from 'obsidian';
 
 import type { ConversationMeta } from '../../core/types';
+import { t } from '../../i18n/i18n';
 
 export interface ResumeSessionDropdownCallbacks {
   onSelect: (conversationId: string) => void;
@@ -130,10 +131,10 @@ export class ResumeSessionDropdown {
     this.dropdownEl.empty();
 
     const header = this.dropdownEl.createDiv({ cls: 'claudian-resume-header' });
-    header.createSpan({ text: 'Resume conversation' });
+    header.createSpan({ text: t('chat.resume.header') });
 
     if (this.conversations.length === 0) {
-      this.dropdownEl.createDiv({ cls: 'claudian-resume-empty', text: 'No conversations' });
+      this.dropdownEl.createDiv({ cls: 'claudian-resume-empty', text: t('chat.resume.empty') });
       return;
     }
 

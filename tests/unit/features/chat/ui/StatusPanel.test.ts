@@ -1,5 +1,6 @@
 import type { TodoItem } from '@/core/tools/todo';
 import { StatusPanel } from '@/features/chat/ui/StatusPanel';
+import { setLocale } from '@/i18n/i18n';
 
 // Mock obsidian
 jest.mock('obsidian', () => ({
@@ -592,6 +593,8 @@ describe('StatusPanel', () => {
 
   describe('bash outputs', () => {
     beforeEach(() => {
+      // 默认语言为 zh-CN，本组断言英文 UI 文案，与 i18n 测试解耦
+      setLocale('en');
       panel.mount(containerEl as unknown as HTMLElement);
     });
 

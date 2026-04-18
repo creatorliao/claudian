@@ -320,7 +320,7 @@ export class MessageRenderer {
           }
         } else if (block.type === 'context_compacted') {
           const boundaryEl = contentEl.createDiv({ cls: 'claudian-compact-boundary' });
-          boundaryEl.createSpan({ cls: 'claudian-compact-boundary-label', text: 'Conversation compacted' });
+          boundaryEl.createSpan({ cls: 'claudian-compact-boundary-label', text: t('chat.compact.conversationCompacted') });
         } else if (block.type === 'subagent') {
           const taskToolCall = msg.toolCalls?.find(
             tc => tc.id === block.subagentId && isSubagentToolName(tc.name)
@@ -617,7 +617,7 @@ export class MessageRenderer {
             label.addEventListener('click', async () => {
               try {
                 await navigator.clipboard.writeText(code.textContent || '');
-                label.setText('copied!');
+                label.setText(t('chat.message.copied'));
                 setTimeout(() => label.setText(match[1]), 1500);
               } catch {
                 // Clipboard API may fail in non-secure contexts
@@ -638,7 +638,7 @@ export class MessageRenderer {
     } catch {
       el.createDiv({
         cls: 'claudian-render-error',
-        text: 'Failed to render message content.',
+        text: t('chat.message.renderFailed'),
       });
     }
   }
@@ -679,7 +679,7 @@ export class MessageRenderer {
 
       // Show "copied!" feedback
       copyBtn.innerHTML = '';
-      copyBtn.setText('copied!');
+      copyBtn.setText(t('chat.message.copied'));
       copyBtn.classList.add('copied');
 
       feedbackTimeout = setTimeout(() => {
@@ -736,7 +736,7 @@ export class MessageRenderer {
       }
       if (feedbackTimeout) clearTimeout(feedbackTimeout);
       copyBtn.innerHTML = '';
-      copyBtn.setText('copied!');
+      copyBtn.setText(t('chat.message.copied'));
       copyBtn.classList.add('copied');
       feedbackTimeout = setTimeout(() => {
         copyBtn.innerHTML = MessageRenderer.COPY_ICON;
@@ -758,7 +758,7 @@ export class MessageRenderer {
       try {
         await this.rewindCallback?.(messageId);
       } catch (err) {
-        new Notice(t('chat.rewind.failed', { error: err instanceof Error ? err.message : 'Unknown error' }));
+        new Notice(t('chat.rewind.failed', { error: err instanceof Error ? err.message : t('common.unknownError') }));
       }
     });
   }
@@ -775,7 +775,7 @@ export class MessageRenderer {
       try {
         await this.forkCallback?.(messageId);
       } catch (err) {
-        new Notice(t('chat.fork.failed', { error: err instanceof Error ? err.message : 'Unknown error' }));
+        new Notice(t('chat.fork.failed', { error: err instanceof Error ? err.message : t('common.unknownError') }));
       }
     });
   }

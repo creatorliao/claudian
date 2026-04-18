@@ -4,6 +4,7 @@ import { Setting } from 'obsidian';
 import type { ProviderSettingsTabRenderer } from '../../../core/providers/types';
 import { renderEnvironmentSettingsSection } from '../../../features/settings/ui/EnvironmentSettingsSection';
 import { t } from '../../../i18n/i18n';
+import type { TranslationKey } from '../../../i18n/types';
 import { getHostnameKey } from '../../../utils/env';
 import { expandHomePath } from '../../../utils/path';
 import { getCodexWorkspaceServices } from '../app/CodexWorkspaceServices';
@@ -11,6 +12,13 @@ import { isWindowsStyleCliReference } from '../runtime/CodexBinaryLocator';
 import { getCodexProviderSettings, updateCodexProviderSettings } from '../settings';
 import { CodexSkillSettings } from './CodexSkillSettings';
 import { CodexSubagentSettings } from './CodexSubagentSettings';
+
+const SUMMARY_OPTIONS: { value: string; labelKey: TranslationKey }[] = [
+  { value: 'auto', labelKey: 'settings.codex.reasoningSummary.optionAuto' },
+  { value: 'concise', labelKey: 'settings.codex.reasoningSummary.optionConcise' },
+  { value: 'detailed', labelKey: 'settings.codex.reasoningSummary.optionDetailed' },
+  { value: 'none', labelKey: 'settings.codex.reasoningSummary.optionOff' },
+];
 
 export const codexSettingsTabRenderer: ProviderSettingsTabRenderer = {
   render(container, context) {
@@ -26,8 +34,8 @@ export const codexSettingsTabRenderer: ProviderSettingsTabRenderer = {
     new Setting(container).setName(t('settings.setup')).setHeading();
 
     new Setting(container)
-      .setName('Enable Codex provider')
-      .setDesc('When enabled, Codex models appear in the model selector for new conversations. Existing Codex sessions are preserved.')
+      .setName(t('settings.codex.providerEnabled.name'))
+      .setDesc(t('settings.codex.providerEnabled.desc'))
       .addToggle((toggle) =>
         toggle
           .setValue(codexSettings.enabled)
@@ -40,12 +48,12 @@ export const codexSettingsTabRenderer: ProviderSettingsTabRenderer = {
 
     if (isWindowsHost) {
       new Setting(container)
-        .setName('Installation method')
-        .setDesc('How Claudian should launch Codex on Windows. Native Windows uses a Windows executable path. WSL launches the Linux CLI inside a selected distro.')
+        .setName(t('settings.codex.installationMethod.name'))
+        .setDesc(t('settings.codex.installationMethod.desc'))
         .addDropdown((dropdown) => {
           dropdown
-            .addOption('native-windows', 'Native Windows')
-            .addOption('wsl', 'WSL')
+            .addOption('native-windows', t('settings.codex.installation.nativeWindows'))
+            .addOption('wsl', t('settings.codex.installation.wsl'))
             .setValue(installationMethod)
             .onChange(async (value) => {
               installationMethod = value === 'wsl' ? 'wsl' : 'native-windows';
@@ -59,20 +67,20 @@ export const codexSettingsTabRenderer: ProviderSettingsTabRenderer = {
     const getCliPathCopy = (): { desc: string; placeholder: string } => {
       if (!isWindowsHost) {
         return {
-          desc: 'Custom path to the local Codex CLI. Leave empty for auto-detection from PATH.',
+          desc: t('settings.codex.cliPath.descGeneric'),
           placeholder: '/usr/local/bin/codex',
         };
       }
 
       if (installationMethod === 'wsl') {
         return {
-          desc: 'Linux-side Codex command or absolute path to run inside WSL. Leave empty for PATH lookup inside the selected distro.',
+          desc: t('settings.codex.cliPath.descWsl'),
           placeholder: 'codex',
         };
       }
 
       return {
-        desc: 'Custom path to the local Codex CLI. Leave empty for auto-detection from PATH. Use the native Windows executable path, usually `codex.exe`.',
+        desc: t('settings.codex.cliPath.descWindowsNative'),
         placeholder: 'C:\\Users\\you\\AppData\\Roaming\\npm\\codex.exe',
       };
     };
@@ -80,7 +88,7 @@ export const codexSettingsTabRenderer: ProviderSettingsTabRenderer = {
     const shouldValidateCliPathAsFile = (): boolean => !isWindowsHost || installationMethod !== 'wsl';
 
     const cliPathSetting = new Setting(container)
-      .setName(`Codex CLI path (${hostnameKey})`)
+      .setName(t('settings.codex.cliPath.name', { host: hostnameKey }))
       .setDesc(getCliPathCopy().desc);
 
     const validationEl = container.createDiv({ cls: 'claudian-cli-path-validation' });
@@ -96,7 +104,7 @@ export const codexSettingsTabRenderer: ProviderSettingsTabRenderer = {
 
       if (!shouldValidateCliPathAsFile()) {
         if (isWindowsStyleCliReference(trimmed)) {
-          return 'WSL mode expects a Linux command or Linux absolute path, not a Windows executable path.';
+          return t('settings.codex.cliPathValidation.wslExpectsLinuxPath');
         }
         return null;
       }
@@ -191,13 +199,13 @@ export const codexSettingsTabRenderer: ProviderSettingsTabRenderer = {
 
     if (isWindowsHost) {
       const wslDistroSetting = new Setting(container)
-        .setName('WSL distro override')
-        .setDesc('Optional advanced override. Leave empty to infer the distro from a \\\\wsl$ workspace path when possible, otherwise use the default WSL distro.');
+        .setName(t('settings.codex.wslDistro.name'))
+        .setDesc(t('settings.codex.wslDistro.desc'));
 
       wslDistroSettingEl = wslDistroSetting.settingEl;
       wslDistroSetting.addText((text) => {
         text
-          .setPlaceholder('Ubuntu')
+          .setPlaceholder(t('settings.codex.wslDistro.placeholder'))
           .setValue(codexSettings.wslDistroOverride)
           .onChange(async (value) => {
             updateCodexProviderSettings(settingsBag, { wslDistroOverride: value });
@@ -222,8 +230,8 @@ export const codexSettingsTabRenderer: ProviderSettingsTabRenderer = {
       .setDesc(t('settings.codexSafeMode.desc'))
       .addDropdown((dropdown) => {
         dropdown
-          .addOption('workspace-write', 'workspace-write')
-          .addOption('read-only', 'read-only')
+          .addOption('workspace-write', t('settings.codexSafeMode.optionWorkspaceWrite'))
+          .addOption('read-only', t('settings.codexSafeMode.optionReadOnly'))
           .setValue(codexSettings.safeMode)
           .onChange(async (value) => {
             updateCodexProviderSettings(
@@ -238,19 +246,12 @@ export const codexSettingsTabRenderer: ProviderSettingsTabRenderer = {
 
     new Setting(container).setName(t('settings.models')).setHeading();
 
-    const SUMMARY_OPTIONS: { value: string; label: string }[] = [
-      { value: 'auto', label: 'Auto' },
-      { value: 'concise', label: 'Concise' },
-      { value: 'detailed', label: 'Detailed' },
-      { value: 'none', label: 'Off' },
-    ];
-
     new Setting(container)
-      .setName('Reasoning summary')
-      .setDesc('Show a summary of the model\'s reasoning process in the thinking block.')
+      .setName(t('settings.codex.reasoningSummary.name'))
+      .setDesc(t('settings.codex.reasoningSummary.desc'))
       .addDropdown((dropdown) => {
         for (const opt of SUMMARY_OPTIONS) {
-          dropdown.addOption(opt.value, opt.label);
+          dropdown.addOption(opt.value, t(opt.labelKey));
         }
         dropdown.setValue(codexSettings.reasoningSummary);
         dropdown.onChange(async (value) => {
@@ -266,12 +267,12 @@ export const codexSettingsTabRenderer: ProviderSettingsTabRenderer = {
 
     const codexCatalog = codexWorkspace.commandCatalog;
     if (codexCatalog) {
-      new Setting(container).setName('Codex Skills').setHeading();
+      new Setting(container).setName(t('settings.codex.skillsSection.heading')).setHeading();
 
       const skillsDesc = container.createDiv({ cls: 'claudian-sp-settings-desc' });
       skillsDesc.createEl('p', {
         cls: 'setting-item-description',
-        text: 'Manage vault-level Codex skills stored in .codex/skills/ or .agents/skills/. Home-level skills are excluded here.',
+        text: t('settings.codex.skillsSection.desc'),
       });
 
       const skillsContainer = container.createDiv({ cls: 'claudian-slash-commands-container' });
@@ -279,19 +280,19 @@ export const codexSettingsTabRenderer: ProviderSettingsTabRenderer = {
     }
 
     context.renderHiddenProviderCommandSetting(container, 'codex', {
-      name: 'Hidden Skills',
-      desc: 'Hide specific Codex skills from the dropdown. Enter skill names without the leading $, one per line.',
-      placeholder: 'analyze\nexplain\nfix',
+      name: t('settings.codex.hiddenSkills.name'),
+      desc: t('settings.codex.hiddenSkills.desc'),
+      placeholder: t('settings.codex.hiddenSkills.placeholder'),
     });
 
     // --- Subagents ---
 
-    new Setting(container).setName('Codex Subagents').setHeading();
+    new Setting(container).setName(t('settings.codex.subagentsSection.heading')).setHeading();
 
     const subagentDesc = container.createDiv({ cls: 'claudian-sp-settings-desc' });
     subagentDesc.createEl('p', {
       cls: 'setting-item-description',
-      text: 'Manage vault-level Codex subagents stored in .codex/agents/. Each TOML file defines one custom agent.',
+      text: t('settings.codex.subagentsSection.desc'),
     });
 
     const subagentContainer = container.createDiv({ cls: 'claudian-slash-commands-container' });
@@ -304,11 +305,11 @@ export const codexSettingsTabRenderer: ProviderSettingsTabRenderer = {
     new Setting(container).setName(t('settings.mcpServers.name')).setHeading();
     const mcpNotice = container.createDiv({ cls: 'claudian-mcp-settings-desc' });
     const mcpDesc = mcpNotice.createEl('p', { cls: 'setting-item-description' });
-    mcpDesc.appendText('Codex manages MCP servers via its own CLI. Configure with ');
+    mcpDesc.appendText(t('settings.codex.mcpNotice.beforeCmd'));
     mcpDesc.createEl('code', { text: 'codex mcp' });
-    mcpDesc.appendText(' and they will be available in Claudian. ');
+    mcpDesc.appendText(t('settings.codex.mcpNotice.afterCmd'));
     mcpDesc.createEl('a', {
-      text: 'Learn more',
+      text: t('common.learnMore'),
       href: 'https://developers.openai.com/codex/mcp',
     });
 
@@ -319,9 +320,9 @@ export const codexSettingsTabRenderer: ProviderSettingsTabRenderer = {
       plugin: context.plugin,
       scope: 'provider:codex',
       heading: t('settings.environment'),
-      name: 'Codex environment',
-      desc: 'Codex-owned runtime variables only. Use this for OPENAI_* and CODEX_* settings. If Codex auto-detection needs help, add its install directory to shared PATH instead of this provider section.',
-      placeholder: 'OPENAI_API_KEY=your-key\nOPENAI_BASE_URL=https://api.openai.com/v1\nOPENAI_MODEL=gpt-5.4\nCODEX_SANDBOX=workspace-write',
+      name: t('settings.codex.env.name'),
+      desc: t('settings.codex.env.desc'),
+      placeholder: t('settings.codex.env.placeholder'),
       renderCustomContextLimits: (target) => context.renderCustomContextLimits(target, 'codex'),
     });
   },

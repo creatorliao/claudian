@@ -4,6 +4,7 @@ import type {
   ProviderReasoningOption,
   ProviderUIOption,
 } from '../../../core/providers/types';
+import { CLAUDE_BRAND_MARK } from '../../../shared/claudeBrandMark';
 import { getCustomModelIds } from '../env/claudeModelEnv';
 import { getClaudeModelOptions } from '../modelOptions';
 import { getClaudeProviderSettings, updateClaudeProviderSettings } from '../settings';
@@ -20,7 +21,6 @@ import {
   supportsXHighEffort,
   THINKING_BUDGETS,
 } from '../types/models';
-import { CLAUDE_BRAND_MARK } from '../../../shared/claudeBrandMark';
 
 const CLAUDE_PERMISSION_MODE_TOGGLE: ProviderPermissionModeToggleConfig = {
   inactiveValue: 'normal',

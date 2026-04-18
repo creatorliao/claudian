@@ -23,6 +23,7 @@ import {
 } from '../../../core/tools/toolNames';
 import type { ChatMessage, StreamChunk, SubagentInfo, ToolCallInfo } from '../../../core/types';
 import type { SDKToolUseResult } from '../../../core/types/diff';
+import { t } from '../../../i18n/i18n';
 import type ClaudianPlugin from '../../../main';
 import { formatDurationMmSs } from '../../../utils/date';
 import { extractDiffData } from '../../../utils/diff';
@@ -1167,7 +1168,7 @@ export class StreamController {
     if (!state.currentContentEl) return;
     this.hideThinkingIndicator();
     const el = state.currentContentEl.createDiv({ cls: 'claudian-compact-boundary' });
-    el.createSpan({ cls: 'claudian-compact-boundary-label', text: 'Conversation compacted' });
+    el.createSpan({ cls: 'claudian-compact-boundary-label', text: t('chat.compact.conversationCompacted') });
   }
 
   // ============================================

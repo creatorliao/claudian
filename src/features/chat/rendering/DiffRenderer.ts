@@ -1,4 +1,5 @@
 import type { DiffLine } from '../../../core/types/diff';
+import { t } from '../../../i18n/i18n';
 
 export interface DiffHunk {
   lines: DiffLine[];
@@ -81,7 +82,7 @@ export function renderDiffContent(
     }
     const remaining = diffLines.length - NEW_FILE_DISPLAY_CAP;
     const separator = containerEl.createDiv({ cls: 'claudian-diff-separator' });
-    separator.setText(`... ${remaining} more lines`);
+    separator.setText(t('chat.diff.moreLinesOmitted', { count: String(remaining) }));
     return;
   }
 
@@ -90,7 +91,7 @@ export function renderDiffContent(
   if (hunks.length === 0) {
     // No changes
     const noChanges = containerEl.createDiv({ cls: 'claudian-diff-no-changes' });
-    noChanges.setText('No changes');
+    noChanges.setText(t('chat.diff.noChanges'));
     return;
   }
 
