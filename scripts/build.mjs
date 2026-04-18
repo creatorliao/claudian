@@ -1,19 +1,58 @@
 #!/usr/bin/env node
 /**
- * Combined build script - runs CSS build then esbuild
- * Avoids npm echoing commands
+ * 生产：`npm run build` → CSS + esbuild，产物写入 dist/claudian（main.js、styles.css、manifest.json）。
+ * 开发：请使用 `npm run dev`（产物仍在仓库根目录，便于 watch）。
  */
 
 import { execSync } from 'child_process';
+import { copyFileSync, existsSync, mkdirSync, unlinkSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
+/** 与 Obsidian 插件目录一致：整文件夹复制到 .obsidian/plugins/claudian 即可 */
+const DIST_PLUGIN = join(ROOT, 'dist', 'claudian');
 
-// Run CSS build silently
-execSync('node scripts/build-css.mjs', { cwd: ROOT, stdio: 'inherit' });
-
-// Run esbuild with args passed through
 const args = process.argv.slice(2).join(' ');
-execSync(`node esbuild.config.mjs ${args}`, { cwd: ROOT, stdio: 'inherit' });
+const isProd = process.argv.slice(2).includes('production');
+
+const childEnv = isProd
+  ? { ...process.env, CLAUDIAN_PLUGIN_OUT_DIR: DIST_PLUGIN }
+  : { ...process.env };
+
+if (isProd) {
+  mkdirSync(DIST_PLUGIN, { recursive: true });
+}
+
+execSync('node scripts/build-css.mjs', { cwd: ROOT, stdio: 'inherit', env: childEnv });
+execSync(`node esbuild.config.mjs ${args}`, { cwd: ROOT, stdio: 'inherit', env: childEnv });
+
+if (isProd) {
+  copyFileSync(join(ROOT, 'manifest.json'), join(DIST_PLUGIN, 'manifest.json'));
+
+  // 避免与 dist/claudian 重复：清理历史遗留的仓库根目录产物
+  for (const name of ['main.js', 'styles.css']) {
+    const p = join(ROOT, name);
+    if (existsSync(p)) {
+      try {
+        unlinkSync(p);
+      } catch {
+        // 忽略占用或只读
+      }
+    }
+  }
+  // 避免与 dist/claudian 混淆：删除曾误放在 dist/ 根下的同名文件
+  for (const name of ['main.js', 'styles.css', 'manifest.json']) {
+    const stale = join(ROOT, 'dist', name);
+    if (existsSync(stale)) {
+      try {
+        unlinkSync(stale);
+      } catch {
+        // ignore
+      }
+    }
+  }
+
+  console.log(`Production bundle → ${DIST_PLUGIN}`);
+}

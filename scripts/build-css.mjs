@@ -4,14 +4,16 @@
  * Concatenates modular CSS files from src/style/ into root styles.css
  */
 
-import { readFileSync, writeFileSync, existsSync, readdirSync } from 'fs';
+import { mkdirSync, readFileSync, writeFileSync, existsSync, readdirSync } from 'fs';
 import { join, dirname, resolve, relative } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 const STYLE_DIR = join(ROOT, 'src', 'style');
-const OUTPUT = join(ROOT, 'styles.css');
+/** 生产构建由 build.mjs 设置，输出到 dist/claudian；开发模式仍写仓库根目录 */
+const PLUGIN_OUT = process.env.CLAUDIAN_PLUGIN_OUT_DIR;
+const OUTPUT = PLUGIN_OUT ? join(PLUGIN_OUT, 'styles.css') : join(ROOT, 'styles.css');
 const INDEX_FILE = join(STYLE_DIR, 'index.css');
 
 const IMPORT_PATTERN = /^\s*@import\s+(?:url\()?['"]([^'"]+)['"]\)?\s*;/gm;
@@ -112,6 +114,9 @@ function build() {
   }
 
   const output = parts.join('\n');
+  if (PLUGIN_OUT) {
+    mkdirSync(PLUGIN_OUT, { recursive: true });
+  }
   writeFileSync(OUTPUT, output);
   console.log(`Built styles.css (${(output.length / 1024).toFixed(1)} KB)`);
 }

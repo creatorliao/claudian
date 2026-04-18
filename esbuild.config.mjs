@@ -23,6 +23,9 @@ if (existsSync('.env.local')) {
 }
 
 const prod = process.argv[2] === 'production';
+/** 生产构建：产物目录（由 scripts/build.mjs 设置）；开发模式为仓库根目录 */
+const pluginBundleDir = process.env.CLAUDIAN_PLUGIN_OUT_DIR || process.cwd();
+const manifestSrcPath = path.join(process.cwd(), 'manifest.json');
 
 const patchCodexSdkImportMeta = {
   name: 'patch-codex-sdk-import-meta',
@@ -60,11 +63,15 @@ const copyToObsidian = {
         mkdirSync(OBSIDIAN_PLUGIN_PATH, { recursive: true });
       }
 
-      const files = ['main.js', 'manifest.json', 'styles.css'];
-      for (const file of files) {
-        if (existsSync(file)) {
-          copyFileSync(file, path.join(OBSIDIAN_PLUGIN_PATH, file));
-          console.log(`Copied ${file} to Obsidian plugin folder`);
+      const bundleFiles = [
+        { src: path.join(pluginBundleDir, 'main.js'), name: 'main.js' },
+        { src: path.join(pluginBundleDir, 'styles.css'), name: 'styles.css' },
+        { src: manifestSrcPath, name: 'manifest.json' },
+      ];
+      for (const { src, name } of bundleFiles) {
+        if (existsSync(src)) {
+          copyFileSync(src, path.join(OBSIDIAN_PLUGIN_PATH, name));
+          console.log(`Copied ${name} to Obsidian plugin folder`);
         }
       }
 
@@ -100,7 +107,7 @@ const context = await esbuild.context({
   logLevel: 'info',
   sourcemap: prod ? false : 'inline',
   treeShaking: true,
-  outfile: 'main.js',
+  outfile: path.join(pluginBundleDir, 'main.js'),
 });
 
 if (prod) {
