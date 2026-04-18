@@ -103,9 +103,11 @@
 /* Input toolbar */
 .claudian-input-toolbar {
   display: flex;
-  align-items: center;
+  align-items: center; /* 纵轴中线对齐（含发送按钮与 24px 文件夹图标行） */
   justify-content: flex-start;
   flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
   padding: 4px 6px 6px 6px;
 }
 

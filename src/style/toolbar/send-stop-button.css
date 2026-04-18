@@ -1,13 +1,17 @@
+/* 与外部上下文/MCP 图标 hit 区一致：24×24，工具栏纵轴中线对齐由父级 flex 保证 */
 .claudian-send-stop-container {
   flex-shrink: 0;
+  margin-left: auto; /* 与左侧控件组分离，贴工具栏右缘 */
+  display: flex;
+  align-items: center;
 }
 
 .claudian-send-stop-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   border-radius: 6px;
   background: var(--claudian-brand);
   color: #fff;
