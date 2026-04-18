@@ -2,6 +2,19 @@
 
 本文档记录 Claudian（Obsidian 插件）的版本变更；格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，版本号遵循语义化版本意图（主版本.次版本.修订号）。
 
+## [2.0.9] - 2026-04-18
+
+### 变更
+
+- **Ribbon / `toggle-view` 语义调整**：由 **`detachLeavesOfType`（关标签）** 改为 **收起 / 再展开**——**尚无**聊天视图时仍 **`activateView()` 创建**；**在侧栏** 时通过 **`WorkspaceSidedock` / `WorkspaceMobileDrawer` 的 `collapse` / `expand`** 让出或恢复宽度，展开时 **`await revealLeaf`**；**在主编辑区**（`openInMainTab`）时，若正看着聊天则 **`setActiveLeaf` 切到主区其它叶子**（若有），否则 **`revealLeaf`** 回到聊天。
+- **边界**：主区 **只有** 聊天一叶、无其它根区叶子时，「收起」无法切换焦点，行为为 **静默跳过**（侧栏模式不受影响）。
+
+### 文档
+
+- **`报告_Ribbon切换聊天面板需求与方案.md`**：与收起/展开实现及边界表同步。
+
+---
+
 ## [2.0.8] - 2026-04-18
 
 ### 变更

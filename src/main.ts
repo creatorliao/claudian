@@ -4,7 +4,13 @@ patchSetMaxListenersForElectron();
 
 import "./providers";
 
-import type { Editor } from "obsidian";
+import type {
+  Editor,
+  WorkspaceLeaf,
+  WorkspaceMobileDrawer,
+  WorkspaceParent,
+  WorkspaceSidedock,
+} from "obsidian";
 import { addIcon, MarkdownView, Notice, Plugin } from "obsidian";
 
 import { DEFAULT_CLAUDIAN_SETTINGS } from "./app/settings/defaultSettings";
@@ -60,7 +66,7 @@ export default class ClaudianPlugin extends Plugin {
 
     // 功能区与侧栏标签与视图内品牌标一致：使用 Claude 星芒（非 Lucide `bot`）
     addIcon(CLAUDIAN_APP_ICON_ID, getClaudeBrandMarkAddIconInnerHtml());
-    // Ribbon：切换整块聊天工作区（无叶子则打开，有则全部 detach，等同手工关标签）
+    // Ribbon：无聊天叶子则创建并打开；已有则侧栏用折叠/展开，主区用切换活动叶子（不销毁视图）
     this.addRibbonIcon(CLAUDIAN_APP_ICON_ID, t("ribbon.toggleClaudian"), () => {
       void this.toggleClaudianView();
     });
@@ -229,17 +235,76 @@ export default class ClaudianPlugin extends Plugin {
   }
 
   /**
-   * 功能区一键开关：已存在任意 `claudian-view` 工作区叶子时全部关闭，否则打开并聚焦。
-   * 关闭使用 `detachLeavesOfType`，与用户手工关闭标签一致。
+   * Ribbon / toggle-view：在「腾出空间」与「回到聊天」之间切换，**不** `detach` 视图。
+   *
+   * - **尚无** `claudian-view` 叶子：等同首次打开 → `activateView()`（按设置落在右侧栏或主编辑区）。
+   * - **在侧栏**（左/右 dock 或移动抽屉祖先）：dock **已折叠** → `expand` + `revealLeaf`（再次展示）；**未折叠** → `collapse`（收起让出宽度）。
+   * - **在主编辑区等**（祖先链上无左右 dock）：当前活动视图是 Claudian → 切到主区中另一片叶子（若有）；否则 → `revealLeaf` 聚焦已有聊天。
+   *
+   * 边界：主区仅有聊天、无其它根叶子时，「收起」无法切换焦点，本方法静默跳过（用户可用侧栏模式或另开笔记）。
    */
   async toggleClaudianView(): Promise<void> {
     const { workspace } = this.app;
     const leaves = workspace.getLeavesOfType(VIEW_TYPE_CLAUDIAN);
-    if (leaves.length > 0) {
-      workspace.detachLeavesOfType(VIEW_TYPE_CLAUDIAN);
+
+    if (leaves.length === 0) {
+      await this.activateView();
       return;
     }
-    await this.activateView();
+
+    const primaryLeaf = leaves[0];
+    const sidedock = this.findParentSidedock(primaryLeaf);
+
+    if (sidedock) {
+      if (sidedock.collapsed) {
+        sidedock.expand();
+        await workspace.revealLeaf(primaryLeaf);
+      } else {
+        sidedock.collapse();
+      }
+      return;
+    }
+
+    const activeClaudian = workspace.getActiveViewOfType(ClaudianView);
+    if (activeClaudian) {
+      const alternate = this.findLastNonClaudianRootLeaf();
+      if (alternate) {
+        workspace.setActiveLeaf(alternate, { focus: true });
+      }
+      return;
+    }
+
+    await workspace.revealLeaf(primaryLeaf);
+  }
+
+  /**
+   * 自叶子沿 `parent` 向上查找，判断是否在左/右侧栏或移动抽屉内。
+   */
+  private findParentSidedock(
+    leaf: WorkspaceLeaf,
+  ): WorkspaceSidedock | WorkspaceMobileDrawer | null {
+    const { workspace } = this.app;
+    let p: WorkspaceParent | null = leaf.parent;
+    while (p) {
+      if (p === workspace.rightSplit || p === workspace.leftSplit) {
+        return p as WorkspaceSidedock | WorkspaceMobileDrawer;
+      }
+      p = p.parent;
+    }
+    return null;
+  }
+
+  /**
+   * 在主工作区（`iterateRootLeaves`）中寻找非 Claudian 的叶子，返回遍历中**最后一个**候选，以尽量贴近最近用过的标签。
+   */
+  private findLastNonClaudianRootLeaf(): WorkspaceLeaf | null {
+    let candidate: WorkspaceLeaf | null = null;
+    this.app.workspace.iterateRootLeaves((leaf) => {
+      if (leaf.view.getViewType() !== VIEW_TYPE_CLAUDIAN) {
+        candidate = leaf;
+      }
+    });
+    return candidate;
   }
 
   private canCreateNewTab(): boolean {

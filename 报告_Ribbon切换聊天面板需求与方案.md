@@ -1,6 +1,6 @@
 # 报告：Ribbon 图标切换聊天面板显示（需求记录与方案）
 
-> **状态**：方案已定稿；**已在 v2.0.8 / 分支 `feat/ribbon-toggle-chat-panel` 落地**（`toggleClaudianView`、`detachLeavesOfType`、新命令 `toggle-view`、Ribbon 与 i18n）。合并或发版前建议在 Obsidian 内手测。
+> **状态**：已定稿并在代码中维护。**切换语义为「收起 / 展开」视图，不 `detach` 工作区标签**（v2.0.9 起）。合并或发版前建议在 Obsidian 内手测（侧栏模式 +「在主编辑器区域打开」）。
 
 ---
 
@@ -8,14 +8,15 @@
 
 ### 1.1 要解决的使用痛点
 
-- 当前 **关闭侧边栏里的聊天**、或 **关掉占满主编辑区的聊天标签** 的路径不够顺手，希望通过 **Ribbon 一键** 在「显示对话」与「让出屏幕给笔记编辑」之间切换。
-- 目标交互：**点一下开、再点一下关**；关闭在用户观感上接近 **手工关掉工作区标签**（收起/关闭面板），实现上 **尽量简单、避免过度设计**。
+- 希望 **一键腾出屏幕** 做别的事，再一键 **回到与 AI 的对话**，且 **不要** 等同于关掉标签（避免会话/状态被当成「关闭」）。
+- **第一次**：若还没有聊天面板 → **创建并打开**（与设置中侧栏/主区一致）。
+- **已有面板**：第一次点击 → **收起**（侧栏则折叠 dock，主区则把焦点让给其它根区标签）；再点 → **重新展示**（展开侧栏并聚焦聊天，或 `revealLeaf` / 切回聊天）。
 
-### 1.2 功能期望
+### 1.2 功能期望（与实现对齐）
 
-1. **Ribbon**：若当前 **没有** `claudian-view` 工作区叶子 → **打开**；若 **已有**（侧栏或主编辑区）→ **全部关闭**。
-2. **侧栏 / 主编辑区**：由既有 `openInMainTab` 控制打开位置；关闭时对 **所有** `claudian-view` 叶子 `detach`。
-3. **多工作区实例**：**一次性关闭全部** `claudian-view` 叶子（`detachLeavesOfType`）。
+1. **尚无** `claudian-view` 叶子：`activateView()`（新建 + `revealLeaf`）。
+2. **在左/右侧栏**（祖先链上出现 `workspace.leftSplit` / `workspace.rightSplit`，或移动端的 `WorkspaceMobileDrawer` 链路）：dock **未折叠** → `collapse()`；**已折叠** → `expand()` + `await revealLeaf(主叶子)`。
+3. **在主编辑区**（祖先链上 **没有** 上述 sidedock）：当前活动视图是 `ClaudianView` → 在 `iterateRootLeaves` 范围内选 **最后** 一个非 `claudian-view` 的叶子 `setActiveLeaf(..., { focus: true })`（若有）；否则 → `revealLeaf` 聚焦已有聊天。
 
 ---
 
@@ -23,52 +24,51 @@
 
 | API | 说明 |
 |-----|------|
-| `getLeavesOfType` | 返回该类型的所有叶子（`obsidian.d.ts`，@since 0.9.7） |
-| `detachLeavesOfType` | 移除该类型的 **全部** 叶子（*Remove all leaves of the given type*） |
-| `revealLeaf` | 前台显示叶子；侧栏时会展开侧栏；宜 **`await`**（[官方文档](https://docs.obsidian.md/Reference/TypeScript+API/Workspace/revealLeaf)，@since 1.7.2） |
-| `WorkspaceLeaf.detach` | 关闭单叶；本方案优先用 `detachLeavesOfType` 一次关全 |
+| `getLeavesOfType` | 判断聊天是否「已存在」 |
+| `WorkspaceSidedock` / `WorkspaceMobileDrawer` | `collapsed`、`collapse()`、`expand()`（收起/展开整条侧栏抽屉） |
+| `revealLeaf` | 展开侧栏并聚焦叶子；宜 **`await`**（[官方文档](https://docs.obsidian.md/Reference/TypeScript+API/Workspace/revealLeaf)） |
+| `iterateRootLeaves` | 仅在 **主区** 叶子中枚举，用于主编辑区「让给其它标签」 |
+| `setActiveLeaf` | 主区切换活动标签 |
+
+**说明**：若需 **真正关闭** 聊天标签，用户仍可在工作区上手动关标签；本 Ribbon / `toggle-view` **不** 调用 `detachLeavesOfType`。
 
 ---
 
-## 3. 已确认的产品决策
+## 3. 边界条件（实现约定）
 
-| 序号 | 主题 | 结论 |
-|------|------|------|
-| 1 | Toggle 规则 | 无 `claudian-view` 叶子 → 打开；有 → **全部** `detachLeavesOfType`。 |
-| 2 | 多实例 | 与上相同，一次关全。 |
-| 3 | 命令与 Ribbon | **Ribbon** → `toggleClaudianView`；**保留** `open-view` 仅打开/聚焦；**新增** `toggle-view`。 |
-| 4 | 关闭语义 | 等同手工关标签；**不**做「只折叠侧栏」等额外逻辑。 |
-
----
-
-## 4. §6 残余问题（已接受，无变更）
-
-以下语义已与产品方确认 **无问题**，实施时 **不** 单独处理：
-
-1. **侧栏折叠但标签仍在**：`getLeavesOfType` 仍非空，再点 Ribbon **会 detach（真关掉）**，不会只做 `revealLeaf`。
-2. **Modal / Notice 等**：不在 `detachLeavesOfType` 范围内；若需另管弹层，单独立项。
-3. **Hover Editor 等第三方容器**：以真机验证为准。
+| 场景 | 行为 |
+|------|------|
+| 首次安装后第一次点 Ribbon | 无叶子 → `activateView()` 创建 |
+| 侧栏已展开、聊天在右栏 | 点一下 → `rightSplit.collapse()`；再点 → `expand` + `revealLeaf` |
+| 侧栏已被用户折叠 | 再点 → `expand` + `revealLeaf`（视为「展示」） |
+| `openInMainTab`、聊天在中央且 **正看着聊天** | 点一下 → 切到主区 **另一** 叶子（若有）；**仅有聊天一叶** → 静默不切换（无法让出主区焦点） |
+| 主区有聊天但 **当前在看笔记** | 点一下 → `revealLeaf` 回到聊天 |
+| 浮动窗口 / 特殊布局 | 祖先链上可能无 sidedock，走主区分支；极端单叶布局同上 |
 
 ---
 
-## 5. 实现说明（与代码同步）
+## 4. 命令分工
+
+| 入口 | 行为 |
+|------|------|
+| Ribbon / `toggle-view` | 上述 **toggleClaudianView** |
+| `open-view` | 仅 **打开或聚焦**（`activateView`），不折叠侧栏 |
+
+---
+
+## 5. 实现与测试
 
 | 项 | 说明 |
 |----|------|
-| 分支 | `feat/ribbon-toggle-chat-panel` |
-| 核心 | `src/main.ts`：`toggleClaudianView()`；`activateView()` 内 `await revealLeaf` |
-| Ribbon | `addRibbonIcon` → `t('ribbon.toggleClaudian')` + `toggleClaudianView` |
-| 命令 | `open-view`：`t('commands.openChatView')`；新增 `toggle-view`：`t('commands.toggleChatView')` |
-| i18n | `commands.*`、`ribbon.toggleClaudian` 已写入各 `locales/*.json` 与 `types.ts` |
-| 测试 | `tests/integration/main.test.ts`：Ribbon / open / toggle；`tests/__mocks__/obsidian.ts`：`detachLeavesOfType`、`revealLeaf` Promise |
+| 核心 | `src/main.ts`：`toggleClaudianView`、`findParentSidedock`、`findLastNonClaudianRootLeaf` |
+| 测试 | `tests/integration/main.test.ts`：侧栏收起/展开、主区 reveal、主区切换活动叶 |
 
 ---
 
 ## 6. 小结
 
-- Ribbon 与 **`toggle-view`**：**开关整块** Claudian 工作区视图。
-- **`open-view`**：仍为 **只开不关**（聚焦已有或新建），便于与热键「强制打开」区分。
+- **收起 ≠ 关闭标签**：侧栏用 **折叠**，主区用 **换焦点**，再次点击 **恢复可见与焦点**（在侧栏场景下由 Obsidian 与 `revealLeaf` 共同保证）。
 
 ---
 
-*文档修订：残余问题已关闭；补充实现分支与文件清单。*
+*文档修订：与 v2.0.9「收起/展开」实现一致；移除原 detach 方案描述。*

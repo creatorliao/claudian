@@ -57,7 +57,20 @@ describe('ClaudianPlugin', () => {
           setViewState: jest.fn().mockResolvedValue(undefined),
         }),
         revealLeaf: jest.fn().mockResolvedValue(undefined),
-        detachLeavesOfType: jest.fn(),
+        rightSplit: {
+          collapsed: false,
+          collapse: jest.fn(),
+          expand: jest.fn(),
+        },
+        leftSplit: {
+          collapsed: false,
+          collapse: jest.fn(),
+          expand: jest.fn(),
+        },
+        rootSplit: {},
+        getActiveViewOfType: jest.fn().mockReturnValue(null),
+        setActiveLeaf: jest.fn(),
+        iterateRootLeaves: jest.fn(),
       },
     };
 
@@ -387,15 +400,88 @@ describe('ClaudianPlugin', () => {
   });
 
   describe('ribbon icon callback', () => {
-    it('detaches all Claudian leaves when ribbon is clicked and any exist', async () => {
+    it('collapses right sidedock when ribbon is clicked and Claudian is in the sidebar', async () => {
       await plugin.onload();
-      const mockLeaf = { id: 'existing' };
+      const dock = mockApp.workspace.rightSplit;
+      const mockTabs = { parent: dock };
+      const mockLeaf = {
+        id: 'existing',
+        parent: mockTabs,
+        view: { getViewType: () => VIEW_TYPE_CLAUDIAN },
+      };
+      dock.collapsed = false;
       mockApp.workspace.getLeavesOfType.mockReturnValue([mockLeaf]);
 
       const ribbonCallback = (plugin.addRibbonIcon as jest.Mock).mock.calls[0][2];
       await ribbonCallback();
 
-      expect(mockApp.workspace.detachLeavesOfType).toHaveBeenCalledWith(VIEW_TYPE_CLAUDIAN);
+      expect(dock.collapse).toHaveBeenCalled();
+      expect(dock.expand).not.toHaveBeenCalled();
+      expect(mockApp.workspace.revealLeaf).not.toHaveBeenCalled();
+    });
+
+    it('expands sidedock and reveals Claudian when dock was collapsed', async () => {
+      await plugin.onload();
+      const dock = mockApp.workspace.rightSplit;
+      const mockTabs = { parent: dock };
+      const mockLeaf = {
+        id: 'existing',
+        parent: mockTabs,
+        view: { getViewType: () => VIEW_TYPE_CLAUDIAN },
+      };
+      dock.collapsed = true;
+      mockApp.workspace.getLeavesOfType.mockReturnValue([mockLeaf]);
+
+      const ribbonCallback = (plugin.addRibbonIcon as jest.Mock).mock.calls[0][2];
+      await ribbonCallback();
+
+      expect(dock.expand).toHaveBeenCalled();
+      expect(dock.collapse).not.toHaveBeenCalled();
+      expect(mockApp.workspace.revealLeaf).toHaveBeenCalledWith(mockLeaf);
+    });
+
+    it('reveals Claudian when leaf is not in a sidedock and another view is active', async () => {
+      await plugin.onload();
+      const inner = { parent: mockApp.workspace.rootSplit };
+      const mockTabs = { parent: inner };
+      const mockLeaf = {
+        id: 'main-claudian',
+        parent: mockTabs,
+        view: { getViewType: () => VIEW_TYPE_CLAUDIAN },
+      };
+      mockApp.workspace.getLeavesOfType.mockReturnValue([mockLeaf]);
+      mockApp.workspace.getActiveViewOfType.mockReturnValue(null);
+
+      const ribbonCallback = (plugin.addRibbonIcon as jest.Mock).mock.calls[0][2];
+      await ribbonCallback();
+
+      expect(mockApp.workspace.revealLeaf).toHaveBeenCalledWith(mockLeaf);
+      expect(mockApp.workspace.setActiveLeaf).not.toHaveBeenCalled();
+    });
+
+    it('switches active root leaf away from Claudian when chat is focused in main area', async () => {
+      await plugin.onload();
+      const inner = { parent: mockApp.workspace.rootSplit };
+      const mockTabs = { parent: inner };
+      const mockLeaf = {
+        id: 'main-claudian',
+        parent: mockTabs,
+        view: { getViewType: () => VIEW_TYPE_CLAUDIAN },
+      };
+      const mockMarkdownLeaf = {
+        view: { getViewType: () => 'markdown' },
+      };
+      mockApp.workspace.getLeavesOfType.mockReturnValue([mockLeaf]);
+      mockApp.workspace.getActiveViewOfType.mockReturnValue({});
+      mockApp.workspace.iterateRootLeaves.mockImplementation((cb: (l: any) => void) => {
+        cb(mockLeaf);
+        cb(mockMarkdownLeaf);
+      });
+
+      const ribbonCallback = (plugin.addRibbonIcon as jest.Mock).mock.calls[0][2];
+      await ribbonCallback();
+
+      expect(mockApp.workspace.setActiveLeaf).toHaveBeenCalledWith(mockMarkdownLeaf, { focus: true });
       expect(mockApp.workspace.revealLeaf).not.toHaveBeenCalled();
     });
 
@@ -411,7 +497,6 @@ describe('ClaudianPlugin', () => {
       const ribbonCallback = (plugin.addRibbonIcon as jest.Mock).mock.calls[0][2];
       await ribbonCallback();
 
-      expect(mockApp.workspace.detachLeavesOfType).not.toHaveBeenCalled();
       expect(mockRightLeaf.setViewState).toHaveBeenCalledWith({
         type: VIEW_TYPE_CLAUDIAN,
         active: true,
@@ -430,19 +515,24 @@ describe('ClaudianPlugin', () => {
       await commandConfig.callback();
 
       expect(mockApp.workspace.revealLeaf).toHaveBeenCalledWith(mockLeaf);
-      expect(mockApp.workspace.detachLeavesOfType).not.toHaveBeenCalled();
     });
 
-    it('detaches all leaves when toggle-view command is executed and leaves exist', async () => {
+    it('collapses sidedock when toggle-view runs and Claudian is in sidebar', async () => {
       await plugin.onload();
-      const mockLeaf = { id: 'existing' };
+      const dock = mockApp.workspace.rightSplit;
+      const mockTabs = { parent: dock };
+      const mockLeaf = {
+        id: 'existing',
+        parent: mockTabs,
+        view: { getViewType: () => VIEW_TYPE_CLAUDIAN },
+      };
+      dock.collapsed = false;
       mockApp.workspace.getLeavesOfType.mockReturnValue([mockLeaf]);
 
       const commandConfig = getRegisteredCommand('toggle-view');
       await commandConfig.callback();
 
-      expect(mockApp.workspace.detachLeavesOfType).toHaveBeenCalledWith(VIEW_TYPE_CLAUDIAN);
-      expect(mockApp.workspace.revealLeaf).not.toHaveBeenCalled();
+      expect(dock.collapse).toHaveBeenCalled();
     });
   });
 
