@@ -19,6 +19,10 @@
 
 - 更新 **TabManager**、**BangBashService**、**QueryOptionsBuilder**、**main** 集成桩等与工作空间行为相关的单测/集成测试。
 
+### 修复
+
+- **Claudian 视图布局**：为叠层状态栏主题增加底部避让（**`--claudian-view-bottom-safe`**，综合 `--status-bar-scroll-padding`、可选 `--status-bar-height`、桌面 **28px** 兜底与 **`safe-area-inset-bottom`**）。状态栏已流内占位的主题若嫌底部空白过大，可在用户 CSS 中将该变量覆盖为 **`0`**。
+
 ---
 
 ## [2.0.18] - 2026-04-20

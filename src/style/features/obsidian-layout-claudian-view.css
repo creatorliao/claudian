@@ -2,6 +2,9 @@
  * Obsidian 壳层：仅作用于 Claudian 视图窗格（data-type="claudian-view"）。
  * 解决主题对 .view-content 的 padding/flex 导致底部错位；聊天区一栏居中；底部组合器卡片化。
  * 选择器均带 [data-type="claudian-view"]，不影响其他插件视图。
+ *
+ * 底部避让：部分主题下状态栏为叠层（非流内占位），v3 贴底后输入区易被遮挡。
+ * --claudian-view-bottom-safe 可在用户 CSS 中覆盖为 0（例如 Minimal minimal-status-off 已占位时嫌空白过大）。
  */
 
 .workspace-leaf-content[data-type="claudian-view"] {
@@ -12,6 +15,16 @@
   --claudian-view-chat-column-max: min(100%, 42rem);
   --claudian-view-composer-radius: 12px;
   --claudian-view-composer-padding: 8px 10px 10px;
+  /*
+   * max：取 Obsidian/主题提供的预留量、可选栏高、保守桌面 fallback、安全区中的较大者。
+   * --status-bar-height 非官方文档必备变量，无定义时按 0 参与 max；28px 为叠层栏常见量级兜底。
+   */
+  --claudian-view-bottom-safe: max(
+    var(--status-bar-scroll-padding, 0px),
+    var(--status-bar-height, 0px),
+    28px,
+    env(safe-area-inset-bottom, 0px)
+  );
 }
 
 .workspace-leaf-content[data-type="claudian-view"] .view-content.claudian-container {
@@ -20,9 +33,8 @@
   height: auto !important;
   max-height: none !important;
   margin: 0 !important;
-  /* 仅清上下内边距以贴底，保留左右与窗格缘的呼吸缝（主题常给四边 padding） */
-  padding-block: 0 !important;
-  padding-inline: 12px !important;
+  /* 上无内边距贴顶栏；下为状态栏/安全区避让；左右与 .claudian-header 对齐 */
+  padding: 0 12px var(--claudian-view-bottom-safe) 12px !important;
 }
 
 .workspace-leaf-content[data-type="claudian-view"] .claudian-tab-content-container {
