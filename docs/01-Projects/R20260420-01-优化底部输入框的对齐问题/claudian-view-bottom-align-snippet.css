@@ -1,0 +1,14 @@
+/*
+ * 【已合入插件，无需再启用本片段】
+ *
+ * 原「窗格对齐 + 聊天区视觉」样式已内置到发布包 styles.css：
+ *   src/style/features/obsidian-layout-claudian-view.css
+ *
+ * 若你曾在 Obsidian「外观 → CSS 代码片段」中启用过本文件的副本，
+ * 请关闭或删除该片段，避免与内置样式重复（一般仍兼容，但无必要）。
+ *
+ * 若需在用户侧覆盖内置变量，可新建极小片段，例如：
+ *   .workspace-leaf-content[data-type="claudian-view"] {
+ *     --claudian-view-chat-column-max: min(100%, 48rem);
+ *   }
+ */

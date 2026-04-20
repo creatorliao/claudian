@@ -2,12 +2,16 @@
 
 本文档记录 Claudian（Obsidian 插件）的版本变更；格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，版本号遵循语义化版本意图（主版本.次版本.修订号）。
 
-## [2.0.16] - 2026-04-19
+## [2.0.16] - 2026-04-20
 
 ### 修复
 
 - **Claude CLI 路径解析**：合并「设置中的 PATH + `getExtraBinaryPaths()` + 进程 PATH」后再探测，与 GUI 下查找 Node 的策略对齐；Unix/macOS 在 PATH 上除 `claude` 可执行文件外，增加与 Windows 一致的 **`cli.js` 推导**；补充 Homebrew Node 的 `cli.js` 路径及 **pnpm 全局目录**（`~/Library/pnpm/global` 等）动态枚举。
 - **Windows**：仍 **优先** 扫描约定的原生 `claude.exe` 安装位，再合并 PATH，避免 Roaming/npm 下的 `cli.js` 覆盖本机安装包。
+
+### 变更
+
+- **Claudian 视图壳层与聊天布局**：新增内置样式模块 **`src/style/features/obsidian-layout-claudian-view.css`**（由 `index.css` 打入 **`styles.css`**）。仅作用于 **`[data-type="claudian-view"]`** 窗格：修正主题下 **`.view-content` 底对齐与左右留白**；消息区、状态条与底部输入区 **同宽居中**（`--claudian-view-chat-column-max` 等变量）；底部输入区 **组合器卡片**（圆角、边框、轻阴影）及顶栏紧凑间距；**无需再单独安装**此前文档中的 Obsidian CSS 代码片段。项目文档 `docs/01-Projects/R20260420-01-优化底部输入框的对齐问题/` 中旧片段文件已改为迁移说明。
 
 ### 工程
 
@@ -17,6 +21,7 @@
 ### 文档
 
 - **`修复报告_Claude_CLI路径智能解析.md`**：问题、根因、方案与修改记录。
+- **项目文档**：根目录若干方案、使用说明与报告 **迁入** `docs/01-Projects/`（含 R20260420-01 底部输入框对齐说明等）。
 
 ---
 
