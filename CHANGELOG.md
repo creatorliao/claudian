@@ -2,6 +2,14 @@
 
 本文档记录 Claudian（Obsidian 插件）的版本变更；格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，版本号遵循语义化版本意图（主版本.次版本.修订号）。
 
+## [2.0.16] - 2026-04-20
+
+### 变更
+
+- **Claudian 视图壳层与聊天布局**：新增内置样式模块 **`src/style/features/obsidian-layout-claudian-view.css`**（由 `index.css` 打入 **`styles.css`**）。仅作用于 **`[data-type="claudian-view"]`** 窗格：修正主题下 **`.view-content` 底对齐与左右留白**；消息区、状态条与底部输入区 **同宽居中**（`--claudian-view-chat-column-max` 等变量）；底部输入区 **组合器卡片**（圆角、边框、轻阴影）及顶栏紧凑间距；**无需再单独安装**此前文档中的 Obsidian CSS 代码片段。项目文档 `docs/01-Projects/R20260420-01-优化底部输入框的对齐问题/` 中旧片段文件已改为迁移说明。
+
+---
+
 ## [2.0.15] - 2026-04-19
 
 ### 变更

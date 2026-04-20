@@ -1,0 +1,87 @@
+/**
+ * Obsidian 壳层：仅作用于 Claudian 视图窗格（data-type="claudian-view"）。
+ * 解决主题对 .view-content 的 padding/flex 导致底部错位；聊天区一栏居中；底部组合器卡片化。
+ * 选择器均带 [data-type="claudian-view"]，不影响其他插件视图。
+ */
+
+.workspace-leaf-content[data-type="claudian-view"] {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  /* 与常见 AI 网页端类似：中间一栏宽度上限，可按需调整 */
+  --claudian-view-chat-column-max: min(100%, 42rem);
+  --claudian-view-composer-radius: 12px;
+  --claudian-view-composer-padding: 8px 10px 10px;
+}
+
+.workspace-leaf-content[data-type="claudian-view"] .view-content.claudian-container {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  margin: 0 !important;
+  /* 仅清上下内边距以贴底，保留左右与窗格缘的呼吸缝（主题常给四边 padding） */
+  padding-block: 0 !important;
+  padding-inline: 12px !important;
+}
+
+.workspace-leaf-content[data-type="claudian-view"] .claudian-tab-content-container {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+}
+
+/* 顶栏与下方聊天区更紧凑 */
+.workspace-leaf-content[data-type="claudian-view"] .claudian-header {
+  padding-bottom: 6px !important;
+}
+
+/*
+ * 消息列表：与下方输入区同宽、水平居中；scrollbar-gutter 减轻滚动条侧视觉偏移。
+ */
+.workspace-leaf-content[data-type="claudian-view"] .claudian-messages {
+  max-width: var(--claudian-view-chat-column-max) !important;
+  margin-inline: auto !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  scrollbar-gutter: stable;
+  padding-inline: 8px !important;
+}
+
+.workspace-leaf-content[data-type="claudian-view"] .claudian-status-panel-container {
+  max-width: var(--claudian-view-chat-column-max) !important;
+  margin-inline: auto !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  padding-inline: 8px !important;
+}
+
+/* 底部输入区外层：组合器卡片（边框 + 轻阴影），与窗格背景区分 */
+.workspace-leaf-content[data-type="claudian-view"] .claudian-input-container {
+  max-width: var(--claudian-view-chat-column-max) !important;
+  margin-inline: auto !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  margin-top: 4px !important;
+  padding: var(--claudian-view-composer-padding) !important;
+  border-radius: var(--claudian-view-composer-radius) !important;
+  border: 1px solid var(--background-modifier-border) !important;
+  background: var(--background-primary) !important;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.07),
+    0 4px 14px rgba(0, 0, 0, 0.05) !important;
+}
+
+body.theme-dark .workspace-leaf-content[data-type="claudian-view"] .claudian-input-container {
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* 内层输入框区域：略深底 + 弱描边，与外卡片分层 */
+.workspace-leaf-content[data-type="claudian-view"] .claudian-input-wrapper {
+  border-color: var(--background-modifier-border-hover) !important;
+  background: var(--background-modifier-form-field, var(--background-secondary)) !important;
+  border-radius: 8px !important;
+}
+
+.workspace-leaf-content[data-type="claudian-view"] .claudian-input-nav-row {
+  padding-bottom: 6px !important;
+}

@@ -43,6 +43,7 @@
 @import "./features/ask-user-question.css";
 @import "./features/plan-mode.css";
 @import "./features/obsidian-chrome.css";
+@import "./features/obsidian-layout-claudian-view.css";
 
 /* Modals */
 @import "./modals/instruction.css";
