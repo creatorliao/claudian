@@ -1,0 +1,109 @@
+---
+description: 版本发布规则 - 提交代码、升级版本、CHANGELOG、构建验证；默认不 push；与 C08 一致
+globs: **/*
+alwaysApply: false
+---
+
+# S03-版本发布规则
+
+## 触发条件
+
+当满足以下任一情况时，执行本规则：
+
+- 用户要求：提交代码、升级版本号、提交推送、发版、push、commit
+- 执行 Cursor 命令：`C08-升级版本并提交代码`
+
+## 核心原则
+
+1. **状态先行**：先 `git status` / 必要时 `git diff`，理解变更范围
+2. **质量门禁**：发版前建议执行 `npm run typecheck && npm run lint && npm run test`；**必须通过** `npm run build`
+3. **完整暂存**：使用 `git add .` 暂存所有应提交变更（注意勿提交 `dist/`、密钥等）
+4. **推送按需**：默认只提交不推送；仅当用户明确要求时再 `git push`
+5. **失败则停**：任一门禁失败时先修复再继续
+
+## 执行流程（按序）
+
+### 0. 检查代码库状态（必须）
+
+- `git status`；必要时 `git diff`
+- 判断本次是「仅提交」还是「升级版本并提交」
+
+### 1. 版本升级（按需）
+
+**仅当**用户明确要求升级版本或执行 C08 时：
+
+```bash
+npm version patch   # 补丁：Bug、小改动、文档
+npm version minor   # 次要：新功能
+npm version major   # 主要：破坏性变更
+```
+
+- `package.json` 的 `version` 脚本会同步 `manifest.json` 中的版本（见 `scripts/sync-version.mjs`）
+- 若执行了本步骤，必须执行步骤 2（CHANGELOG）
+
+### 2. 更新 CHANGELOG.md（版本升级时必须）
+
+**仅当**执行了步骤 1 时：
+
+- 根目录 `CHANGELOG.md`，**中文**条目
+- 顶部新增版本，日期用**真实发版日**（用户环境当前日或实际提交日），示例：
+
+```markdown
+## [2.0.18] - 2026-04-20
+
+- 改动说明一
+- 改动说明二
+```
+
+- 若文件不存在则创建
+
+### 3. 构建验证（必须）
+
+```bash
+npm run build
+```
+
+- 成功则继续；失败则分析修复后重试
+- **禁止**在构建失败时 commit / push
+
+### 4. 暂存与提交
+
+```bash
+git add .
+git commit -m "v{版本号} {简要说明}"
+```
+
+示例：`git commit -m "v2.0.18 修复 xxx"`
+
+### 5. 推送（按需）
+
+**默认不执行**。仅当用户明确要求「推送」「push」「提交到远程」时：
+
+```bash
+git push
+```
+
+## 智能体检查清单
+
+- [ ] 已理解 `git status` 变更
+- [ ] `npm run build` 成功（及用户要求的 typecheck/lint/test）
+- [ ] 升版时已更新 `CHANGELOG.md`
+- [ ] 提交信息清晰
+- [ ] 未在用户未要求时执行 `git push`
+
+## 与 C08 命令的对应关系
+
+| C08 步骤 | 本规则 |
+|----------|--------|
+| 检查代码库 | 步骤 0 |
+| npm version patch/minor/major | 步骤 1 |
+| 更新 CHANGELOG.md | 步骤 2 |
+| npm run build | 步骤 3 |
+| git add / commit | 步骤 4 |
+| 默认不 push | 步骤 5 |
+
+## 参考文档
+
+- 仓库根目录 `CLAUDE.md`（命令列表与约定）
+- `.cursor/commands/C08-升级版本并提交代码.md`
+- `.cursor/rules/S02-构建系统规则.mdc`

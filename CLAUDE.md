@@ -16,7 +16,7 @@ Claudian is an Obsidian plugin that embeds provider-backed chat runtimes in a si
 ## Commands
 
 ```bash
-npm run sync:claude   # 将 .cursor/commands、skills、rules 复制到 .claude/（单一维护源在 .cursor）
+npm run sync:claude   # 将 .cursor/commands、skills、rules 复制到 .claude/（单一维护源在 .cursor；.claude/ 副本已纳入仓库）
 npm run dev
 npm run build
 npm run typecheck

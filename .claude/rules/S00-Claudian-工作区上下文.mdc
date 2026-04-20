@@ -1,0 +1,46 @@
+---
+description: Claudian 工作区上下文 - 包管理、构建产物、架构入口与实施门禁（始终应用，便于 AI 对齐本仓库）
+globs: **/*
+alwaysApply: true
+---
+
+# S00-Claudian 工作区上下文
+
+## 项目是什么
+
+- **Claudian**：Obsidian 插件，在侧栏与内联编辑中嵌入多提供商对话运行时（Claude 默认，Codex 可选）。
+- **架构与目录职责**：以仓库根目录 `CLAUDE.md` 为准；深入某层时阅读对应 `src/**/CLAUDE.md`（如 `src/core/`、`src/providers/claude/`、`src/features/chat/`）。
+
+## 跨平台与智能体约束（Windows / macOS）
+
+- **目标环境**：本仓库**至少**须在 **Windows** 与 **macOS** 上可开发、构建与运行（Obsidian 插件常见场景）；CI 或贡献者可能在 **Linux** 上跑脚本，新增脚本与路径逻辑应**不依赖单一操作系统**。
+- **路径**：在 Node/TypeScript 中使用 `path.join` / `path.resolve` / `fileURLToPath`，**禁止**手写 `foo/bar` 当作文件系统路径的唯一形式来拼接盘符或假定根路径；避免假设大小写敏感/不敏感的细节影响逻辑。
+- **脚本与命令**：优先用 **`package.json` + `node scripts/*.mjs`** 作为跨平台入口；**避免**把仅适用于 bash 的脚本当作**唯一**官方路径（若保留 `.sh`，须文档说明 Windows 替代方式或提供 Node 等价实现）。
+- **智能体实施要求**：修改或新增构建脚本、复制目录、调用外部命令、读写工作区路径时，**显式考虑 Windows 与 macOS**（含路径分隔符、`exec`/shell 差异）；不得引入「仅在当前开发机可用」的硬编码。
+
+## 包管理与常用命令
+
+- 本仓库 **`package.json` 脚本以 `npm` 为准**（`npm run dev` / `npm run build` / `npm run typecheck` / `npm run lint` / `npm run test`）。用户若使用 pnpm，可用对等命令，但文档与规则默认写 `npm`。
+- 实施与发版前的推荐门禁（与 `CLAUDE.md` 一致）：`npm run typecheck && npm run lint && npm run test && npm run build`。
+
+## 构建与产物
+
+- **生产构建**（`npm run build`）：产物目录为 **`dist/{manifest.id}/`**（由 `scripts/lib/read-plugin-id.mjs` 读取 `manifest.json`，当前仓库即为 `dist/claudian/`），包含 `main.js`、`styles.css`、`manifest.json`。
+- **开发模式**（`npm run dev`）：监听构建；CSS/JS 会先出现在**仓库根目录**（见 `scripts/build.mjs`、`scripts/build-css.mjs` 注释），与生产路径不同，属预期行为。
+- 可选：在 `.env.local` 中配置 `OBSIDIAN_VAULT`，构建结束时将产物复制到该库下的 `.obsidian/plugins/{manifest.id}/`（见根目录 `esbuild.config.mjs`）。
+
+## 代码与文档习惯
+
+- **告警与质量门禁**：
+  - **影响执行的告警必须修复**：凡会导致运行时错误、类型上必然失败、或明显破坏可维护性/正确性的告警（含 ESLint、TypeScript、`tsc` 等）必须清零，不得留作「已知问题」。
+  - **不因消警而过度设计**：对**最终结果与行为无实质影响**的告警，不应靠堆砌防御性分支、冗余空值检查、重复封装或「万能」抽象来「压下去」。优先通过简化逻辑、收窄类型、删除死代码或**合理收紧/调整规则配置**来消除；避免为消警而过度保护与过度抽象。
+- **Provider 边界**：核心层与提供商适配分层，避免在 `src/core/` 写死某一提供商逻辑；新能力优先对齐官方 SDK / app-server 行为（见 `CLAUDE.md`「Provider-native first」）。
+- **测试**：`tests/` 与 `src/` 镜像布局；新行为或修复优先 TDD。
+- **日志**：生产代码避免 `console.*`。
+- **文档与工作流**：需求/方案/报告类产出默认放在 `docs/01-Projects/` 下按日编号目录（详见 `S01-文档存储规则.mdc`）；规范类在 `docs/02-Areas/`；上游报告归档在 `docs/04-Archives/`。
+
+## 相关规则与命令
+
+- 构建细节：`S02-构建系统规则.mdc`
+- 版本与提交：`S03-版本发布规则.mdc`
+- 工作流步骤：`.cursor/commands/C01`～`C08` 与 skill `dev-workflow`
