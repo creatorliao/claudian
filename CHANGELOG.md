@@ -2,6 +2,18 @@
 
 本文档记录 Claudian（Obsidian 插件）的版本变更；格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，版本号遵循语义化版本意图（主版本.次版本.修订号）。
 
+## [2.0.17] - 2026-04-20
+
+### 修复
+
+- **选区上下文（独立窗口 / 单独标签）**：当 Claudian 位于 **独立窗口** 或 **单独标签页** 时，点击 Claudian 面板后仍 **保留** 笔记中已选文字的对话上下文，不再因 Markdown 编辑视图失焦、`document.activeElement` 落在 `<body>` 等原因被轮询逻辑误清。实现上为 `SelectionController` 的焦点守卫增加 **当前活动 leaf 的视图类型** 校验（传入 `ownViewType`，与 Claudian 视图一致时视为仍处「本插件焦点语境」）；合并自上游 [YishenTu/claudian#478](https://github.com/YishenTu/claudian/pull/478)（关联 issue #399）。
+
+### 测试
+
+- **单测**：`SelectionController` 增补独立窗口 / 非 Markdown 活动 leaf 等场景的回归用例。
+
+---
+
 ## [2.0.16] - 2026-04-20
 
 ### 修复
