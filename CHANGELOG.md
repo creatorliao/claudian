@@ -21,7 +21,7 @@
 
 ### 修复
 
-- **Claudian 视图布局**：为叠层状态栏主题增加底部避让（**`--claudian-view-bottom-safe`**，综合 `--status-bar-scroll-padding`、可选 `--status-bar-height`、桌面 **28px** 兜底与 **`safe-area-inset-bottom`**）。状态栏已流内占位的主题若嫌底部空白过大，可在用户 CSS 中将该变量覆盖为 **`0`**。
+- **Claudian 视图布局**：为叠层状态栏主题增加底部避让（**`--claudian-view-bottom-safe`**：`calc(max(…, 36px, safe-area) + 6px)`，在主题变量之上为输入组合器阴影与状态栏顶留缝）。状态栏已流内占位的主题若嫌底部空白过大，可在用户 CSS 中将该变量覆盖为 **`0`**。
 
 ---
 

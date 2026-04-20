@@ -16,14 +16,17 @@
   --claudian-view-composer-radius: 12px;
   --claudian-view-composer-padding: 8px 10px 10px;
   /*
-   * max：取 Obsidian/主题提供的预留量、可选栏高、保守桌面 fallback、安全区中的较大者。
-   * --status-bar-height 非官方文档必备变量，无定义时按 0 参与 max；28px 为叠层栏常见量级兜底。
+   * max：取 Obsidian/主题提供的预留量、可选栏高、桌面兜底、安全区中的较大者。
+   * 兜底 36px：叠层状态栏常见高度 + 输入组合器向下阴影/圆角与栏顶之间留一点呼吸缝。
+   * --status-bar-height 非官方必备，无定义时按 0 参与 max。
    */
-  --claudian-view-bottom-safe: max(
-    var(--status-bar-scroll-padding, 0px),
-    var(--status-bar-height, 0px),
-    28px,
-    env(safe-area-inset-bottom, 0px)
+  --claudian-view-bottom-safe: calc(
+    max(
+      var(--status-bar-scroll-padding, 0px),
+      var(--status-bar-height, 0px),
+      36px,
+      env(safe-area-inset-bottom, 0px)
+    ) + 6px
   );
 }
 
