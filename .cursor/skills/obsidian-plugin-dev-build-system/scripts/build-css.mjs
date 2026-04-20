@@ -1,22 +1,57 @@
 #!/usr/bin/env node
 /**
- * CSS Build Script
- * 合并 src/style/ 模块为单个 styles.css。
- * 生产：由 build.mjs 设置 CLAUDIAN_PLUGIN_OUT_DIR → dist/{manifest.id}/styles.css
- * 开发：未设置 env 时写入仓库根目录 styles.css
+ * CSS 构建脚本（参考实现）
+ * 
+ * 本脚本是参考实现，可以根据项目实际情况进行适配或替换。
+ * CSS 构建是可选的，如果项目不需要 CSS，可以跳过此步骤。
+ * 如果项目有 CSS 但无需构建，可以直接复制现有 CSS 文件。
+ * 
+ * 核心要求：
+ * - 输出到 dist/{pluginName}/styles.css（必须遵守）
+ * - 不在项目根目录生成临时文件（必须遵守）
+ * 
+ * 参考实现方式：
+ * - CSS 模块化合并（本脚本）
+ * - PostCSS 处理
+ * - Sass/Less 编译
+ * - 直接复制单个 CSS 文件
+ * 
+ * 构建流程：
+ * 1. 读取 manifest.json 获取插件名称
+ * 2. 读取 src/style/index.css 中的 @import 语句
+ * 3. 按照顺序合并所有引用的 CSS 文件
+ * 4. 直接输出到 dist/{pluginName}/styles.css
+ * 
+ * 注意：styles.css 是构建产物，会被 .gitignore 忽略，不会被提交到 git
  */
 
-import { mkdirSync, readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
-import { join, dirname, resolve, relative } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { readFileSync, writeFileSync, existsSync, readdirSync, mkdirSync } from 'fs';
+import { join, dirname, resolve, relative } from 'path';
+import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 const STYLE_DIR = join(ROOT, 'src', 'style');
-/** 生产构建由 build.mjs 设置 CLAUDIAN_PLUGIN_OUT_DIR，输出到 dist/{manifest.id}/；开发模式写仓库根目录 */
-const PLUGIN_OUT = process.env.CLAUDIAN_PLUGIN_OUT_DIR;
-const OUTPUT = PLUGIN_OUT ? join(PLUGIN_OUT, 'styles.css') : join(ROOT, 'styles.css');
 const INDEX_FILE = join(STYLE_DIR, 'index.css');
+
+// 从 manifest.json 读取插件名称
+const manifestPath = join(ROOT, 'manifest.json');
+if (!existsSync(manifestPath)) {
+  console.error('Missing manifest.json');
+  process.exit(1);
+}
+
+const manifest = JSON.parse(readFileSync(manifestPath, 'utf-8'));
+const pluginName = manifest.name;
+const outDir = join(ROOT, 'dist', pluginName);
+
+// 确保输出目录存在
+if (!existsSync(outDir)) {
+  mkdirSync(outDir, { recursive: true });
+}
+
+// 直接输出到 dist/{pluginName}/styles.css
+const OUTPUT = join(outDir, 'styles.css');
 
 const IMPORT_PATTERN = /^\s*@import\s+(?:url\()?['"]([^'"]+)['"]\)?\s*;/gm;
 
@@ -116,9 +151,6 @@ function build() {
   }
 
   const output = parts.join('\n');
-  if (PLUGIN_OUT) {
-    mkdirSync(PLUGIN_OUT, { recursive: true });
-  }
   writeFileSync(OUTPUT, output);
   console.log(`Built styles.css (${(output.length / 1024).toFixed(1)} KB)`);
 }

@@ -3,9 +3,9 @@
  * Post-install script - copies .env.local.example to .env.local if it doesn't exist
  */
 
-import { copyFileSync, existsSync } from 'fs';
-import { dirname, join } from 'path';
-import { fileURLToPath } from 'url';
+import { copyFileSync, existsSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 // Skip in CI environments
 if (process.env.CI) {

@@ -2,6 +2,7 @@ import esbuild from 'esbuild';
 import path from 'path';
 import process from 'process';
 import builtins from 'builtin-modules';
+import { readPluginId } from './scripts/lib/read-plugin-id.mjs';
 import {
   copyFileSync,
   existsSync,
@@ -23,9 +24,11 @@ if (existsSync('.env.local')) {
 }
 
 const prod = process.argv[2] === 'production';
+const repoRoot = process.cwd();
 /** 生产构建：产物目录（由 scripts/build.mjs 设置）；开发模式为仓库根目录 */
-const pluginBundleDir = process.env.CLAUDIAN_PLUGIN_OUT_DIR || process.cwd();
-const manifestSrcPath = path.join(process.cwd(), 'manifest.json');
+const pluginBundleDir = process.env.CLAUDIAN_PLUGIN_OUT_DIR || repoRoot;
+const manifestSrcPath = path.join(repoRoot, 'manifest.json');
+const pluginId = readPluginId(repoRoot);
 
 const patchCodexSdkImportMeta = {
   name: 'patch-codex-sdk-import-meta',
@@ -46,7 +49,7 @@ const patchCodexSdkImportMeta = {
 // Obsidian plugin folder path (set via OBSIDIAN_VAULT env var or .env.local)
 const OBSIDIAN_VAULT = process.env.OBSIDIAN_VAULT;
 const OBSIDIAN_PLUGIN_PATH = OBSIDIAN_VAULT && existsSync(OBSIDIAN_VAULT)
-  ? path.join(OBSIDIAN_VAULT, '.obsidian', 'plugins', 'claudian')
+  ? path.join(OBSIDIAN_VAULT, '.obsidian', 'plugins', pluginId)
   : null;
 
 // Plugin to copy built files to Obsidian plugin folder
@@ -55,7 +58,7 @@ const copyToObsidian = {
   setup(build) {
     build.onEnd((result) => {
       if (result.errors.length > 0) return;
-      rmSync(path.join(process.cwd(), '.codex-vendor'), { recursive: true, force: true });
+      rmSync(path.join(repoRoot, '.codex-vendor'), { recursive: true, force: true });
 
       if (!OBSIDIAN_PLUGIN_PATH) return;
 

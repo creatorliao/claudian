@@ -2,6 +2,28 @@
 
 本文档记录 Claudian（Obsidian 插件）的版本变更；格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，版本号遵循语义化版本意图（主版本.次版本.修订号）。
 
+## [2.0.18] - 2026-04-20
+
+### 工程
+
+- **构建与产物路径**：`scripts/lib/read-plugin-id.mjs` 从 `manifest.json` 读取插件 id，统一 **`dist/{id}/`** 与相关脚本（`build.mjs`、`build-css.mjs`、`esbuild.config.mjs`、`postinstall.mjs`）；与 **`S02`** 约定一致。
+- **版本同步**：`scripts/sync-version.js` 迁移为 **`scripts/sync-version.mjs`**（`npm version` 生命周期仍同步 `manifest.json`）。
+- **npm 脚本**：新增 **`report:upstream-signals`**（上游/社区信号采集）、**`copy:obsidian`** / **`build:try`**（可选将构建产物同步到上层 Obsidian 库）、**`sync:claude`**（将 `.cursor` 下命令/技能/规则同步到 `.claude/`）。
+- **ESLint**：为 **`scripts/**/*.mjs`** 声明 Node 全局（如 `process`），消除脚本误报；与 **`no-useless-assignment`** 规则对齐的 **`upstream-signal-report.mjs`** 小调整。
+
+### 智能体与工作流（本仓库）
+
+- 纳入 **`.cursor/rules`**（含 **`S00`～`S03`**）：工作区上下文、文档存放、构建系统、版本发布；**`S00`** 含 **Windows / macOS 跨平台约束**与**告警/质量门禁**约定。
+- 纳入 **`.cursor/commands`**（**`C01`～`C08`**）与 **`.cursor/skills`**（如 **`dev-workflow`**、**`obsidian-plugin-dev-build-system`**、**`upstream-community-signal-report`**），便于 AI 辅助需求—发版流程与构建说明对齐。
+
+### 文档
+
+- **`docs/02-Areas/`**：更新 fork 与上游信号筛选最佳实践；新增 **构建产物同步到上层 Obsidian 库** 实践说明。
+- **`docs/04-Archives/`**：归档上游社区信号采集与调查报告样例（**2026-04-20**）。
+- **`AGENTS.md` / `CLAUDE.md`**：补充跨平台说明并指向 **`S00`**。
+
+---
+
 ## [2.0.17] - 2026-04-20
 
 ### 修复

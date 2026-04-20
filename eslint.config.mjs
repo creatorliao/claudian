@@ -10,6 +10,15 @@ export default defineConfig([
   {
     ignores: ['dist/**', 'node_modules/**', 'coverage/**', 'main.js'],
   },
+  // Node 脚本：否则 process 等会触发 no-undef（默认非浏览器环境未注入 Node 全局）
+  {
+    files: ['scripts/**/*.mjs'],
+    languageOptions: {
+      globals: {
+        process: 'readonly',
+      },
+    },
+  },
   js.configs.recommended,
   ...tseslint.configs['flat/recommended'],
   {

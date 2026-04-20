@@ -1,18 +1,20 @@
 #!/usr/bin/env node
 /**
- * 生产：`npm run build` → CSS + esbuild，产物写入 dist/claudian（main.js、styles.css、manifest.json）。
+ * 生产：`npm run build` → CSS + esbuild，产物写入 dist/{manifest.id}/（main.js、styles.css、manifest.json）。
  * 开发：请使用 `npm run dev`（产物仍在仓库根目录，便于 watch）。
  */
 
-import { execSync } from 'child_process';
-import { copyFileSync, existsSync, mkdirSync, unlinkSync } from 'fs';
-import { dirname, join } from 'path';
-import { fileURLToPath } from 'url';
+import { execSync } from 'node:child_process';
+import { copyFileSync, existsSync, mkdirSync, unlinkSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { readPluginId } from './lib/read-plugin-id.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
-/** 与 Obsidian 插件目录一致：整文件夹复制到 .obsidian/plugins/claudian 即可 */
-const DIST_PLUGIN = join(ROOT, 'dist', 'claudian');
+const PLUGIN_ID = readPluginId(ROOT);
+/** 与 Obsidian 插件目录一致：整文件夹复制到 .obsidian/plugins/{id} */
+const DIST_PLUGIN = join(ROOT, 'dist', PLUGIN_ID);
 
 const args = process.argv.slice(2).join(' ');
 const isProd = process.argv.slice(2).includes('production');
@@ -31,7 +33,7 @@ execSync(`node esbuild.config.mjs ${args}`, { cwd: ROOT, stdio: 'inherit', env: 
 if (isProd) {
   copyFileSync(join(ROOT, 'manifest.json'), join(DIST_PLUGIN, 'manifest.json'));
 
-  // 避免与 dist/claudian 重复：清理历史遗留的仓库根目录产物
+  // 避免与 dist/{id} 重复：清理历史遗留的仓库根目录产物
   for (const name of ['main.js', 'styles.css']) {
     const p = join(ROOT, name);
     if (existsSync(p)) {
@@ -42,7 +44,7 @@ if (isProd) {
       }
     }
   }
-  // 避免与 dist/claudian 混淆：删除曾误放在 dist/ 根下的同名文件
+  // 避免与 dist/{id} 混淆：删除曾误放在 dist/ 根下的同名文件
   for (const name of ['main.js', 'styles.css', 'manifest.json']) {
     const stale = join(ROOT, 'dist', name);
     if (existsSync(stale)) {
@@ -54,5 +56,5 @@ if (isProd) {
     }
   }
 
-  console.log(`Production bundle → ${DIST_PLUGIN}`);
+  console.log(`Production bundle -> ${DIST_PLUGIN}`);
 }

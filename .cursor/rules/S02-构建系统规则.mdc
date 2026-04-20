@@ -1,0 +1,79 @@
+---
+description: 构建系统规则 - Claudian 仓库实际构建流程、产物路径与验证清单
+globs: **/*
+alwaysApply: false
+---
+
+# S02-构建系统规则（Claudian）
+
+## 核心原则
+
+1. **生产产物集中**：生产构建输出必须在 **`dist/{manifest.id}/`**（由 `scripts/lib/read-plugin-id.mjs` 读取；本仓库 `id` 为 `claudian`）。
+2. **根目录不保留生产 bundle**：生产构建结束后应清理误留在根目录的 `main.js` / `styles.css`（`build.mjs` 已处理常见情况）。
+3. **开发模式例外**：`npm run dev` 下为便于 watch，产物可写在**仓库根目录**；与生产路径不同，属预期（见 `scripts/build.mjs` 头部注释）。
+
+## 生产构建产物
+
+路径：**`dist/{manifest.id}/`**（本仓库为 `dist/claudian/`）
+
+| 文件 | 说明 |
+|------|------|
+| `main.js` | esbuild 打包入口 `src/main.ts` |
+| `styles.css` | `scripts/build-css.mjs` 合并 `src/style/` |
+| `manifest.json` | 从仓库根目录复制 |
+
+**说明**：当前流水线**不**生成 `.hotreload`；若需热重载插件，请自行按 Obsidian 社区惯例添加，勿臆测本仓库已包含该步骤。
+
+## 命令
+
+```bash
+npm run build      # 生产：CSS + esbuild → dist/claudian/
+npm run dev        # 开发：watch（产物默认在根目录）
+npm run build:css  # 仅 CSS（通常由 build/dev 间接调用）
+```
+
+## 构建顺序（生产）
+
+1. 设置环境变量 `CLAUDIAN_PLUGIN_OUT_DIR` 指向 `dist/{manifest.id}`（由 `scripts/build.mjs` 在 `production` 模式下设置）。
+2. 执行 `node scripts/build-css.mjs` → `dist/{manifest.id}/styles.css`。
+3. 执行 `node esbuild.config.mjs production` → `dist/{manifest.id}/main.js`。
+4. 复制根目录 `manifest.json` → `dist/{manifest.id}/manifest.json`。
+5. 清理根目录及 `dist/` 根下可能遗留的 `main.js` / `styles.css` / `manifest.json`（避免与 `dist/claudian` 混淆）。
+
+**关键文件**（均在仓库根目录或 `scripts/`）：
+
+| 文件 | 作用 |
+|------|------|
+| `scripts/build.mjs` | 生产构建编排 |
+| `scripts/build-css.mjs` | CSS 合并 |
+| `esbuild.config.mjs` | esbuild 配置与可选复制到 Obsidian |
+| `manifest.json` | `id`: claudian，`name`: Claudian |
+
+## 同步到 Obsidian 插件目录（可选）
+
+- **开发（watch）**：在 `.env.local` 中设置 `OBSIDIAN_VAULT` 指向库根；构建结束且路径存在时，`esbuild.config.mjs` 会将产物复制到 **`{OBSIDIAN_VAULT}/.obsidian/plugins/{manifest.id}/`**。未配置则跳过。
+- **发版/多库验证（脚本优先）**：执行 **`npm run copy:obsidian`**（`scripts/publish-to-obsidian-vaults.mjs`）从项目根**向上**查找所有 `.obsidian`，将 **`dist/{id}/`** 覆盖复制到各库的 **`plugins/{id}/`**；或一键 **`npm run build:try`**（先 build 再 copy）。详见 `docs/02-Areas/最佳实践_构建产物同步到上层Obsidian库.md`。
+
+## 构建验证检查清单
+
+### 构建前
+
+- [ ] 根目录 `manifest.json` 存在且含 `id`、`name`、`version`
+- [ ] `src/main.ts`、`src/style/index.css` 存在
+
+### 构建后（生产）
+
+- [ ] `dist/{manifest.id}/main.js` 存在
+- [ ] `dist/{manifest.id}/styles.css` 存在
+- [ ] `dist/{manifest.id}/manifest.json` 存在
+- [ ] 根目录无应删除的遗留 `main.js` / `styles.css`（若仍存在，检查构建是否走 `production`）
+
+## .gitignore
+
+构建产物目录与根目录临时产物应被忽略（以仓库 `.gitignore` 为准）；**勿提交** `dist/` 或根目录下的 bundle 文件。
+
+## 相关规则
+
+- `S00-Claudian-工作区上下文.mdc`：总览与 npm 门禁
+- `S01-文档存储规则.mdc`：文档存放
+- `S03-版本发布规则.mdc`：发版与构建门禁

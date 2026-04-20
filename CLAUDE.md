@@ -16,6 +16,7 @@ Claudian is an Obsidian plugin that embeds provider-backed chat runtimes in a si
 ## Commands
 
 ```bash
+npm run sync:claude   # 将 .cursor/commands、skills、rules 复制到 .claude/（单一维护源在 .cursor）
 npm run dev
 npm run build
 npm run typecheck
@@ -59,8 +60,9 @@ Tests mirror the `src/` layout under `tests/unit/` and `tests/integration/`.
 | `.claude/settings.json` | Claude Code-compatible project settings, permissions, and plugin overrides |
 | `.claudian/claudian-settings.json` | Shared Claudian app settings plus provider-specific configuration |
 | `.claude/mcp.json` | Claudian-managed MCP servers for Claude |
-| `.claude/commands/**/*.md` | Claude slash commands |
-| `.claude/skills/*/SKILL.md` | Claude skills |
+| `.claude/commands/**/*.md` | Claude slash commands（与 `.cursor/commands` 同步：`npm run sync:claude`） |
+| `.claude/skills/*/SKILL.md` | Claude skills（与 `.cursor/skills` 同步，见上） |
+| `.claude/rules/*.mdc` | 与 `.cursor/rules` 同步的规则副本，供仓库内对照；Claude Code CLI 以项目 `CLAUDE.md` 与官方配置为准 |
 | `.claude/agents/*.md` | Claude vault agents |
 | `.claudian/sessions/*.meta.json` | Provider-neutral session metadata |
 | `.codex/skills/*/SKILL.md` | Codex vault skills |
@@ -71,6 +73,7 @@ Tests mirror the `src/` layout under `tests/unit/` and `tests/integration/`.
 
 ## Development Notes
 
+- **Cross-platform (Windows + macOS)**: Treat Windows and macOS as first-class dev and runtime targets. Use Node path APIs (`path.join`, `path.resolve`) for filesystem paths; avoid bash-only scripts as the sole supported workflow. See `.cursor/rules/S00-Claudian-工作区上下文.mdc` (section 跨平台与智能体约束).
 - **Provider-native first**: Prefer the official Claude SDK and Codex app-server behavior over reimplementing provider features locally. When the provider already owns a capability, adapt to it instead of shadowing it.
 - **Runtime exploration**: For provider integrations, inspect real runtime output first. Claude data lands under `~/.claude/` and Codex data under `~/.codex/`. Real transcripts beat guessed event shapes. Put throwaway local scripts in `.context/`; only promote durable tooling into `dev/`.
 - **Comments**: Comment why, not what. Avoid narration and redundant JSDoc.
