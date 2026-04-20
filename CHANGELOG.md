@@ -2,6 +2,14 @@
 
 本文档记录 Claudian（Obsidian 插件）的版本变更；格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，版本号遵循语义化版本意图（主版本.次版本.修订号）。
 
+## [2.1.1] - 2026-04-20
+
+### 修复
+
+- **Claudian 视图布局**：为叠层状态栏主题增加底部避让变量 **`--claudian-view-bottom-safe`**（`calc(max(--status-bar-scroll-padding, --status-bar-height, 36px, safe-area) + 6px)`），减少输入组合器与全局状态栏重叠；**6px** 用于组合器下阴影与栏顶呼吸缝。状态栏已流内占位的主题若底部空白过大，可在用户 CSS 中将 **`--claudian-view-bottom-safe`** 覆盖为 **`0`**。
+
+---
+
 ## [2.1.0] - 2026-04-20
 
 ### 功能
@@ -19,9 +27,9 @@
 
 - 更新 **TabManager**、**BangBashService**、**QueryOptionsBuilder**、**main** 集成桩等与工作空间行为相关的单测/集成测试。
 
-### 修复
+### 文档
 
-- **Claudian 视图布局**：为叠层状态栏主题增加底部避让（**`--claudian-view-bottom-safe`**：`calc(max(…, 36px, safe-area) + 6px)`，在主题变量之上为输入组合器阴影与状态栏顶留缝）。状态栏已流内占位的主题若嫌底部空白过大，可在用户 CSS 中将该变量覆盖为 **`0`**。
+- **`docs/01-Projects/R20260420-01-优化底部输入框的对齐问题/`**：新增状态栏与输入区重叠的待确认方案说明（**`待确认_方案_状态栏与输入区重叠避让.md`**）。
 
 ---
 
