@@ -22,7 +22,7 @@ yarn-error.log*
 # IDE
 .idea/
 .vscode/
-.cursor/
+# 本 fork 将 `.cursor/` 下的命令与规则纳入版本维护，故不忽略整个目录（与上游 PR #484 默认不同）。
 *.swp
 *.swo
 *~
