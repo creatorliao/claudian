@@ -2,6 +2,25 @@
 
 本文档记录 Claudian（Obsidian 插件）的版本变更；格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，版本号遵循语义化版本意图（主版本.次版本.修订号）。
 
+## [2.1.0] - 2026-04-20
+
+### 功能
+
+- **工作空间（Vault 内子目录）**：文件树中 **文件夹** 右键 **「设为工作空间」**，将持久化路径写入存储并在 **Ribbon** 提示中展示简短目录名；非法路径给出 Notice。
+- **重置工作空间**：命令 **`Reset workspace`**（及视图内对应操作）清空持久化工作空间，各 Tab 副标题与后续新建 Tab 回到 **Vault 根** 语义。
+- **Tab 与有效工作目录**：每个 Tab 持有 **`workspace` 快照**；新建 Tab **继承**当前持久化工作空间；向 Claude / Codex 运行时传入 **`effectiveCwd`**，**Bang Bash** 与外部工具路径按解析后的目录执行。
+- **路径工具**：新增 **`resolveWorkspacePath`**、**`formatWorkspaceDisplayShort`**、**`absoluteWorkspaceToVaultRelative`**、**`isFileInWorkspaceVaultRelative`** 等，统一 Vault 相对/绝对路径与安全校验；**`getVaultPath`** 对 `app.vault` 做空值防护。
+
+### 国际化
+
+- 新增 **`contextMenu.*`**（设为工作空间、路径无效等）、**`commands.resetWorkspace`**（`en` / `zh-CN`）。
+
+### 测试
+
+- 更新 **TabManager**、**BangBashService**、**QueryOptionsBuilder**、**main** 集成桩等与工作空间行为相关的单测/集成测试。
+
+---
+
 ## [2.0.18] - 2026-04-20
 
 ### 工程

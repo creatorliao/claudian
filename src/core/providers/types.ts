@@ -84,7 +84,12 @@ export interface ProviderSettingsReconciler {
 
 /** Tab manager state persisted across restarts. */
 export interface AppTabManagerState {
-  openTabs: Array<{ tabId: string; conversationId: string | null }>;
+  openTabs: Array<{
+    tabId: string;
+    conversationId: string | null;
+    /** 该 Tab 工作空间绝对路径快照；缺省表示 Vault 根语义 */
+    workspace?: string | null;
+  }>;
   activeTabId: string | null;
 }
 

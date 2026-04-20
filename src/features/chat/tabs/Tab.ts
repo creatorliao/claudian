@@ -25,7 +25,11 @@ import { t } from '../../../i18n/i18n';
 import type ClaudianPlugin from '../../../main';
 import { SlashCommandDropdown } from '../../../shared/components/SlashCommandDropdown';
 import { getEnhancedPath } from '../../../utils/env';
-import { getVaultPath } from '../../../utils/path';
+import {
+  absoluteWorkspaceToVaultRelative,
+  getVaultPath,
+  resolveWorkspacePath,
+} from '../../../utils/path';
 import { BrowserSelectionController } from '../controllers/BrowserSelectionController';
 import { CanvasSelectionController } from '../controllers/CanvasSelectionController';
 import { ConversationController } from '../controllers/ConversationController';
@@ -108,6 +112,8 @@ export interface TabCreateOptions {
   tabId?: TabId;
   /** Provider to inherit for blank tabs (e.g. from the active tab). */
   defaultProviderId?: ProviderId;
+  /** 初始工作空间绝对路径；null 表示 Vault 根 */
+  initialWorkspace?: string | null;
   onStreamingChanged?: (isStreaming: boolean) => void;
   onTitleChanged?: (title: string) => void;
   onAttentionChanged?: (needsAttention: boolean) => void;
@@ -334,6 +340,7 @@ export function createTab(options: TabCreateOptions): TabData {
     containerEl,
     conversation,
     tabId,
+    initialWorkspace,
     onStreamingChanged,
     onAttentionChanged,
     onConversationIdChanged,
@@ -409,6 +416,7 @@ export function createTab(options: TabCreateOptions): TabData {
     },
     dom,
     renderer: null,
+    workspace: initialWorkspace ?? null,
   };
 
   return tab;
@@ -615,6 +623,12 @@ function initializeContextManagers(tab: TabData, plugin: ClaudianPlugin): void {
         tab.renderer?.scrollToBottomIfNeeded();
       },
       getExternalContexts: () => tab.ui.externalContextSelector?.getExternalContexts() || [],
+      getWorkspacePath: () => {
+        const vp = getVaultPath(plugin.app);
+        if (!vp) return null;
+        const abs = resolveWorkspacePath(tab.workspace, vp) ?? tab.workspace;
+        return absoluteWorkspaceToVaultRelative(abs, vp);
+      },
     },
     dom.inputContainerEl
   );
@@ -701,7 +715,9 @@ function initializeInstructionAndTodo(tab: TabData, plugin: ClaudianPlugin): voi
     const vaultPath = getVaultPath(plugin.app);
     if (vaultPath) {
       const enhancedPath = getEnhancedPath();
-      const bashService = new BangBashService(vaultPath, enhancedPath);
+      const getCwd = () =>
+        resolveWorkspacePath(tab.workspace, vaultPath) ?? vaultPath ?? process.cwd();
+      const bashService = new BangBashService(getCwd, enhancedPath);
 
       tab.ui.bangBashModeManager = new BangBashModeManagerClass(
         dom.inputEl,
@@ -1333,6 +1349,10 @@ export function initializeTabControllers(
     getAgentService: () => tab.service,
     getSubagentManager: () => services.subagentManager,
     getTabProviderId: () => getTabProviderId(tab, plugin),
+    getEffectiveCwd: () => {
+      const vp = getVaultPath(plugin.app);
+      return resolveWorkspacePath(tab.workspace, vp) ?? vp ?? '';
+    },
     ensureServiceInitialized: async () => {
       if (tab.serviceInitialized && tab.lifecycleState === 'bound_active') {
         return true;

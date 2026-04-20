@@ -12,18 +12,18 @@ const TIMEOUT_MS = 30_000;
 const MAX_BUFFER = 1024 * 1024; // 1MB
 
 export class BangBashService {
-  private cwd: string;
+  private getCwd: () => string;
   private enhancedPath: string;
 
-  constructor(cwd: string, enhancedPath: string) {
-    this.cwd = cwd;
+  constructor(getCwd: () => string, enhancedPath: string) {
+    this.getCwd = getCwd;
     this.enhancedPath = enhancedPath;
   }
 
   execute(command: string): Promise<BangBashResult> {
     return new Promise((resolve) => {
       exec(command, {
-        cwd: this.cwd,
+        cwd: this.getCwd(),
         env: { ...process.env, PATH: this.enhancedPath },
         timeout: TIMEOUT_MS,
         maxBuffer: MAX_BUFFER,

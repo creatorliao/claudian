@@ -88,6 +88,14 @@ function createMockPlugin(overrides: Record<string, any> = {}): any {
       workspace: {
         revealLeaf: jest.fn(),
       },
+      vault: {
+        adapter: { basePath: '/mock/vault' },
+      },
+    },
+    storage: {
+      getWorkspace: jest.fn().mockResolvedValue(''),
+      setWorkspace: jest.fn().mockResolvedValue(undefined),
+      ...(overrides.storage || {}),
     },
     settings: {
       maxTabs: DEFAULT_MAX_TABS,
@@ -139,6 +147,7 @@ function createMockTabData(overrides: Record<string, any> = {}): any {
     id: `tab-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
     providerId: 'claude',
     conversationId: null,
+    workspace: null,
     service: null,
     serviceInitialized: false,
     state: {

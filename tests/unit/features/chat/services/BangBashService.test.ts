@@ -12,7 +12,7 @@ describe('BangBashService', () => {
   let service: BangBashService;
 
   beforeEach(() => {
-    service = new BangBashService('/test/dir', '/usr/bin');
+    service = new BangBashService(() => '/test/dir', '/usr/bin');
   });
 
   afterEach(() => {

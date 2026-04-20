@@ -4,6 +4,7 @@ import { Notice } from 'obsidian';
 import { SESSIONS_PATH, SessionStorage } from '../../core/bootstrap/SessionStorage';
 import type { SharedAppStorage } from '../../core/bootstrap/storage';
 import { CLAUDIAN_STORAGE_PATH } from '../../core/bootstrap/StoragePaths';
+import type { AppTabManagerState } from '../../core/providers/types';
 import { VaultFileAdapter } from '../../core/storage/VaultFileAdapter';
 import { t } from '../../i18n/i18n';
 import { ClaudianSettingsStorage, type StoredClaudianSettings } from '../settings/ClaudianSettingsStorage';
@@ -32,7 +33,7 @@ export class SharedStorageService implements SharedAppStorage {
     await this.claudianSettings.save(settings as StoredClaudianSettings);
   }
 
-  async setTabManagerState(state: { openTabs: Array<{ tabId: string; conversationId: string | null }>; activeTabId: string | null }): Promise<void> {
+  async setTabManagerState(state: AppTabManagerState): Promise<void> {
     try {
       const data = (await this.plugin.loadData()) || {};
       data.tabManagerState = state;
@@ -42,7 +43,7 @@ export class SharedStorageService implements SharedAppStorage {
     }
   }
 
-  async getTabManagerState(): Promise<{ openTabs: Array<{ tabId: string; conversationId: string | null }>; activeTabId: string | null } | null> {
+  async getTabManagerState(): Promise<AppTabManagerState | null> {
     try {
       const data = await this.plugin.loadData();
       if (!data?.tabManagerState) {
@@ -55,6 +56,20 @@ export class SharedStorageService implements SharedAppStorage {
     }
   }
 
+  /**
+   * 默认工作空间（Vault 相对路径），存于 data.json。
+   */
+  async getWorkspace(): Promise<string> {
+    const data = (await this.plugin.loadData()) || {};
+    return typeof data.workspace === 'string' ? data.workspace : '';
+  }
+
+  async setWorkspace(value: string): Promise<void> {
+    const data = (await this.plugin.loadData()) || {};
+    data.workspace = value ?? '';
+    await this.plugin.saveData(data);
+  }
+
   getAdapter(): VaultFileAdapter {
     return this.adapter;
   }
@@ -64,7 +79,7 @@ export class SharedStorageService implements SharedAppStorage {
     await this.adapter.ensureFolder(SESSIONS_PATH);
   }
 
-  private validateTabManagerState(data: unknown): { openTabs: Array<{ tabId: string; conversationId: string | null }>; activeTabId: string | null } | null {
+  private validateTabManagerState(data: unknown): AppTabManagerState | null {
     if (!data || typeof data !== 'object') {
       return null;
     }
@@ -74,7 +89,7 @@ export class SharedStorageService implements SharedAppStorage {
       return null;
     }
 
-    const validatedTabs: Array<{ tabId: string; conversationId: string | null }> = [];
+    const validatedTabs: AppTabManagerState['openTabs'] = [];
     for (const tab of state.openTabs) {
       if (!tab || typeof tab !== 'object') {
         continue;
@@ -85,9 +100,11 @@ export class SharedStorageService implements SharedAppStorage {
         continue;
       }
 
+      const ws = tabObj.workspace;
       validatedTabs.push({
         tabId: tabObj.tabId,
         conversationId: typeof tabObj.conversationId === 'string' ? tabObj.conversationId : null,
+        workspace: typeof ws === 'string' || ws === null ? (ws as string | null) : undefined,
       });
     }
 

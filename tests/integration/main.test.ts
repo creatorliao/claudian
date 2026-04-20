@@ -49,6 +49,7 @@ describe('ClaudianPlugin', () => {
         },
       },
       workspace: {
+        on: jest.fn().mockReturnValue({ unload: jest.fn() }),
         getLeavesOfType: jest.fn().mockReturnValue([]),
         getRightLeaf: jest.fn().mockReturnValue({
           setViewState: jest.fn().mockResolvedValue(undefined),
@@ -82,6 +83,7 @@ describe('ClaudianPlugin', () => {
 
     // Create plugin instance with mocked app
     plugin = new ClaudianPlugin(mockApp, mockManifest);
+    (plugin as unknown as { registerEvent: (ref: unknown) => void }).registerEvent = jest.fn();
     (plugin.loadData as jest.Mock).mockResolvedValue({});
   });
 
@@ -380,6 +382,7 @@ describe('ClaudianPlugin', () => {
       const mockTabManager = {
         getAllTabs: jest.fn().mockReturnValue([{
           providerId: 'claude',
+          workspace: null,
           state: { isStreaming: false },
           serviceInitialized: true,
           service: { ensureReady: mockEnsureReady },
@@ -395,7 +398,10 @@ describe('ClaudianPlugin', () => {
       // Change env but not in a way that affects model
       await plugin.applyEnvironmentVariables('shared', 'SOME_VAR=value');
 
-      expect(mockEnsureReady).toHaveBeenCalledWith({ force: true });
+      expect(mockEnsureReady).toHaveBeenCalledWith({
+        force: true,
+        effectiveCwd: '/test/vault',
+      });
     });
   });
 

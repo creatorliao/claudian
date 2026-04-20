@@ -74,6 +74,9 @@
       "notice": "已添加 {count} 个文件到上下文",
       "overlay": "拖放文件到此处添加到上下文"
     },
+    "workspace": {
+      "fileOutsideWorkspace": "该文件不在当前 Tab 工作空间内，未加入上下文"
+    },
     "tabs": {
       "maxAllowedNotice": "最多允许 {maxTabs} 个标签页"
     },
@@ -965,7 +968,18 @@
     "inlineEdit": "内联编辑",
     "newTab": "新建标签页",
     "newSession": "新会话（当前标签页）",
-    "closeCurrentTab": "关闭当前标签页"
+    "closeCurrentTab": "关闭当前标签页",
+    "resetWorkspace": "重置工作空间"
+  },
+  "contextMenu": {
+    "setWorkspace": "设为工作空间",
+    "workspaceSet": "已设为默认工作空间",
+    "invalidPath": "路径无效或不在 Vault 内",
+    "workspaceReset": "已重置为 Vault 根目录"
+  },
+  "workspace": {
+    "vaultRoot": "Vault 根目录",
+    "resetTooltip": "重置工作空间为 Vault 根目录"
   },
   "ribbon": {
     "toggleClaudian": "切换 Claudian 聊天面板"

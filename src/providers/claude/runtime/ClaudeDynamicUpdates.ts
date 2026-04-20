@@ -35,6 +35,7 @@ export interface ClaudeDynamicUpdateDeps {
     vaultPath: string,
     cliPath: string,
     externalContextPaths?: string[],
+    effectiveCwd?: string,
   ) => PersistentQueryConfig;
   needsRestart: (newConfig: PersistentQueryConfig) => boolean;
   ensureReady: (options: ChatRuntimeEnsureReadyOptions) => Promise<boolean>;
@@ -171,7 +172,12 @@ export async function applyClaudeDynamicUpdates(
     return;
   }
 
-  const newConfig = deps.buildPersistentQueryConfig(vaultPath, cliPath, newExternalContextPaths);
+  const newConfig = deps.buildPersistentQueryConfig(
+    vaultPath,
+    cliPath,
+    newExternalContextPaths,
+    queryOptions?.effectiveCwd,
+  );
   if (!deps.needsRestart(newConfig)) {
     return;
   }
@@ -180,6 +186,7 @@ export async function applyClaudeDynamicUpdates(
     externalContextPaths: newExternalContextPaths,
     preserveHandlers: restartOptions?.preserveHandlers,
     force: true,
+    effectiveCwd: queryOptions?.effectiveCwd,
   });
 
   if (restarted && deps.getPersistentQuery()) {

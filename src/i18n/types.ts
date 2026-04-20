@@ -768,4 +768,12 @@ export type TranslationKey =
   | "commands.newTab"
   | "commands.newSession"
   | "commands.closeCurrentTab"
+  | "commands.resetWorkspace"
+  | "contextMenu.setWorkspace"
+  | "contextMenu.workspaceSet"
+  | "contextMenu.invalidPath"
+  | "contextMenu.workspaceReset"
+  | "workspace.vaultRoot"
+  | "workspace.resetTooltip"
+  | "chat.workspace.fileOutsideWorkspace"
   | "ribbon.toggleClaudian";

@@ -64,6 +64,7 @@ function createMockPersistentQueryConfig(
   overrides: Partial<PersistentQueryConfig> = {}
 ): PersistentQueryConfig {
   return {
+    effectiveCwd: '/test/vault',
     model: 'sonnet',
     thinkingTokens: null,
     effortLevel: null,
@@ -85,6 +86,7 @@ function createMockPersistentQueryConfig(
 function createMockContext(overrides: Partial<QueryOptionsContext> = {}): QueryOptionsContext {
   return {
     vaultPath: '/test/vault',
+    effectiveCwd: '/test/vault',
     cliPath: '/mock/claude',
     settings: createMockSettings(),
     customEnv: {},

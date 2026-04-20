@@ -27,6 +27,19 @@
   margin: 0;
   font-size: 14px;
   font-weight: 600;
+  /* 主标题锚点色由插件声明，减少主题全局规则漂移 */
+  color: var(--text-normal);
+}
+
+/* 工作区短路径：次级元信息，弱于智能体名称，避免被主题当成链接/强调色 */
+.claudian-workspace-subtitle {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-muted);
+  text-decoration: none;
+  filter: none;
+  text-shadow: none;
+  letter-spacing: 0.02em;
 }
 
 .claudian-logo {

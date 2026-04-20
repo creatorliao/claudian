@@ -9,6 +9,8 @@ export interface BuildCodexLaunchSpecOptions {
   settings: Record<string, unknown>;
   resolvedCliCommand: string | null;
   hostVaultPath: string | null;
+  /** 若设置则作为 Codex 工作目录（否则为 Vault 根） */
+  workingDirectory?: string | null;
   env: Record<string, string>;
   hostPlatform?: NodeJS.Platform;
   resolveDefaultWslDistro?: () => string | undefined;
@@ -26,7 +28,7 @@ export function buildCodexLaunchSpec(
     resolveDefaultWslDistro: options.resolveDefaultWslDistro,
   });
   const pathMapper = createCodexPathMapper(target);
-  const spawnCwd = options.hostVaultPath ?? process.cwd();
+  const spawnCwd = options.workingDirectory ?? options.hostVaultPath ?? process.cwd();
 
   const workspaceDistro = inferWslDistroFromWindowsPath(options.hostVaultPath);
   if (

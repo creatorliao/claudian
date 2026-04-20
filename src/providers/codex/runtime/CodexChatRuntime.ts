@@ -139,6 +139,9 @@ export class CodexChatRuntime implements ChatRuntime {
   private canceled = false;
   private turnMetadata: ChatTurnMetadata = {};
 
+  /** 最近一次 Tab 工作目录（主机路径） */
+  private lastEffectiveCwd: string | null = null;
+
   constructor(plugin: ClaudianPlugin) {
     this.plugin = plugin;
   }
@@ -209,9 +212,15 @@ export class CodexChatRuntime implements ChatRuntime {
   }
 
   async ensureReady(options?: ChatRuntimeEnsureReadyOptions): Promise<boolean> {
+    const vaultPath = getVaultPath(this.plugin.app);
+    if (vaultPath && options?.effectiveCwd !== undefined) {
+      this.lastEffectiveCwd = options.effectiveCwd || vaultPath;
+    }
+    const effectiveWd = this.lastEffectiveCwd ?? vaultPath ?? undefined;
+
     const promptSettings = this.getSystemPromptSettings();
     const promptKey = computeSystemPromptKey(promptSettings);
-    const launchSpec = resolveCodexAppServerLaunchSpec(this.plugin, this.providerId);
+    const launchSpec = resolveCodexAppServerLaunchSpec(this.plugin, this.providerId, effectiveWd);
     const clientConfigKey = [promptKey, JSON.stringify({
       command: launchSpec.command,
       args: launchSpec.args,
@@ -241,7 +250,10 @@ export class CodexChatRuntime implements ChatRuntime {
   ): AsyncGenerator<StreamChunk> {
     this.resetTurnMetadata();
     let turn = originalTurn;
-    await this.ensureReady();
+    const vaultPath = getVaultPath(this.plugin.app);
+    const cwd = queryOptions?.effectiveCwd ?? vaultPath ?? process.cwd();
+    this.lastEffectiveCwd = cwd;
+    await this.ensureReady({ effectiveCwd: cwd });
 
     this.canceled = false;
     this.cleanupActiveInputBundles();

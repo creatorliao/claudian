@@ -89,6 +89,8 @@ export function createResponseHandler(options: ResponseHandlerOptions): Response
 }
 
 export interface PersistentQueryConfig {
+  /** SDK 进程当前工作目录（与 vaultPath 可不同，如子文件夹工作空间） */
+  effectiveCwd: string;
   model: string | null;
   thinkingTokens: number | null;
   effortLevel: EffortLevel | null;

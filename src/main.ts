@@ -11,7 +11,8 @@ import type {
   WorkspaceParent,
   WorkspaceSidedock,
 } from "obsidian";
-import { addIcon, MarkdownView, Notice, Plugin } from "obsidian";
+import { addIcon, MarkdownView, Notice, Plugin, TFolder } from "obsidian";
+import * as path from "path";
 
 import { DEFAULT_CLAUDIAN_SETTINGS } from "./app/settings/defaultSettings";
 import { SharedStorageService } from "./app/storage/SharedStorageService";
@@ -47,13 +48,20 @@ import {
   getClaudeBrandMarkAddIconInnerHtml,
 } from "./shared/claudeBrandMark";
 import { buildCursorContext } from "./utils/editor";
-import { getVaultPath } from "./utils/path";
+import {
+  formatWorkspaceDisplayShort,
+  getVaultPath,
+  isPathWithinVault,
+  resolveWorkspacePath,
+} from "./utils/path";
 
 export default class ClaudianPlugin extends Plugin {
   settings!: ClaudianSettings;
   storage!: SharedAppStorage;
   private conversations: Conversation[] = [];
   private lastKnownTabManagerState: AppTabManagerState | null = null;
+  /** Ribbon 图标元素，用于更新工作空间 tooltip */
+  private ribbonIconEl: HTMLElement | null = null;
 
   async onload() {
     await this.loadSettings();
@@ -67,9 +75,34 @@ export default class ClaudianPlugin extends Plugin {
     // 功能区与侧栏标签与视图内品牌标一致：使用 Claude 星芒（非 Lucide `bot`）
     addIcon(CLAUDIAN_APP_ICON_ID, getClaudeBrandMarkAddIconInnerHtml());
     // Ribbon：无聊天叶子则创建并打开；已有则侧栏用折叠/展开，主区用切换活动叶子（不销毁视图）
-    this.addRibbonIcon(CLAUDIAN_APP_ICON_ID, t("ribbon.toggleClaudian"), () => {
+    this.ribbonIconEl = this.addRibbonIcon(CLAUDIAN_APP_ICON_ID, t("ribbon.toggleClaudian"), () => {
       void this.toggleClaudianView();
     });
+    void this.updateRibbonTooltipFromStorage();
+
+    this.registerEvent(
+      this.app.workspace.on("file-menu", (menu, file) => {
+        if (file instanceof TFolder) {
+          menu.addItem((item) =>
+            item
+              .setIcon(CLAUDIAN_APP_ICON_ID)
+              .setTitle(t("contextMenu.setWorkspace"))
+              .onClick(async () => {
+                const vaultPath = getVaultPath(this.app);
+                if (!vaultPath) return;
+                const folderPath = path.join(vaultPath, file.path);
+                if (!isPathWithinVault(folderPath, vaultPath)) {
+                  new Notice(t("contextMenu.invalidPath"));
+                  return;
+                }
+                await this.storage.setWorkspace(file.path);
+                new Notice(t("contextMenu.workspaceSet"));
+                await this.updateRibbonTooltipFromStorage();
+              }),
+          );
+        }
+      }),
+    );
 
     this.addCommand({
       id: "open-view",
@@ -195,6 +228,14 @@ export default class ClaudianPlugin extends Plugin {
           }
         }
         return true;
+      },
+    });
+
+    this.addCommand({
+      id: "reset-workspace",
+      name: t("commands.resetWorkspace"),
+      callback: () => {
+        void this.resetWorkspaceAndNotify();
       },
     });
 
@@ -537,6 +578,7 @@ export default class ClaudianPlugin extends Plugin {
       }
 
       let failedTabs = 0;
+      const vp = getVaultPath(this.app);
       if (changed) {
         for (const tab of affectedTabs) {
           if (!tab.service || !tab.serviceInitialized) {
@@ -545,8 +587,11 @@ export default class ClaudianPlugin extends Plugin {
           try {
             const externalContextPaths =
               tab.ui.externalContextSelector?.getExternalContexts() ?? [];
+            const effectiveCwd = vp
+              ? resolveWorkspacePath(tab.workspace, vp) ?? vp
+              : undefined;
             tab.service.resetSession();
-            await tab.service.ensureReady({ externalContextPaths });
+            await tab.service.ensureReady({ externalContextPaths, effectiveCwd });
           } catch {
             failedTabs++;
           }
@@ -557,7 +602,10 @@ export default class ClaudianPlugin extends Plugin {
             continue;
           }
           try {
-            await tab.service.ensureReady({ force: true });
+            const effectiveCwd = vp
+              ? resolveWorkspacePath(tab.workspace, vp) ?? vp
+              : undefined;
+            await tab.service.ensureReady({ force: true, effectiveCwd });
           } catch {
             failedTabs++;
           }
@@ -849,6 +897,30 @@ export default class ClaudianPlugin extends Plugin {
       }
     }
     return null;
+  }
+
+  /** 根据持久化工作空间更新 Ribbon 提示（全局默认目录） */
+  async updateRibbonTooltipFromStorage(): Promise<void> {
+    const vaultPath = getVaultPath(this.app);
+    if (!this.ribbonIconEl || !vaultPath) return;
+    const rel = await this.storage.getWorkspace();
+    const abs = resolveWorkspacePath(rel?.trim() || null, vaultPath);
+    const short = abs ? formatWorkspaceDisplayShort(abs, vaultPath) : "";
+    const ribbonBase = t("ribbon.toggleClaudian");
+    const suffix = short ? ` — ${short}` : ` — ${t("workspace.vaultRoot")}`;
+    const tip = `${ribbonBase}${suffix}`;
+    this.ribbonIconEl.setAttribute("aria-label", tip);
+    this.ribbonIconEl.setAttribute("title", tip);
+  }
+
+  /** 清空持久化并将所有已打开视图下的 Tab 工作空间快照置为 Vault 根 */
+  async resetWorkspaceAndNotify(): Promise<void> {
+    await this.storage.setWorkspace("");
+    new Notice(t("contextMenu.workspaceReset"));
+    await this.updateRibbonTooltipFromStorage();
+    for (const view of this.getAllViews()) {
+      view.resetWorkspaceToVaultRoot();
+    }
   }
 
   private getLastKnownOpenTabCount(): number {

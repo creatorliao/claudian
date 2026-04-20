@@ -70,6 +70,8 @@ export interface ChatRuntimeQueryOptions {
   enabledMcpServers?: Set<string>;
   forceColdStart?: boolean;
   externalContextPaths?: string[];
+  /** Agent SDK / CLI 进程工作目录；缺省为 Vault 根路径 */
+  effectiveCwd?: string;
 }
 
 export interface ChatRuntimeEnsureReadyOptions {
@@ -77,6 +79,8 @@ export interface ChatRuntimeEnsureReadyOptions {
   externalContextPaths?: string[];
   force?: boolean;
   preserveHandlers?: boolean;
+  /** 与 query 一致的工作目录；缺省为 Vault 根 */
+  effectiveCwd?: string;
 }
 
 export type ChatRuntimeConversationState = Pick<

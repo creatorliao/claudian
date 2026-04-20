@@ -15,6 +15,9 @@ export interface SharedAppStorage {
   saveClaudianSettings(settings: Record<string, unknown>): Promise<void>;
   setTabManagerState(state: AppTabManagerState): Promise<void>;
   getTabManagerState(): Promise<AppTabManagerState | null>;
+  /** 持久化默认工作空间（Vault 相对路径，空串表示 Vault 根） */
+  getWorkspace(): Promise<string>;
+  setWorkspace(value: string): Promise<void>;
   sessions: AppSessionStorage;
   getAdapter(): VaultFileAdapter;
 }

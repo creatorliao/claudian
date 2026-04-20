@@ -7,6 +7,7 @@ import type { SlashCommand } from '../../../core/types';
 import { t } from '../../../i18n/i18n';
 import type ClaudianPlugin from '../../../main';
 import { chooseForkTarget } from '../../../shared/modals/ForkTargetModal';
+import { getVaultPath, resolveWorkspacePath } from '../../../utils/path';
 import { getTabProviderId } from './providerResolution';
 import {
   activateTab,
@@ -41,6 +42,8 @@ function isTabManagerViewHost(value: unknown): value is TabManagerViewHost {
 
 type CreateTabOptions = {
   activate?: boolean;
+  /** 恢复时的绝对路径快照；不传则从插件持久化默认解析 */
+  persistedWorkspace?: string | null;
 };
 
 type OpenConversationOptions = {
@@ -127,7 +130,7 @@ export class TabManager implements TabManagerInterface {
       return null;
     }
 
-    const { activate = true } = options;
+    const { activate = true, persistedWorkspace } = options;
 
     const conversation = conversationId
       ? await this.plugin.getConversationById(conversationId)
@@ -139,12 +142,24 @@ export class TabManager implements TabManagerInterface {
       ? undefined
       : (activeTab ? getTabProviderId(activeTab, this.plugin) : undefined);
 
+    const vaultPath = getVaultPath(this.plugin.app);
+    let initialWorkspace: string | null = null;
+    if (vaultPath) {
+      if (persistedWorkspace !== undefined) {
+        initialWorkspace = resolveWorkspacePath(persistedWorkspace, vaultPath);
+      } else {
+        const rel = await this.plugin.storage.getWorkspace();
+        initialWorkspace = resolveWorkspacePath(rel?.trim() || null, vaultPath);
+      }
+    }
+
     const tab = createTab({
       plugin: this.plugin,
       containerEl: this.containerEl,
       conversation: conversation ?? undefined,
       tabId,
       defaultProviderId,
+      initialWorkspace,
       onStreamingChanged: (isStreaming) => {
         tab.ui?.sendStopButton?.setStreaming(isStreaming);
         this.callbacks.onTabStreamingChanged?.(tab.id, isStreaming);
@@ -550,6 +565,7 @@ export class TabManager implements TabManagerInterface {
       openTabs.push({
         tabId: tab.id,
         conversationId: tab.conversationId,
+        workspace: tab.workspace,
       });
     }
 
@@ -564,7 +580,9 @@ export class TabManager implements TabManagerInterface {
     // Create tabs from persisted state with error handling
     for (const tabState of state.openTabs) {
       try {
-        await this.createTab(tabState.conversationId, tabState.tabId);
+        await this.createTab(tabState.conversationId, tabState.tabId, {
+          persistedWorkspace: tabState.workspace,
+        });
       } catch {
         // Continue restoring other tabs
       }

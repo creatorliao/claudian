@@ -4,7 +4,7 @@ import * as os from 'os';
 import * as path from 'path';
 
 export function getVaultPath(app: App): string | null {
-  const basePath = (app.vault.adapter as { basePath?: unknown } | undefined)?.basePath;
+  const basePath = (app.vault?.adapter as { basePath?: unknown } | undefined)?.basePath;
   return typeof basePath === 'string' ? basePath : null;
 }
 
@@ -342,4 +342,76 @@ export function normalizePathForVault(
   }
 
   return normalizedRaw.replace(/\\/g, '/');
+}
+
+/**
+ * 将绝对工作目录转为 Vault 相对路径（供文档胶囊等按工作空间过滤）。
+ * 若不在 Vault 内或无法解析则返回 null。
+ */
+export function absoluteWorkspaceToVaultRelative(
+  absoluteWorkspace: string | null | undefined,
+  vaultPath: string | null,
+): string | null {
+  if (!vaultPath || !absoluteWorkspace?.trim()) return null;
+  const normalized = normalizePathForFilesystem(absoluteWorkspace.trim());
+  if (!normalized) return null;
+  if (!isPathWithinVault(normalized, vaultPath)) return null;
+  const rel = path.relative(vaultPath, normalized);
+  return rel ? rel.replace(/\\/g, '/') : null;
+}
+
+/**
+ * 解析持久化或 Tab 快照中的工作目录为绝对路径。
+ * 必须在 Vault 内、存在且为目录；否则返回 null（调用方视为 Vault 根）。
+ */
+export function resolveWorkspacePath(
+  rawWorkspace: string | null | undefined,
+  vaultPath: string | null,
+): string | null {
+  if (!vaultPath || !rawWorkspace?.trim()) return null;
+  const normalized = normalizePathForFilesystem(rawWorkspace.trim());
+  if (!normalized) return null;
+  const absolute = path.isAbsolute(normalized)
+    ? normalized
+    : path.join(vaultPath, normalized);
+  if (!isPathWithinVault(absolute, vaultPath)) return null;
+  try {
+    const stat = fs.statSync(absolute);
+    if (!stat.isDirectory()) return null;
+  } catch {
+    return null;
+  }
+  return absolute;
+}
+
+/**
+ * 判断 Vault 相对路径的文件是否落在给定工作空间（Vault 相对）内。
+ * workspace 为空或 null 表示整个 Vault。
+ */
+export function isFileInWorkspaceVaultRelative(
+  fileVaultRelativePath: string,
+  workspaceVaultRelative: string | null | undefined,
+): boolean {
+  if (!workspaceVaultRelative || workspaceVaultRelative === '') return true;
+  const normFile = fileVaultRelativePath.replace(/\\/g, '/');
+  const normWs = workspaceVaultRelative.replace(/\\/g, '/');
+  return normFile === normWs || normFile.startsWith(`${normWs}/`);
+}
+
+/**
+ * 标题区 / Ribbon 用的简短展示（相对 Vault 的最后一级或末两级）。
+ */
+export function formatWorkspaceDisplayShort(
+  absoluteWorkspace: string | null | undefined,
+  vaultPath: string | null,
+): string {
+  if (!vaultPath || !absoluteWorkspace?.trim()) return '';
+  const normalized = normalizePathForFilesystem(absoluteWorkspace.trim());
+  if (!normalized || !isPathWithinVault(normalized, vaultPath)) return '';
+  const rel = path.relative(vaultPath, normalized).replace(/\\/g, '/');
+  if (!rel || rel === '.') return '';
+  const parts = rel.split('/').filter(Boolean);
+  if (parts.length === 0) return '';
+  if (parts.length <= 2) return parts.join('/');
+  return parts[parts.length - 1] ?? '';
 }

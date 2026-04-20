@@ -37,6 +37,8 @@ export interface QueryOptionsContext {
   enhancedPath: string;
   mcpManager: McpServerManager;
   pluginManager: AppPluginManager;
+  /** Agent 进程工作目录，缺省等于 vaultPath */
+  effectiveCwd: string;
 }
 
 export interface PersistentQueryContext extends QueryOptionsContext {
@@ -88,6 +90,10 @@ export class QueryOptionsBuilder {
       return true;
     }
 
+    if (currentConfig.effectiveCwd !== newConfig.effectiveCwd) {
+      return true;
+    }
+
     return false;
   }
 
@@ -115,6 +121,7 @@ export class QueryOptionsBuilder {
     const pluginsKey = ctx.pluginManager.getPluginsKey();
 
     return {
+      effectiveCwd: ctx.effectiveCwd,
       model: ctx.settings.model,
       thinkingTokens: thinkingTokens && thinkingTokens > 0 ? thinkingTokens : null,
       effortLevel: isAdaptiveThinkingModel(ctx.settings.model)
@@ -268,7 +275,7 @@ export class QueryOptionsBuilder {
       userName: ctx.settings.userName,
     };
     const options: Options = {
-      cwd: ctx.vaultPath,
+      cwd: ctx.effectiveCwd,
       systemPrompt: buildSystemPrompt(systemPromptSettings),
       model,
       abortController,

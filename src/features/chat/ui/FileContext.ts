@@ -13,7 +13,11 @@ import {
 } from '../../../utils/contextMentionResolver';
 import { buildExternalContextDisplayEntries } from '../../../utils/externalContext';
 import { externalContextScanner } from '../../../utils/externalContextScanner';
-import { getVaultPath, normalizePathForVault as normalizePathForVaultUtil } from '../../../utils/path';
+import {
+  getVaultPath,
+  isFileInWorkspaceVaultRelative,
+  normalizePathForVault as normalizePathForVaultUtil,
+} from '../../../utils/path';
 import { FileContextState } from './file-context/state/FileContextState';
 import { FileChipsView } from './file-context/view/FileChipsView';
 
@@ -21,6 +25,8 @@ export interface FileContextCallbacks {
   getExcludedTags: () => string[];
   onChipsChanged?: () => void;
   getExternalContexts?: () => string[];
+  /** Vault 相对工作空间路径；空/null 表示整库 */
+  getWorkspacePath?: () => string | null;
   /** Called when an agent is selected from the @ mention dropdown. */
   onAgentMentionSelect?: (agentId: string) => void;
 }
@@ -202,6 +208,10 @@ export class FileContextManager {
     if (activeFile && !this.hasExcludedTag(activeFile)) {
       const normalizedPath = this.normalizePathForVault(activeFile.path);
       if (normalizedPath) {
+        const ws = this.callbacks.getWorkspacePath?.();
+        if (ws !== undefined && ws !== null && ws !== '' && !isFileInWorkspaceVaultRelative(normalizedPath, ws)) {
+          return;
+        }
         this.currentNotePath = normalizedPath;
         this.state.attachFile(normalizedPath);
         this.refreshCurrentNoteChip();
@@ -213,6 +223,12 @@ export class FileContextManager {
   handleFileOpen(file: TFile) {
     const normalizedPath = this.normalizePathForVault(file.path);
     if (!normalizedPath) return;
+
+    const ws = this.callbacks.getWorkspacePath?.();
+    if (ws !== undefined && ws !== null && ws !== '' && !isFileInWorkspaceVaultRelative(normalizedPath, ws)) {
+      new Notice(t('chat.workspace.fileOutsideWorkspace'));
+      return;
+    }
 
     if (!this.state.isSessionStarted()) {
       this.state.clearAttachments();

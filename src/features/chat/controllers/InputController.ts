@@ -95,6 +95,8 @@ export interface InputControllerDeps {
   getTabProviderId?: () => ProviderId;
   /** Returns true if ready. */
   ensureServiceInitialized?: () => Promise<boolean>;
+  /** 当前 Tab Agent 工作目录（绝对路径） */
+  getEffectiveCwd?: () => string;
   openConversation?: (conversationId: string) => Promise<void>;
   onForkAll?: () => Promise<void>;
   restorePrePlanPermissionModeIfNeeded?: () => void;
@@ -362,7 +364,12 @@ export class InputController {
       // Pass history WITHOUT current turn (userMsg + assistantMsg we just added)
       // This prevents duplication when rebuilding context for new sessions
       const previousMessages = state.messages.slice(0, -2);
-      for await (const chunk of agentService.query(preparedTurn, previousMessages)) {
+      const effectiveCwd = this.deps.getEffectiveCwd?.();
+      for await (const chunk of agentService.query(
+        preparedTurn,
+        previousMessages,
+        effectiveCwd ? { effectiveCwd } : undefined,
+      )) {
         if (state.streamGeneration !== streamGeneration) {
           wasInvalidated = true;
           break;

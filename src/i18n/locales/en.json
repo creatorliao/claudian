@@ -74,6 +74,9 @@
       "notice": "Added {count} file(s) to context",
       "overlay": "Drop file here to add to context"
     },
+    "workspace": {
+      "fileOutsideWorkspace": "This file is outside the current tab workspace; not added to context"
+    },
     "tabs": {
       "maxAllowedNotice": "Maximum {maxTabs} tabs allowed"
     },
@@ -965,7 +968,18 @@
     "inlineEdit": "Inline edit",
     "newTab": "New tab",
     "newSession": "New session (in current tab)",
-    "closeCurrentTab": "Close current tab"
+    "closeCurrentTab": "Close current tab",
+    "resetWorkspace": "Reset workspace"
+  },
+  "contextMenu": {
+    "setWorkspace": "Set as workspace",
+    "workspaceSet": "Default workspace updated",
+    "invalidPath": "Invalid path or outside the vault",
+    "workspaceReset": "Workspace reset to vault root"
+  },
+  "workspace": {
+    "vaultRoot": "Vault root",
+    "resetTooltip": "Reset workspace to vault root"
   },
   "ribbon": {
     "toggleClaudian": "Toggle Claudian chat panel"

@@ -227,6 +227,12 @@ export interface TabData {
 
   /** Per-tab renderer. */
   renderer: MessageRenderer | null;
+
+  /**
+   * 该 Tab 的工作空间绝对路径快照；null 表示 Vault 根。
+   * 新建 Tab 时从持久化默认解析；恢复布局时从 tabManagerState 还原。
+   */
+  workspace: string | null;
 }
 
 export type TabProviderContext = Pick<TabData, 'conversationId' | 'service' | 'providerId' | 'lifecycleState' | 'draftModel'>;
@@ -237,6 +243,8 @@ export type TabProviderContext = Pick<TabData, 'conversationId' | 'service' | 'p
 export interface PersistedTabState {
   tabId: TabId;
   conversationId: string | null;
+  /** 绝对路径快照，与 TabData.workspace 一致 */
+  workspace?: string | null;
 }
 
 /**

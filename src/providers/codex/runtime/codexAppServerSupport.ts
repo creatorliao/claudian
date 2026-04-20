@@ -36,11 +36,14 @@ export function buildCodexAppServerEnvironment(
 export function resolveCodexAppServerLaunchSpec(
   plugin: ClaudianPlugin,
   providerId: ProviderId = 'codex',
+  effectiveWorkingDirectory?: string | null,
 ): CodexLaunchSpec {
+  const hostVault = getCodexAppServerWorkingDirectory(plugin);
   return buildCodexLaunchSpec({
     settings: plugin.settings as unknown as Record<string, unknown>,
     resolvedCliCommand: plugin.getResolvedProviderCliPath(providerId),
-    hostVaultPath: getCodexAppServerWorkingDirectory(plugin),
+    hostVaultPath: hostVault,
+    workingDirectory: effectiveWorkingDirectory ?? undefined,
     env: buildCodexAppServerEnvironment(plugin, providerId),
   });
 }

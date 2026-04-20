@@ -9,6 +9,11 @@ import { VIEW_TYPE_CLAUDIAN } from '../../core/types';
 import { t } from '../../i18n/i18n';
 import type ClaudianPlugin from '../../main';
 import { CLAUDIAN_APP_ICON_ID } from '../../shared/claudeBrandMark';
+import {
+  formatWorkspaceDisplayShort,
+  getVaultPath,
+  resolveWorkspacePath,
+} from '../../utils/path';
 import type { HistoryConversationOpenState } from './controllers/ConversationController';
 import { getTabProviderId, onProviderAvailabilityChanged, updatePlanModeUI } from './tabs/Tab';
 import { TabBar } from './tabs/TabBar';
@@ -32,6 +37,8 @@ export class ClaudianView extends ItemView {
   private titleSlotEl: HTMLElement | null = null;
   private logoEl: HTMLElement | null = null;
   private titleTextEl: HTMLElement | null = null;
+  /** 当前激活 Tab 工作空间简短路径 */
+  private workspaceSubtitleEl: HTMLElement | null = null;
   private headerActionsEl: HTMLElement | null = null;
   private headerActionsContent: HTMLElement | null = null;
 
@@ -83,6 +90,39 @@ export class ClaudianView extends ItemView {
 
   getIcon(): string {
     return CLAUDIAN_APP_ICON_ID;
+  }
+
+  /**
+   * 标题区副标题：当前激活 Tab 的工作空间（与 Ribbon 的持久化默认可能暂时不一致）。
+   */
+  updateWorkspaceSubtitle(): void {
+    if (!this.workspaceSubtitleEl) return;
+    const tab = this.tabManager?.getActiveTab();
+    const vaultPath = getVaultPath(this.plugin.app);
+    if (!vaultPath) return;
+
+    const resolved = tab?.workspace
+      ? resolveWorkspacePath(tab.workspace, vaultPath)
+      : null;
+    const displayAbs = resolved ?? vaultPath;
+    const label =
+      !tab?.workspace
+        ? t('workspace.vaultRoot')
+        : resolved
+          ? formatWorkspaceDisplayShort(resolved, vaultPath) || t('workspace.vaultRoot')
+          : t('workspace.vaultRoot');
+
+    this.workspaceSubtitleEl.textContent = ` · ${label}`;
+    this.workspaceSubtitleEl.setAttribute('title', displayAbs);
+    this.workspaceSubtitleEl.style.display = 'inline';
+  }
+
+  /** 插件「重置工作空间」：清空本视图内所有 Tab 的 workspace 快照 */
+  resetWorkspaceToVaultRoot(): void {
+    for (const tab of this.tabManager?.getAllTabs() ?? []) {
+      tab.workspace = null;
+    }
+    this.updateWorkspaceSubtitle();
   }
 
   /** Refreshes model-dependent UI across all tabs (used after settings/env changes). */
@@ -163,6 +203,7 @@ export class ClaudianView extends ItemView {
         onTabCreated: () => {
           this.updateTabBar();
           this.updateNavRowLocation();
+          this.updateWorkspaceSubtitle();
           this.persistTabState();
           this.syncProviderBrandColor();
         },
@@ -170,6 +211,7 @@ export class ClaudianView extends ItemView {
           this.updateTabBar();
           this.updateHistoryDropdown();
           this.updateNavRowLocation();
+          this.updateWorkspaceSubtitle();
           this.persistTabState();
           this.syncProviderBrandColor();
         },
@@ -193,6 +235,7 @@ export class ClaudianView extends ItemView {
     this.wireEventHandlers();
     await this.restoreOrCreateTabs();
     this.syncProviderBrandColor();
+    this.updateWorkspaceSubtitle();
     this.updateLayoutForPosition();
   }
 
@@ -236,6 +279,11 @@ export class ClaudianView extends ItemView {
       cls: 'claudian-title-text',
     });
 
+    this.workspaceSubtitleEl = this.titleSlotEl.createSpan({
+      cls: 'claudian-workspace-subtitle',
+    });
+    this.workspaceSubtitleEl.style.display = 'none';
+
     // Header actions container (for header mode - initially hidden)
     this.headerActionsEl = header.createDiv({ cls: 'claudian-header-actions claudian-header-actions-slot' });
     this.headerActionsEl.style.display = 'none';
@@ -263,14 +311,22 @@ export class ClaudianView extends ItemView {
     this.headerActionsContent = document.createElement('div');
     this.headerActionsContent.className = 'claudian-header-actions';
 
+    // 头部操作按钮：仅用 aria-label 作为可访问名称；勿再设 title，否则与 Obsidian 基于 aria 的提示叠成两重 tooltip（与 TabBar 徽章一致）。
     // New tab button (plus icon)
     const newTabBtn = this.headerActionsContent.createDiv({ cls: 'claudian-header-btn claudian-new-tab-btn' });
     setIcon(newTabBtn, 'square-plus');
     const newTabTip = t('chat.header.newTab');
     newTabBtn.setAttribute('aria-label', newTabTip);
-    newTabBtn.setAttribute('title', newTabTip);
     newTabBtn.addEventListener('click', async () => {
       await this.createNewTab();
+    });
+
+    const resetWsBtn = this.headerActionsContent.createDiv({ cls: 'claudian-header-btn' });
+    setIcon(resetWsBtn, 'folder-x');
+    const resetWsTip = t('workspace.resetTooltip');
+    resetWsBtn.setAttribute('aria-label', resetWsTip);
+    resetWsBtn.addEventListener('click', () => {
+      void this.plugin.resetWorkspaceAndNotify();
     });
 
     // New conversation button (square-pen icon - new conversation in current tab)
@@ -278,7 +334,6 @@ export class ClaudianView extends ItemView {
     setIcon(newBtn, 'square-pen');
     const newConvTip = t('chat.header.newConversation');
     newBtn.setAttribute('aria-label', newConvTip);
-    newBtn.setAttribute('title', newConvTip);
     newBtn.addEventListener('click', async () => {
       await this.tabManager?.createNewConversation();
       this.updateHistoryDropdown();
@@ -290,7 +345,6 @@ export class ClaudianView extends ItemView {
     setIcon(historyBtn, 'history');
     const historyTip = t('chat.header.history');
     historyBtn.setAttribute('aria-label', historyTip);
-    historyBtn.setAttribute('title', historyTip);
 
     this.historyDropdown = historyContainer.createDiv({ cls: 'claudian-history-menu' });
 
