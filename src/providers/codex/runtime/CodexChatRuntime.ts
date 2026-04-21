@@ -1055,11 +1055,7 @@ export class CodexChatRuntime implements ChatRuntime {
     );
     const memoriesDirTarget = deriveCodexMemoriesDirFromSessionsRoot(transcriptRootTargetHint)
       ?? this.resolveMemoriesDirTarget(sessionFilePathHint)
-      ?? (
-        this.launchSpec?.target.method === 'wsl'
-          ? null
-          : path.join(os.homedir(), '.codex', 'memories')
-      );
+      ?? path.join(os.homedir(), '.codex', 'memories');
 
     const writableRoots = [
       this.launchSpec?.targetCwd ?? getVaultPath(this.plugin.app),

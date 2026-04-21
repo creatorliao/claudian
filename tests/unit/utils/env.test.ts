@@ -1009,6 +1009,14 @@ describe('getExtraBinaryPaths (Windows branches)', () => {
     expect(result).toContain('nodejs');
   });
 
+  it('includes LOCALAPPDATA/cursor-agent for Cursor Agent CLI', () => {
+    process.env.LOCALAPPDATA = '/mock/AppData/Local';
+    process.env.HOME = '/mock/home';
+    const mod = loadWithWindowsPlatform();
+    const result = mod.getEnhancedPath();
+    expect(result).toContain('cursor-agent');
+  });
+
   it('includes NVM_SYMLINK when set', () => {
     process.env.NVM_SYMLINK = '/mock/nvm/symlink';
     process.env.HOME = '/mock/home';

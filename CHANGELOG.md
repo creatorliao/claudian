@@ -2,6 +2,24 @@
 
 本文档记录 Claudian（Obsidian 插件）的版本变更；格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，版本号遵循语义化版本意图（主版本.次版本.修订号）。
 
+## [2.1.2] - 2026-04-21
+
+### 功能
+
+- **Codex 本机化**：移除 Windows 下「安装方式 / WSL」及相关设置与启动逻辑；Codex 仅在本机进程启动（`native-windows` / `host-native`），删除 WSL 路径映射与专用运行时分支。
+- **CLI 自动检测**：**Cursor** 增加对 IDE 安装包内 `resources/app/bin` 的探测（macOS `/Applications/...`、`%LOCALAPPDATA%\Programs\cursor\...`）；**Codex** 合并 `npm_config_prefix` / `PNPM_HOME`、`~/.npm-global/bin`、`~/.yarn/bin`、Windows `%LOCALAPPDATA%\pnpm` 等补充目录后再查找，提升 GUI 短 PATH 下的发现率。
+- **提供商与设置**：通用页三提供商开关、`providerCliPresence` 等与 Codex 新政一致；精简 Codex「CLI 路径」文案（`zh-CN` / `en`）。
+
+### 测试
+
+- 更新 Codex 去 WSL 后的单测（含 `CodexChatRuntime`、`CodexSettingsTab`、存储与 presence）；补充 Cursor / Codex BinaryLocator 相关用例。
+
+### 文档
+
+- **`docs/01-Projects/R20260421-02-提供商CLI与Codex本机化/C03-解决方案_实施摘要与验收.md`**：实施摘要与验收项，便于追溯。
+
+---
+
 ## [2.1.1] - 2026-04-20
 
 ### 修复

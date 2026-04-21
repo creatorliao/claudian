@@ -4,6 +4,7 @@ import * as path from 'path';
 
 import {
   findCodexBinaryPath,
+  getCodexSupplementalSearchDirectories,
   resolveCodexCliPath,
 } from '@/providers/codex/runtime/CodexBinaryLocator';
 
@@ -61,30 +62,22 @@ describe('CodexBinaryLocator', () => {
     expect(resolveCodexCliPath('', '', `PATH=${pathDir}`)).toBe(pathBinary);
   });
 
-  it('uses the configured Linux command directly in WSL mode', () => {
-    expect(resolveCodexCliPath(
-      'codex',
-      '',
-      '',
-      { installationMethod: 'wsl', hostPlatform: 'win32' },
-    )).toBe('codex');
-  });
-
-  it('falls back to the default Linux command in WSL mode', () => {
-    expect(resolveCodexCliPath(
-      '',
-      '',
-      '',
-      { installationMethod: 'wsl', hostPlatform: 'win32' },
-    )).toBe('codex');
-  });
-
-  it('ignores a Windows-native CLI path in WSL mode and falls back to the Linux command', () => {
-    expect(resolveCodexCliPath(
-      'C:\\Users\\user\\AppData\\Roaming\\npm\\codex.exe',
-      '',
-      '',
-      { installationMethod: 'wsl', hostPlatform: 'win32' },
-    )).toBe('codex');
+  it('getCodexSupplementalSearchDirectories 在设置 npm_config_prefix 且存在 bin 目录时包含该目录（Unix）', () => {
+    const prefix = fs.mkdtempSync(path.join(os.tmpdir(), 'codex-npm-prefix-'));
+    const binDir = path.join(prefix, 'bin');
+    fs.mkdirSync(binDir, { recursive: true });
+    const prev = process.env.npm_config_prefix;
+    process.env.npm_config_prefix = prefix;
+    try {
+      const dirs = getCodexSupplementalSearchDirectories('darwin');
+      expect(dirs).toContain(binDir);
+    } finally {
+      if (prev === undefined) {
+        delete process.env.npm_config_prefix;
+      } else {
+        process.env.npm_config_prefix = prev;
+      }
+    }
   });
 });
+

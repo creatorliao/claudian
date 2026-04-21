@@ -37,18 +37,9 @@ function resolveFallbackCodexHomeTarget(launchSpec: CodexLaunchSpec): string | n
   const rawCodexHome = typeof launchSpec.env.CODEX_HOME === 'string'
     ? launchSpec.env.CODEX_HOME.trim()
     : '';
-  const envCodexHome = launchSpec.target.method === 'wsl'
-    ? normalizeOptionalTargetPath(
-        launchSpec,
-        rawCodexHome.startsWith('/') ? rawCodexHome : launchSpec.pathMapper.toTargetPath(rawCodexHome),
-      )
-    : normalizeOptionalTargetPath(launchSpec, rawCodexHome);
+  const envCodexHome = normalizeOptionalTargetPath(launchSpec, rawCodexHome);
   if (envCodexHome) {
     return envCodexHome;
-  }
-
-  if (launchSpec.target.method === 'wsl') {
-    return null;
   }
 
   const homeVar = launchSpec.target.platformFamily === 'windows'

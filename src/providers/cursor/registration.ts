@@ -11,8 +11,8 @@ import { getCursorProviderSettings } from './settings';
 import { cursorChatUIConfig } from './ui/CursorChatUIConfig';
 
 export const cursorProviderRegistration: ProviderRegistration = {
-  displayName: 'Cursor Agent',
-  blankTabOrder: 8,
+  displayName: 'Cursor',
+  blankTabOrder: 10,
   isEnabled: (settings) => getCursorProviderSettings(settings).enabled,
   capabilities: CURSOR_PROVIDER_CAPABILITIES,
   environmentKeyPatterns: [/^CURSOR_/i],

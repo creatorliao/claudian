@@ -5,6 +5,8 @@ import type { HostnameCliPaths } from '../../core/types/settings';
 export type ClaudeSafeMode = 'acceptEdits' | 'default';
 
 export interface ClaudeProviderSettings {
+  /** 是否作为聊天提供商启用；默认 true，老配置缺省视为启用 */
+  enabled: boolean;
   safeMode: ClaudeSafeMode;
   cliPath: string;
   cliPathsByHost: HostnameCliPaths;
@@ -20,6 +22,7 @@ export interface ClaudeProviderSettings {
 }
 
 export const DEFAULT_CLAUDE_PROVIDER_SETTINGS: Readonly<ClaudeProviderSettings> = Object.freeze({
+  enabled: true,
   safeMode: 'acceptEdits',
   cliPath: '',
   cliPathsByHost: {},
@@ -54,6 +57,8 @@ export function getClaudeProviderSettings(
   const config = getProviderConfig(settings, 'claude');
 
   return {
+    enabled:
+      (config.enabled as boolean | undefined) ?? DEFAULT_CLAUDE_PROVIDER_SETTINGS.enabled,
     safeMode: (config.safeMode as ClaudeSafeMode | undefined)
       ?? (settings.claudeSafeMode as ClaudeSafeMode | undefined)
       ?? DEFAULT_CLAUDE_PROVIDER_SETTINGS.safeMode,

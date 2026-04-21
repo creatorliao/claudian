@@ -17,24 +17,9 @@ export const cursorSettingsTabRenderer: ProviderSettingsTabRenderer = {
 
     new Setting(container).setName(t('settings.setup')).setHeading();
 
-    new Setting(container)
-      .setName('Enable Cursor Agent provider')
-      .setDesc(
-        'When enabled, Cursor Agent appears as a provider. Requires the Cursor CLI (`agent`) and authentication (for example CURSOR_API_KEY). Headless mode uses --trust; review permission mode and sandbox settings carefully.',
-      )
-      .addToggle((toggle) =>
-        toggle
-          .setValue(cursorSettings.enabled)
-          .onChange(async (value) => {
-            updateCursorProviderSettings(settingsBag, { enabled: value });
-            await context.plugin.saveSettings();
-            context.refreshModelSelectors();
-          })
-      );
-
     const cliPathSetting = new Setting(container)
-      .setName(`Cursor Agent CLI path (${hostnameKey})`)
-      .setDesc('Path to the `agent` binary, or leave empty to search PATH.');
+      .setName(t('settings.cursor.cliPath.name', { host: hostnameKey }))
+      .setDesc(t('settings.cursor.cliPath.desc'));
 
     const validationEl = container.createDiv({ cls: 'claudian-cli-path-validation' });
     validationEl.style.color = 'var(--text-error)';
@@ -120,7 +105,7 @@ export const cursorSettingsTabRenderer: ProviderSettingsTabRenderer = {
 
     const safety = container.createDiv({ cls: 'setting-item-description' });
     safety.createEl('p', {
-      text: 'Claudian maps toolbar permission mode to Cursor CLI flags: YOLO uses --force and sandbox disabled; Plan uses plan mode with sandbox enabled; Normal uses sandbox enabled without --force. All runs use --trust so the agent can complete non-interactively.',
+      text: t('settings.cursor.safetyBody'),
     });
 
     renderEnvironmentSettingsSection({
@@ -128,9 +113,9 @@ export const cursorSettingsTabRenderer: ProviderSettingsTabRenderer = {
       plugin: context.plugin,
       scope: 'provider:cursor',
       heading: t('settings.environment'),
-      name: 'Cursor Agent environment',
-      desc: 'Variables such as CURSOR_API_KEY. Chats are stored under ~/.cursor/chats/<workspace-hash>/<session-id>/.',
-      placeholder: 'CURSOR_API_KEY=your-key',
+      name: t('settings.cursor.env.name'),
+      desc: t('settings.cursor.env.desc'),
+      placeholder: t('settings.cursor.env.placeholder'),
       renderCustomContextLimits: (target) => context.renderCustomContextLimits(target, 'cursor'),
     });
   },

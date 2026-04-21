@@ -88,19 +88,27 @@ describe('ProviderRegistry', () => {
       providerConfigs: {
         codex: { enabled: true },
       },
-    })).toEqual(['codex', 'claude']);
+    })).toEqual(['claude', 'codex']);
     expect(ProviderRegistry.getEnabledProviderIds({
       providerConfigs: {
         codex: { enabled: true },
         cursor: { enabled: true },
       },
-    })).toEqual(['cursor', 'codex', 'claude']);
+    })).toEqual(['claude', 'cursor', 'codex']);
+
+    expect(ProviderRegistry.getEnabledProviderIds({
+      providerConfigs: {
+        claude: { enabled: false },
+        codex: { enabled: true },
+        cursor: { enabled: false },
+      },
+    })).toEqual(['codex']);
   });
 
   it('returns the display name from provider registration metadata', () => {
     expect(ProviderRegistry.getProviderDisplayName('claude')).toBe('Claude');
     expect(ProviderRegistry.getProviderDisplayName('codex')).toBe('Codex');
-    expect(ProviderRegistry.getProviderDisplayName('cursor')).toBe('Cursor Agent');
+    expect(ProviderRegistry.getProviderDisplayName('cursor')).toBe('Cursor');
   });
 
   it('creates a Cursor runtime', () => {

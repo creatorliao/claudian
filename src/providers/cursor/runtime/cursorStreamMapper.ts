@@ -114,7 +114,28 @@ export class CursorNdjsonStreamReducer {
     }
 
     if (type === 'assistant') {
+      const hasTs = rec.timestamp_ms != null;
+      const hasMc = rec.model_call_id != null;
+
+      // 与官方一致：`--output-format stream-json` + `--stream-partial-output` 时 assistant 分三类
+      // https://cursor.com/docs/cli/reference/output-format
+      // - 有 timestamp_ms 且有 model_call_id：tool 前缓冲重复，跳过
+      // - 有 timestamp_ms 且无 model_call_id：流式增量，直接追加 content 文本（非累积整句）
+      if (hasTs && hasMc) {
+        return { chunks: [], sessionId };
+      }
+
+      if (hasTs && !hasMc) {
+        const piece = extractAssistantText(rec);
+        const chunks: StreamChunk[] = piece ? [{ type: 'text', content: piece }] : [];
+        return { chunks, sessionId };
+      }
+
+      // 无 timestamp_ms：未带 partial 元数据（旧 CLI 或整段消息），沿用累积差分
       const full = extractAssistantText(rec);
+      if (full === this.assistantAcc) {
+        return { chunks: [], sessionId };
+      }
       const delta = full.startsWith(this.assistantAcc)
         ? full.slice(this.assistantAcc.length)
         : full;

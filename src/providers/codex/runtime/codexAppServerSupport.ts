@@ -40,7 +40,6 @@ export function resolveCodexAppServerLaunchSpec(
 ): CodexLaunchSpec {
   const hostVault = getCodexAppServerWorkingDirectory(plugin);
   return buildCodexLaunchSpec({
-    settings: plugin.settings as unknown as Record<string, unknown>,
     resolvedCliCommand: plugin.getResolvedProviderCliPath(providerId),
     hostVaultPath: hostVault,
     workingDirectory: effectiveWorkingDirectory ?? undefined,

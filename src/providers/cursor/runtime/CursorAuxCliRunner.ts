@@ -1,4 +1,3 @@
-import { spawn } from 'child_process';
 
 import { ProviderSettingsCoordinator } from '../../../core/providers/ProviderSettingsCoordinator';
 import type ClaudianPlugin from '../../../main';
@@ -6,6 +5,7 @@ import { getVaultPath } from '../../../utils/path';
 import { buildCursorAgentEnvironment } from './cursorAgentEnv';
 import { resolveCursorModelForCli } from './cursorCliModel';
 import { buildCursorAgentJsonModeFlagArgs, type CursorPermissionMode } from './cursorLaunchArgs';
+import { spawnCursorCli } from './cursorSpawn';
 
 export interface CursorAuxQueryConfig {
   systemPrompt: string;
@@ -108,7 +108,7 @@ export class CursorAuxCliRunner {
     signal?: AbortSignal,
   ): Promise<{ stdout: string; stderr: string; code: number | null; signal: NodeJS.Signals | null }> {
     return new Promise((resolve, reject) => {
-      const child = spawn(command, args, {
+      const child = spawnCursorCli(command, args, {
         cwd: options.cwd,
         env: options.env,
         windowsHide: true,

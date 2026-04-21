@@ -398,7 +398,31 @@
     "tabs": {
       "general": "通用",
       "claude": "Claude",
-      "codex": "Codex"
+      "codex": "Codex",
+      "cursor": "Cursor"
+    },
+    "providers": {
+      "heading": "聊天提供商",
+      "atLeastOneEnabled": "至少需要启用一个提供商。",
+      "toggle": {
+        "claude": {
+          "name": "启用 Claude",
+          "desc": "开启后，设置页签与模型选择器中显示 Claude。"
+        },
+        "cursor": {
+          "name": "启用 Cursor",
+          "desc": "开启后，设置页签与模型选择器中显示 Cursor。"
+        },
+        "codex": {
+          "name": "启用 Codex",
+          "desc": "开启后，设置页签与模型选择器中显示 Codex。"
+        }
+      },
+      "cliMissing": {
+        "claude": "未在本机检测到 Claude CLI。请先安装 Claude Code CLI，或在 Claude 页签中填写 CLI 路径。",
+        "cursor": "未在本机检测到 Cursor CLI（agent）。请安装 Cursor CLI，或在 Cursor 页签中填写路径。",
+        "codex": "未在本机检测到 Codex CLI。请安装 Codex，或在 Codex 页签中填写路径。"
+      }
     },
     "display": "显示",
     "conversations": "对话",
@@ -808,9 +832,9 @@
       },
       "cliPath": {
         "name": "Codex CLI 路径（{host}）",
-        "descGeneric": "本地 Codex CLI 的自定义路径。留空则从 PATH 自动检测。",
+        "descGeneric": "Codex CLI 的自定义路径。留空使用自动检测。",
         "descWsl": "在 WSL 内运行的 Linux 侧 Codex 命令或绝对路径。留空则在所选发行版内查 PATH。",
-        "descWindowsNative": "本地 Codex CLI 的自定义路径。留空则从 PATH 自动检测。请使用本机 Windows 可执行路径，一般为 `codex.exe`。"
+        "descWindowsNative": "Codex CLI 的自定义路径。留空使用自动检测。Windows 下一般为 `codex.exe`，或填写 npm 等安装的完整路径。"
       },
       "cliPathValidation": {
         "wslExpectsLinuxPath": "WSL 模式下应填写 Linux 命令或 Linux 绝对路径，不能使用 Windows 可执行路径。"
@@ -849,6 +873,22 @@
         "name": "Codex 环境变量",
         "desc": "仅填写 Codex 运行时变量。用于 OPENAI_* 与 CODEX_*。若自动检测不到 Codex，请把安装目录加入共享 PATH，而不是仅写在此处。",
         "placeholder": "OPENAI_API_KEY=your-key\nOPENAI_BASE_URL=https://api.openai.com/v1\nOPENAI_MODEL=gpt-5.4\nCODEX_SANDBOX=workspace-write"
+      }
+    },
+    "cursor": {
+      "providerEnabled": {
+        "name": "启用 Cursor 提供商",
+        "desc": "开启后可在提供商列表中使用 Cursor。需要已安装的 `agent`（或 macOS/Linux 上的 `cursor-agent`）CLI，以及登录凭证（如 CURSOR_API_KEY）。运行使用 `--trust`；工具栏权限模式对应沙盒与 `--force` 策略，请按需选择。"
+      },
+      "cliPath": {
+        "name": "CLI 路径（{host}）",
+        "desc": "留空则自动解析：先增强 PATH，再查常见安装位置（Windows：`%LOCALAPPDATA%\\cursor-agent` 及 `versions\\<build>`；macOS/Linux：`~/.local/bin`、`~/.local/share/cursor-agent/versions/<build>/`）。终端可用但此处不可用 → 填写完整路径或重启 Obsidian（图形界面 PATH 往往更短）。Windows 可用 `agent.cmd`；插件优先选同目录下的 `agent.exe`。"
+      },
+      "safetyBody": "工具栏权限对应 CLI：YOLO → `--force` 且关闭沙盒；Plan → 规划模式并启用沙盒；普通 → 仅沙盒、不加 `--force`。每次运行均带 `--trust`，以便在无交互环境下执行。",
+      "env": {
+        "name": "Cursor 环境变量",
+        "desc": "例如 CURSOR_API_KEY。会话文件位于 `~/.cursor/chats/<工作区哈希>/<会话 id>/`。",
+        "placeholder": "CURSOR_API_KEY=your-key"
       }
     },
     "pluginsUi": {

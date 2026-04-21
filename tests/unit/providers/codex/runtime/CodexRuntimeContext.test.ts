@@ -2,26 +2,6 @@ import type { CodexLaunchSpec } from '@/providers/codex/runtime/codexLaunchTypes
 import { createCodexPathMapper } from '@/providers/codex/runtime/CodexPathMapper';
 import { createCodexRuntimeContext } from '@/providers/codex/runtime/CodexRuntimeContext';
 
-function createLaunchSpec(overrides: Partial<CodexLaunchSpec> = {}): CodexLaunchSpec {
-  const target = {
-    method: 'wsl' as const,
-    platformFamily: 'unix' as const,
-    platformOs: 'linux' as const,
-    distroName: 'Ubuntu',
-  };
-
-  return {
-    target,
-    command: 'wsl.exe',
-    args: ['--distribution', 'Ubuntu', '--cd', '/home/user/repo', 'codex', 'app-server', '--listen', 'stdio://'],
-    spawnCwd: 'C:\\repo',
-    targetCwd: '/home/user/repo',
-    env: {},
-    pathMapper: createCodexPathMapper(target),
-    ...overrides,
-  };
-}
-
 function createHostLaunchSpec(overrides: Partial<CodexLaunchSpec> = {}): CodexLaunchSpec {
   const target = {
     method: 'host-native' as const,
@@ -41,32 +21,50 @@ function createHostLaunchSpec(overrides: Partial<CodexLaunchSpec> = {}): CodexLa
   };
 }
 
+function createWindowsLaunchSpec(overrides: Partial<CodexLaunchSpec> = {}): CodexLaunchSpec {
+  const target = {
+    method: 'native-windows' as const,
+    platformFamily: 'windows' as const,
+    platformOs: 'windows' as const,
+  };
+
+  return {
+    target,
+    command: 'C:\\codex.exe',
+    args: ['app-server', '--listen', 'stdio://'],
+    spawnCwd: 'C:\\repo',
+    targetCwd: 'C:\\repo',
+    env: { USERPROFILE: 'C:\\Users\\test' },
+    pathMapper: createCodexPathMapper(target),
+    ...overrides,
+  };
+}
+
 describe('createCodexRuntimeContext', () => {
-  it('derives host-readable transcript roots from initialize.codexHome for WSL targets', () => {
+  it('derives paths from initialize.codexHome for native-windows targets', () => {
     const context = createCodexRuntimeContext(
-      createLaunchSpec(),
+      createWindowsLaunchSpec(),
+      {
+        userAgent: 'test/0.1',
+        codexHome: 'C:\\Users\\test\\.codex',
+        platformFamily: 'windows',
+        platformOs: 'windows',
+      },
+    );
+
+    expect(context.codexHomeTarget).toBe('C:\\Users\\test\\.codex');
+    expect(context.codexHomeHost).toBe('C:\\Users\\test\\.codex');
+    expect(context.sessionsDirTarget).toBe('C:\\Users\\test\\.codex\\sessions');
+  });
+
+  it('fails fast when initialize platform metadata does not match the selected target', () => {
+    expect(() => createCodexRuntimeContext(
+      createWindowsLaunchSpec(),
       {
         userAgent: 'test/0.1',
         codexHome: '/home/user/.codex',
         platformFamily: 'unix',
         platformOs: 'linux',
-      },
-    );
-
-    expect(context.codexHomeHost).toBe('\\\\wsl$\\Ubuntu\\home\\user\\.codex');
-    expect(context.sessionsDirTarget).toBe('/home/user/.codex/sessions');
-    expect(context.sessionsDirHost).toBe('\\\\wsl$\\Ubuntu\\home\\user\\.codex\\sessions');
-    expect(context.memoriesDirTarget).toBe('/home/user/.codex/memories');
-  });
-
-  it('fails fast when initialize platform metadata does not match the selected target', () => {
-    expect(() => createCodexRuntimeContext(
-      createLaunchSpec(),
-      {
-        userAgent: 'test/0.1',
-        codexHome: 'C:\\Users\\user\\.codex',
-        platformFamily: 'windows',
-        platformOs: 'windows',
       },
     )).toThrow('Codex target mismatch');
   });
@@ -86,22 +84,5 @@ describe('createCodexRuntimeContext', () => {
     expect(context.sessionsDirTarget).toBe('/Users/test/.codex/sessions');
     expect(context.sessionsDirHost).toBe('/Users/test/.codex/sessions');
     expect(context.memoriesDirTarget).toBe('/Users/test/.codex/memories');
-  });
-
-  it('keeps transcript roots nullable when initialize omits codexHome for WSL targets', () => {
-    const context = createCodexRuntimeContext(
-      createLaunchSpec(),
-      {
-        userAgent: 'test/0.1',
-        platformFamily: 'unix',
-        platformOs: 'linux',
-      },
-    );
-
-    expect(context.codexHomeTarget).toBeNull();
-    expect(context.codexHomeHost).toBeNull();
-    expect(context.sessionsDirTarget).toBeNull();
-    expect(context.sessionsDirHost).toBeNull();
-    expect(context.memoriesDirTarget).toBeNull();
   });
 });

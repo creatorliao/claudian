@@ -398,7 +398,31 @@
     "tabs": {
       "general": "General",
       "claude": "Claude",
-      "codex": "Codex"
+      "codex": "Codex",
+      "cursor": "Cursor"
+    },
+    "providers": {
+      "heading": "Chat providers",
+      "atLeastOneEnabled": "At least one provider must stay enabled.",
+      "toggle": {
+        "claude": {
+          "name": "Enable Claude",
+          "desc": "Show Claude in the settings tabs and model picker when on."
+        },
+        "cursor": {
+          "name": "Enable Cursor",
+          "desc": "Show Cursor in the settings tabs and model picker when on."
+        },
+        "codex": {
+          "name": "Enable Codex",
+          "desc": "Show Codex in the settings tabs and model picker when on."
+        }
+      },
+      "cliMissing": {
+        "claude": "Claude CLI not found on this computer. Install the Claude Code CLI, or open the Claude tab and set the CLI path.",
+        "cursor": "Cursor CLI (agent) not found on this computer. Install the Cursor CLI or set the CLI path under Cursor settings.",
+        "codex": "Codex CLI not found on this computer. Install Codex or set the CLI path under Codex settings."
+      }
     },
     "display": "Display",
     "conversations": "Conversations",
@@ -808,9 +832,9 @@
       },
       "cliPath": {
         "name": "Codex CLI path ({host})",
-        "descGeneric": "Custom path to the local Codex CLI. Leave empty for auto-detection from PATH.",
+        "descGeneric": "Custom path to the Codex CLI. Leave empty for auto-detection.",
         "descWsl": "Linux-side Codex command or absolute path to run inside WSL. Leave empty for PATH lookup inside the selected distro.",
-        "descWindowsNative": "Custom path to the local Codex CLI. Leave empty for auto-detection from PATH. Use the native Windows executable path, usually `codex.exe`."
+        "descWindowsNative": "Custom path to the Codex CLI. Leave empty for auto-detection. On Windows, use `codex.exe` or the full path from your package manager."
       },
       "cliPathValidation": {
         "wslExpectsLinuxPath": "WSL mode expects a Linux command or Linux absolute path, not a Windows executable path."
@@ -849,6 +873,22 @@
         "name": "Codex environment",
         "desc": "Codex-owned runtime variables only. Use this for OPENAI_* and CODEX_* settings. If Codex auto-detection needs help, add its install directory to shared PATH instead of this provider section.",
         "placeholder": "OPENAI_API_KEY=your-key\nOPENAI_BASE_URL=https://api.openai.com/v1\nOPENAI_MODEL=gpt-5.4\nCODEX_SANDBOX=workspace-write"
+      }
+    },
+    "cursor": {
+      "providerEnabled": {
+        "name": "Enable Cursor provider",
+        "desc": "Adds Cursor as a provider. Requires the `agent` (or `cursor-agent`) CLI and authentication (e.g. CURSOR_API_KEY). Uses `--trust` for unattended runs; use the toolbar permission mode for sandbox and `--force`."
+      },
+      "cliPath": {
+        "name": "CLI path ({host})",
+        "desc": "Leave empty for auto-detection: extended PATH, then defaults (Windows: `%LOCALAPPDATA%\\cursor-agent` and `versions\\<build>`; macOS/Linux: `~/.local/bin`, `~/.local/share/cursor-agent/versions/<build>/`). If it works in Terminal but not here, set this path or restart Obsidian—GUI apps often get a shorter PATH. Windows: `agent.cmd` is OK; the plugin prefers `agent.exe` when present."
+      },
+      "safetyBody": "Toolbar permission mode maps to CLI flags: YOLO → `--force`, sandbox off; Plan → plan mode with sandbox; Normal → sandbox on, no `--force`. All runs use `--trust`.",
+      "env": {
+        "name": "Cursor environment",
+        "desc": "Variables such as CURSOR_API_KEY. Chat files live under `~/.cursor/chats/<workspace-hash>/<session-id>/`.",
+        "placeholder": "CURSOR_API_KEY=your-key"
       }
     },
     "pluginsUi": {

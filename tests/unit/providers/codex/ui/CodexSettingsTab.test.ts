@@ -225,10 +225,6 @@ function createPlugin(overrides: Record<string, unknown> = {}): any {
           reasoningSummary: 'detailed',
           environmentVariables: '',
           environmentHash: '',
-          installationMethod: 'native-windows',
-          installationMethodsByHost: {},
-          wslDistroOverride: '',
-          wslDistroOverridesByHost: {},
         },
       },
       ...overrides,
@@ -286,119 +282,41 @@ describe('CodexSettingsTab', () => {
     mockedStatSync.mockReturnValue({ isFile: () => true } as fs.Stats);
   });
 
-  it('renders installation method and WSL distro override controls on Windows', () => {
+  it('本机 Windows 下展示 Windows 可执行路径说明与占位符', () => {
     Object.defineProperty(process, 'platform', { value: 'win32' });
     const plugin = createPlugin();
 
     codexSettingsTabRenderer.render(createContainer(), createContext(plugin));
 
-    expect(findSetting('Installation method').dropdownComponents).toHaveLength(1);
-    expect(findSetting('WSL distro override').textComponents).toHaveLength(1);
-  });
-
-  it('hides Windows-only installation controls on non-Windows platforms', () => {
-    Object.defineProperty(process, 'platform', { value: 'darwin' });
-    const plugin = createPlugin();
-
-    codexSettingsTabRenderer.render(createContainer(), createContext(plugin));
-
+    const cliPathSetting = findSetting('Codex CLI path (host-a)');
     expect(findOptionalSetting('Installation method')).toBeUndefined();
     expect(findOptionalSetting('WSL distro override')).toBeUndefined();
+    expect(cliPathSetting.desc).toContain('Windows');
+    expect(cliPathSetting.textComponents[0].placeholder).toContain('codex.exe');
   });
 
-  it('uses host-native CLI path behavior on non-Windows even when WSL is saved', async () => {
+  it('非 Windows 下使用 POSIX 样式的 CLI 路径说明', () => {
     Object.defineProperty(process, 'platform', { value: 'darwin' });
-    const plugin = createPlugin({
-      providerConfigs: {
-        codex: {
-          enabled: true,
-          safeMode: 'workspace-write',
-          cliPath: '',
-          cliPathsByHost: {},
-          reasoningSummary: 'detailed',
-          environmentVariables: '',
-          environmentHash: '',
-          installationMethod: 'wsl',
-          installationMethodsByHost: {
-            'host-a': 'wsl',
-          },
-          wslDistroOverride: 'Ubuntu',
-          wslDistroOverridesByHost: {
-            'host-a': 'Ubuntu',
-          },
-        },
-      },
-    });
-
-    codexSettingsTabRenderer.render(createContainer(), createContext(plugin));
-
-    const cliPathSetting = findSetting('Codex CLI path (host-a)');
-    expect(cliPathSetting.desc).toBe('Custom path to the local Codex CLI. Leave empty for auto-detection from PATH.');
-    expect(cliPathSetting.textComponents[0].placeholder).toBe('/usr/local/bin/codex');
-
-    await cliPathSetting.textComponents[0].onChangeCallback?.('codex');
-
-    expect(plugin.settings.providerConfigs.codex.cliPathsByHost['host-a']).toBeUndefined();
-    expect(mockSaveSettings).toHaveBeenCalledTimes(0);
-    expect(mockBroadcastToAllTabs).toHaveBeenCalledTimes(0);
-  });
-
-  it('accepts a Linux-side CLI command when installation method is WSL', async () => {
-    Object.defineProperty(process, 'platform', { value: 'win32' });
     const plugin = createPlugin();
 
     codexSettingsTabRenderer.render(createContainer(), createContext(plugin));
 
-    const installationMethodSetting = findSetting('Installation method');
-    await installationMethodSetting.dropdownComponents[0].onChangeCallback?.('wsl');
-
     const cliPathSetting = findSetting('Codex CLI path (host-a)');
-    await cliPathSetting.textComponents[0].onChangeCallback?.('codex');
-
-    expect(plugin.settings.providerConfigs.codex.installationMethodsByHost).toEqual({
-      'host-a': 'wsl',
-    });
-    expect(plugin.settings.providerConfigs.codex.cliPathsByHost['host-a']).toBe('codex');
-    expect(mockSaveSettings).toHaveBeenCalled();
-    expect(mockBroadcastToAllTabs).toHaveBeenCalled();
+    expect(cliPathSetting.textComponents[0].placeholder).toBe('/usr/local/bin/codex');
   });
 
-  it('rejects a Windows-native CLI path when installation method is WSL', async () => {
-    Object.defineProperty(process, 'platform', { value: 'win32' });
-    const plugin = createPlugin({
-      providerConfigs: {
-        codex: {
-          enabled: true,
-          safeMode: 'workspace-write',
-          cliPath: '',
-          cliPathsByHost: {
-            'host-a': 'C:\\Users\\me\\AppData\\Roaming\\npm\\codex.exe',
-          },
-          reasoningSummary: 'detailed',
-          environmentVariables: '',
-          environmentHash: '',
-          installationMethod: 'native-windows',
-          installationMethodsByHost: {},
-          wslDistroOverride: '',
-          wslDistroOverridesByHost: {},
-        },
-      },
-    });
+  it('填写有效路径时更新本机 CLI 路径（POSIX）', async () => {
+    Object.defineProperty(process, 'platform', { value: 'darwin' });
+    mockedExistsSync.mockImplementation((p: fs.PathLike) => String(p) === '/usr/local/bin/codex');
+    const plugin = createPlugin();
 
     codexSettingsTabRenderer.render(createContainer(), createContext(plugin));
 
-    const installationMethodSetting = findSetting('Installation method');
-    await installationMethodSetting.dropdownComponents[0].onChangeCallback?.('wsl');
-
     const cliPathSetting = findSetting('Codex CLI path (host-a)');
-    await cliPathSetting.textComponents[0].onChangeCallback?.('C:\\Users\\me\\AppData\\Roaming\\npm\\codex.exe');
+    await cliPathSetting.textComponents[0].onChangeCallback?.('/usr/local/bin/codex');
 
-    expect(plugin.settings.providerConfigs.codex.installationMethodsByHost).toEqual({
-      'host-a': 'wsl',
-    });
-    expect(plugin.settings.providerConfigs.codex.cliPathsByHost['host-a']).toBe(
-      'C:\\Users\\me\\AppData\\Roaming\\npm\\codex.exe',
-    );
-    expect(mockBroadcastToAllTabs).toHaveBeenCalledTimes(0);
+    expect(plugin.settings.providerConfigs.codex.cliPathsByHost['host-a']).toBe('/usr/local/bin/codex');
+    expect(mockSaveSettings).toHaveBeenCalled();
+    expect(mockBroadcastToAllTabs).toHaveBeenCalled();
   });
 });

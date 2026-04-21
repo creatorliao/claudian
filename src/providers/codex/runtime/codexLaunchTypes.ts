@@ -1,6 +1,4 @@
-import type { CodexInstallationMethod } from '../settings';
-
-export type CodexExecutionMethod = 'host-native' | CodexInstallationMethod;
+export type CodexExecutionMethod = 'host-native' | 'native-windows';
 export type CodexExecutionPlatformOs = 'windows' | 'linux' | 'macos';
 export type CodexExecutionPlatformFamily = 'windows' | 'unix';
 
@@ -8,7 +6,6 @@ export interface CodexExecutionTarget {
   method: CodexExecutionMethod;
   platformFamily: CodexExecutionPlatformFamily;
   platformOs: CodexExecutionPlatformOs;
-  distroName?: string;
 }
 
 export interface CodexPathMapper {

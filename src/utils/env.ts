@@ -62,6 +62,8 @@ export function getExtraBinaryPaths(): string[] {
     if (localAppData) {
       paths.push(path.join(localAppData, 'Programs', 'nodejs'));
       paths.push(path.join(localAppData, 'Programs', 'node'));
+      // Cursor Agent CLI 默认安装目录；GUI 应用继承的 PATH 常不含此处，与终端不一致
+      paths.push(path.join(localAppData, 'cursor-agent'));
     }
 
     // Common program locations (official Node.js installer)
@@ -137,7 +139,7 @@ export function getExtraBinaryPaths(): string[] {
 
     return paths;
   } else {
-    // Unix paths
+    // Unix paths（含 macOS / Linux）。Cursor 官方 CLI 默认把 `agent` 链到 ~/.local/bin，见 CursorBinaryLocator 对 ~/.local/share/cursor-agent/versions 的回退。
     const paths = [
       '/usr/local/bin',
       '/opt/homebrew/bin',  // macOS ARM Homebrew

@@ -1,3 +1,8 @@
+/**
+ * Cursor Agent CLI 全局参数（`-p` / `--print`、`--output-format`、`--workspace` 等）
+ * 与官方文档一致：https://cursor.com/docs/cli/reference/parameters
+ * Headless / 流式输出：https://cursor.com/docs/cli/headless · https://cursor.com/docs/cli/reference/output-format
+ */
 export type CursorPermissionMode = 'yolo' | 'plan' | 'normal';
 
 export interface BuildCursorAgentFlagArgsOptions {

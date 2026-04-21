@@ -26,60 +26,6 @@ function normalizePosixPath(value: string): string {
   return normalized === '/' ? normalized : normalized.replace(/\/+$/, '');
 }
 
-function maybeMapWindowsDriveToWsl(hostPath: string): string | null {
-  const normalized = normalizeWindowsPath(hostPath);
-  const match = normalized.match(/^([A-Za-z]):(?:\\(.*))?$/);
-  if (!match) {
-    return null;
-  }
-
-  const drive = match[1].toLowerCase();
-  const tail = (match[2] ?? '').replace(/\\/g, '/');
-  return tail ? `/mnt/${drive}/${tail}` : `/mnt/${drive}`;
-}
-
-function maybeMapWslUncToLinux(hostPath: string, distroName?: string): string | null {
-  const normalized = normalizeWindowsPath(hostPath);
-  const match = normalized.match(/^\\\\wsl\$\\([^\\]+)(?:\\(.*))?$/i);
-  if (!match) {
-    return null;
-  }
-
-  const uncDistro = match[1];
-  if (distroName && uncDistro.toLowerCase() !== distroName.toLowerCase()) {
-    return null;
-  }
-
-  const tail = match[2] ? match[2].replace(/\\/g, '/') : '';
-  return tail ? `/${tail}` : '/';
-}
-
-function maybeMapLinuxToWindowsDrive(targetPath: string): string | null {
-  const normalized = normalizePosixPath(targetPath);
-  const match = normalized.match(/^\/mnt\/([a-zA-Z])(?:\/(.*))?$/);
-  if (!match) {
-    return null;
-  }
-
-  const drive = match[1].toUpperCase();
-  const tail = match[2] ? match[2].replace(/\//g, '\\') : '';
-  return tail ? `${drive}:\\${tail}` : `${drive}:\\`;
-}
-
-function maybeMapLinuxToWslUnc(targetPath: string, distroName?: string): string | null {
-  if (!distroName) {
-    return null;
-  }
-
-  const normalized = normalizePosixPath(targetPath);
-  if (!normalized.startsWith('/')) {
-    return null;
-  }
-
-  const tail = normalized === '/' ? '' : normalized.slice(1).replace(/\//g, '\\');
-  return tail ? `\\\\wsl$\\${distroName}\\${tail}` : `\\\\wsl$\\${distroName}`;
-}
-
 function createIdentityMapper(target: CodexExecutionTarget): CodexPathMapper {
   return {
     target,
@@ -112,38 +58,6 @@ function createIdentityMapper(target: CodexExecutionTarget): CodexPathMapper {
   };
 }
 
-function createWslPathMapper(target: CodexExecutionTarget): CodexPathMapper {
-  return {
-    target,
-    toTargetPath(hostPath: string): string | null {
-      if (!hostPath) {
-        return null;
-      }
-
-      return maybeMapWslUncToLinux(hostPath, target.distroName)
-        ?? maybeMapWindowsDriveToWsl(hostPath);
-    },
-    toHostPath(targetPath: string): string | null {
-      if (!targetPath) {
-        return null;
-      }
-
-      return maybeMapLinuxToWindowsDrive(targetPath)
-        ?? maybeMapLinuxToWslUnc(targetPath, target.distroName);
-    },
-    mapTargetPathList(hostPaths: string[]): string[] {
-      return hostPaths
-        .map(hostPath => this.toTargetPath(hostPath))
-        .filter((value): value is string => typeof value === 'string' && value.length > 0);
-    },
-    canRepresentHostPath(hostPath: string): boolean {
-      return this.toTargetPath(hostPath) !== null;
-    },
-  };
-}
-
 export function createCodexPathMapper(target: CodexExecutionTarget): CodexPathMapper {
-  return target.method === 'wsl'
-    ? createWslPathMapper(target)
-    : createIdentityMapper(target);
+  return createIdentityMapper(target);
 }

@@ -8,7 +8,6 @@ import type { TranslationKey } from '../../../i18n/types';
 import { getHostnameKey } from '../../../utils/env';
 import { expandHomePath } from '../../../utils/path';
 import { getCodexWorkspaceServices } from '../app/CodexWorkspaceServices';
-import { isWindowsStyleCliReference } from '../runtime/CodexBinaryLocator';
 import { getCodexProviderSettings, updateCodexProviderSettings } from '../settings';
 import { CodexSkillSettings } from './CodexSkillSettings';
 import { CodexSubagentSettings } from './CodexSubagentSettings';
@@ -27,42 +26,10 @@ export const codexSettingsTabRenderer: ProviderSettingsTabRenderer = {
     const codexSettings = getCodexProviderSettings(settingsBag);
     const hostnameKey = getHostnameKey();
     const isWindowsHost = process.platform === 'win32';
-    let installationMethod = codexSettings.installationMethod;
 
     // --- Setup ---
 
     new Setting(container).setName(t('settings.setup')).setHeading();
-
-    new Setting(container)
-      .setName(t('settings.codex.providerEnabled.name'))
-      .setDesc(t('settings.codex.providerEnabled.desc'))
-      .addToggle((toggle) =>
-        toggle
-          .setValue(codexSettings.enabled)
-          .onChange(async (value) => {
-            updateCodexProviderSettings(settingsBag, { enabled: value });
-            await context.plugin.saveSettings();
-            context.refreshModelSelectors();
-          })
-      );
-
-    if (isWindowsHost) {
-      new Setting(container)
-        .setName(t('settings.codex.installationMethod.name'))
-        .setDesc(t('settings.codex.installationMethod.desc'))
-        .addDropdown((dropdown) => {
-          dropdown
-            .addOption('native-windows', t('settings.codex.installation.nativeWindows'))
-            .addOption('wsl', t('settings.codex.installation.wsl'))
-            .setValue(installationMethod)
-            .onChange(async (value) => {
-              installationMethod = value === 'wsl' ? 'wsl' : 'native-windows';
-              updateCodexProviderSettings(settingsBag, { installationMethod });
-              refreshInstallationMethodUI();
-              await context.plugin.saveSettings();
-            });
-        });
-    }
 
     const getCliPathCopy = (): { desc: string; placeholder: string } => {
       if (!isWindowsHost) {
@@ -72,20 +39,11 @@ export const codexSettingsTabRenderer: ProviderSettingsTabRenderer = {
         };
       }
 
-      if (installationMethod === 'wsl') {
-        return {
-          desc: t('settings.codex.cliPath.descWsl'),
-          placeholder: 'codex',
-        };
-      }
-
       return {
         desc: t('settings.codex.cliPath.descWindowsNative'),
         placeholder: 'C:\\Users\\you\\AppData\\Roaming\\npm\\codex.exe',
       };
     };
-
-    const shouldValidateCliPathAsFile = (): boolean => !isWindowsHost || installationMethod !== 'wsl';
 
     const cliPathSetting = new Setting(container)
       .setName(t('settings.codex.cliPath.name', { host: hostnameKey }))
@@ -101,13 +59,6 @@ export const codexSettingsTabRenderer: ProviderSettingsTabRenderer = {
     const validatePath = (value: string): string | null => {
       const trimmed = value.trim();
       if (!trimmed) return null;
-
-      if (!shouldValidateCliPathAsFile()) {
-        if (isWindowsStyleCliReference(trimmed)) {
-          return t('settings.codex.cliPathValidation.wslExpectsLinuxPath');
-        }
-        return null;
-      }
 
       const expandedPath = expandHomePath(trimmed);
 
@@ -141,23 +92,6 @@ export const codexSettingsTabRenderer: ProviderSettingsTabRenderer = {
 
     const cliPathsByHost = { ...codexSettings.cliPathsByHost };
     let cliPathInputEl: HTMLInputElement | null = null;
-    let wslDistroSettingEl: HTMLElement | null = null;
-    let wslDistroInputEl: HTMLInputElement | null = null;
-
-    const refreshInstallationMethodUI = (): void => {
-      const cliCopy = getCliPathCopy();
-      cliPathSetting.setDesc(cliCopy.desc);
-      if (cliPathInputEl) {
-        cliPathInputEl.placeholder = cliCopy.placeholder;
-        updateCliPathValidation(cliPathInputEl.value, cliPathInputEl);
-      }
-      if (wslDistroSettingEl) {
-        wslDistroSettingEl.style.display = installationMethod === 'wsl' ? '' : 'none';
-      }
-      if (wslDistroInputEl) {
-        wslDistroInputEl.disabled = installationMethod !== 'wsl';
-      }
-    };
 
     const persistCliPath = async (value: string): Promise<boolean> => {
       const isValid = updateCliPathValidation(value, cliPathInputEl ?? undefined);
@@ -176,7 +110,7 @@ export const codexSettingsTabRenderer: ProviderSettingsTabRenderer = {
       await context.plugin.saveSettings();
       const view = context.plugin.getView();
       await view?.getTabManager()?.broadcastToAllTabs(
-        (service) => Promise.resolve(service.cleanup())
+        (service) => Promise.resolve(service.cleanup()),
       );
       return true;
     };
@@ -196,30 +130,6 @@ export const codexSettingsTabRenderer: ProviderSettingsTabRenderer = {
 
       updateCliPathValidation(currentValue, text.inputEl);
     });
-
-    if (isWindowsHost) {
-      const wslDistroSetting = new Setting(container)
-        .setName(t('settings.codex.wslDistro.name'))
-        .setDesc(t('settings.codex.wslDistro.desc'));
-
-      wslDistroSettingEl = wslDistroSetting.settingEl;
-      wslDistroSetting.addText((text) => {
-        text
-          .setPlaceholder(t('settings.codex.wslDistro.placeholder'))
-          .setValue(codexSettings.wslDistroOverride)
-          .onChange(async (value) => {
-            updateCodexProviderSettings(settingsBag, { wslDistroOverride: value });
-            await context.plugin.saveSettings();
-          });
-
-        text.inputEl.addClass('claudian-settings-cli-path-input');
-        text.inputEl.style.width = '100%';
-        text.inputEl.disabled = installationMethod !== 'wsl';
-        wslDistroInputEl = text.inputEl;
-      });
-    }
-
-    refreshInstallationMethodUI();
 
     // --- Safety ---
 

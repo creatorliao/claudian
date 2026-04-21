@@ -6,16 +6,29 @@ import {
   normalizeHiddenCommandList,
 } from '../../core/providers/commands/hiddenCommands';
 import { ProviderRegistry } from '../../core/providers/ProviderRegistry';
+import { ProviderSettingsCoordinator } from '../../core/providers/ProviderSettingsCoordinator';
+import { PROVIDER_UI_ORDER } from '../../core/providers/providerUiOrder';
 import { ProviderWorkspaceRegistry } from '../../core/providers/ProviderWorkspaceRegistry';
 import type { ProviderId } from '../../core/providers/types';
 import { getAvailableLocales, getLocaleDisplayName, setLocale, t } from '../../i18n/i18n';
 import type { Locale, TranslationKey } from '../../i18n/types';
 import type ClaudianPlugin from '../../main';
+import { getClaudeProviderSettings, updateClaudeProviderSettings } from '../../providers/claude/settings';
+import { getCodexProviderSettings, updateCodexProviderSettings } from '../../providers/codex/settings';
+import { getCursorProviderSettings, updateCursorProviderSettings } from '../../providers/cursor/settings';
 import { formatContextLimit, parseContextLimit, parseEnvironmentVariables } from '../../utils/env';
 import { buildNavMappingText, parseNavMappings } from './keyboardNavigation';
+import { isProviderCliPresent } from './providerCliPresence';
 import { renderEnvironmentSettingsSection } from './ui/EnvironmentSettingsSection';
 
 type SettingsTabId = 'general' | ProviderId;
+
+/** 提供商子页的 Tab 文案：优先使用 i18n（settings.tabs.<id>），缺失时回退到注册表 displayName */
+function getProviderSettingsTabLabel(providerId: ProviderId): string {
+  const key = `settings.tabs.${providerId}` as TranslationKey;
+  const translated = t(key);
+  return translated !== key ? translated : ProviderRegistry.getProviderDisplayName(providerId);
+}
 
 function formatHotkey(hotkey: { modifiers: string[]; key: string }): string {
   const isMac = navigator.platform.includes('Mac');
@@ -96,8 +109,11 @@ export class ClaudianSettingTab extends PluginSettingTab {
 
     setLocale(this.plugin.settings.locale as Locale);
 
-    const providerTabs = ProviderRegistry.getRegisteredProviderIds();
-    const tabIds: SettingsTabId[] = ['general', ...providerTabs];
+    const settingsBag = this.plugin.settings as unknown as Record<string, unknown>;
+    const visibleProviderTabs = PROVIDER_UI_ORDER.filter((id) =>
+      ProviderRegistry.isEnabled(id, settingsBag),
+    );
+    const tabIds: SettingsTabId[] = ['general', ...visibleProviderTabs];
     if (!tabIds.includes(this.activeTab)) {
       this.activeTab = 'general';
     }
@@ -108,8 +124,8 @@ export class ClaudianSettingTab extends PluginSettingTab {
 
     for (const id of tabIds) {
       const label = id === 'general'
-        ? t('settings.tabs.general' as TranslationKey)
-        : ProviderRegistry.getProviderDisplayName(id);
+        ? t('settings.tabs.general')
+        : getProviderSettingsTabLabel(id);
       const button = tabBar.createEl('button', {
         cls: `claudian-settings-tab${id === this.activeTab ? ' claudian-settings-tab--active' : ''}`,
         text: label,
@@ -133,7 +149,7 @@ export class ClaudianSettingTab extends PluginSettingTab {
 
     this.renderGeneralTab(tabContents.get('general')!);
 
-    for (const providerId of providerTabs) {
+    for (const providerId of visibleProviderTabs) {
       const content = tabContents.get(providerId);
       if (!content) {
         continue;
@@ -178,6 +194,8 @@ export class ClaudianSettingTab extends PluginSettingTab {
             this.display();
           });
       });
+
+    this.renderProviderToggles(container);
 
     // --- Display ---
 
@@ -567,6 +585,78 @@ export class ClaudianSettingTab extends PluginSettingTab {
         await this.plugin.saveSettings();
       });
     }
+  }
+
+  /**
+   * 在「通用」中集中控制各提供商是否启用：
+   * - 至少保留一个启用；
+   * - 从关闭切为开启时，若本机解析不到对应 CLI，则拒绝开启并提示（与运行时使用同一套解析逻辑）。
+   */
+  private renderProviderToggles(container: HTMLElement): void {
+    const settingsBag = this.plugin.settings as unknown as Record<string, unknown>;
+
+    new Setting(container).setName(t('settings.providers.heading')).setHeading();
+
+    const bindToggle = (
+      providerId: 'claude' | 'cursor' | 'codex',
+      read: () => boolean,
+      write: (value: boolean) => void,
+    ): void => {
+      new Setting(container)
+        .setName(t(`settings.providers.toggle.${providerId}.name` as TranslationKey))
+        .setDesc(t(`settings.providers.toggle.${providerId}.desc` as TranslationKey))
+        .addToggle((toggle) => {
+          toggle.setValue(read()).onChange(async (value) => {
+            const previous = read();
+            write(value);
+
+            if (value === false) {
+              if (ProviderRegistry.getEnabledProviderIds(settingsBag).length === 0) {
+                write(previous);
+                toggle.setValue(previous);
+                new Notice(t('settings.providers.atLeastOneEnabled'));
+                return;
+              }
+            } else if (!isProviderCliPresent(providerId, settingsBag)) {
+              write(previous);
+              toggle.setValue(previous);
+              new Notice(t(`settings.providers.cliMissing.${providerId}` as TranslationKey));
+              return;
+            }
+
+            await this.plugin.saveSettings();
+            if (ProviderSettingsCoordinator.reconcileTitleGenerationModelSelection(settingsBag)) {
+              await this.plugin.saveSettings();
+            }
+            for (const view of this.plugin.getAllViews()) {
+              view.refreshModelSelector();
+            }
+            this.display();
+          });
+        });
+    };
+
+    bindToggle(
+      'claude',
+      () => getClaudeProviderSettings(settingsBag).enabled,
+      (v) => {
+        updateClaudeProviderSettings(settingsBag, { enabled: v });
+      },
+    );
+    bindToggle(
+      'cursor',
+      () => getCursorProviderSettings(settingsBag).enabled,
+      (v) => {
+        updateCursorProviderSettings(settingsBag, { enabled: v });
+      },
+    );
+    bindToggle(
+      'codex',
+      () => getCodexProviderSettings(settingsBag).enabled,
+      (v) => {
+        updateCodexProviderSettings(settingsBag, { enabled: v });
+      },
+    );
   }
 
   private async restartServiceForPromptChange(): Promise<void> {

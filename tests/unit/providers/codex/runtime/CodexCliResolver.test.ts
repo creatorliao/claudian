@@ -66,36 +66,4 @@ describe('CodexCliResolver', () => {
 
     expect(resolved).toBe(expected);
   });
-
-  it('returns a Linux-side command in WSL mode without host filesystem validation', () => {
-    mockedExists.mockReturnValue(false);
-
-    const resolver = new CodexCliResolver();
-    const resolved = resolver.resolve(
-      {
-        'current-host': 'codex',
-      },
-      '',
-      '',
-      { installationMethod: 'wsl', hostPlatform: 'win32' },
-    );
-
-    expect(resolved).toBe('codex');
-  });
-
-  it('falls back to the Linux command when a Windows-native CLI path is configured in WSL mode', () => {
-    mockedExists.mockReturnValue(false);
-
-    const resolver = new CodexCliResolver();
-    const resolved = resolver.resolve(
-      {
-        'current-host': 'C:\\Users\\user\\AppData\\Roaming\\npm\\codex.exe',
-      },
-      '',
-      '',
-      { installationMethod: 'wsl', hostPlatform: 'win32' },
-    );
-
-    expect(resolved).toBe('codex');
-  });
 });

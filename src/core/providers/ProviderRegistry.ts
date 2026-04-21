@@ -1,5 +1,6 @@
 import type ClaudianPlugin from '../../main';
 import type { ChatRuntime } from '../runtime/ChatRuntime';
+import { getProviderUiRank } from './providerUiOrder';
 import {
   type CreateChatRuntimeOptions,
   DEFAULT_CHAT_PROVIDER_ID,
@@ -98,10 +99,8 @@ export class ProviderRegistry {
 
   static getEnabledProviderIds(settings: Record<string, unknown>): ProviderId[] {
     return this.getRegisteredProviderIds()
-      .filter(providerId => this.getProviderRegistration(providerId).isEnabled(settings))
-      .sort((a, b) => (
-        this.getProviderRegistration(a).blankTabOrder - this.getProviderRegistration(b).blankTabOrder
-      ));
+      .filter((providerId) => this.getProviderRegistration(providerId).isEnabled(settings))
+      .sort((a, b) => getProviderUiRank(a) - getProviderUiRank(b));
   }
 
   static getProviderDisplayName(providerId: ProviderId): string {

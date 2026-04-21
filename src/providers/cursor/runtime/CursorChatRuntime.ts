@@ -1,4 +1,4 @@
-import { spawn } from 'child_process';
+import type { ChildProcess } from 'child_process';
 import * as readline from 'readline';
 
 import { ProviderSettingsCoordinator } from '../../../core/providers/ProviderSettingsCoordinator';
@@ -28,6 +28,7 @@ import { getCursorState, resolveCursorSessionId } from '../types';
 import { buildCursorAgentEnvironment } from './cursorAgentEnv';
 import { resolveCursorModelForCli } from './cursorCliModel';
 import { buildCursorAgentFlagArgs, type CursorPermissionMode } from './cursorLaunchArgs';
+import { spawnCursorCli } from './cursorSpawn';
 import { CursorNdjsonStreamReducer } from './cursorStreamMapper';
 
 export class CursorChatRuntime implements ChatRuntime {
@@ -37,7 +38,7 @@ export class CursorChatRuntime implements ChatRuntime {
   private ready = false;
   private readyListeners = new Set<(ready: boolean) => void>();
   private canceled = false;
-  private child: ReturnType<typeof spawn> | null = null;
+  private child: ChildProcess | null = null;
   private lastSessionId: string | null = null;
   private activeResumeId: string | null = null;
   private turnMetadata: ChatTurnMetadata = {};
@@ -130,7 +131,7 @@ export class CursorChatRuntime implements ChatRuntime {
     const env = buildCursorAgentEnvironment(this.plugin);
     const reducer = new CursorNdjsonStreamReducer();
     let sawDone = false;
-    const child = spawn(cli, [...flagArgs, turn.prompt], {
+    const child = spawnCursorCli(cli, [...flagArgs, turn.prompt], {
       cwd: workspaceDir,
       env,
       windowsHide: true,
@@ -142,6 +143,11 @@ export class CursorChatRuntime implements ChatRuntime {
       stderrAcc += d.toString('utf8');
     });
 
+    if (!child.stdout) {
+      yield { type: 'error', content: 'Cursor Agent has no stdout pipe.' };
+      yield { type: 'done' };
+      return;
+    }
     const rl = readline.createInterface({ input: child.stdout });
 
     try {
