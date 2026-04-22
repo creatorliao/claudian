@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
  * 生产：`npm run build` → CSS + esbuild，产物写入 dist/{manifest.id}/（main.js、styles.css、manifest.json）。
+ * 生产结束后会尝试将 dist/{id}/ 同步到「自 cwd 向上第一个 .obsidian」下的 plugins/{id}/（可用 CLAUDIAN_SKIP_OBSIDIAN_SYNC 跳过）。
  * 开发：请使用 `npm run dev`（产物仍在仓库根目录，便于 watch）。
  */
 
@@ -9,6 +10,7 @@ import { copyFileSync, existsSync, mkdirSync, unlinkSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readPluginId } from './lib/read-plugin-id.mjs';
+import { trySyncDistToNearestObsidian } from './lib/sync-dist-to-nearest-obsidian.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -57,4 +59,5 @@ if (isProd) {
   }
 
   console.log(`Production bundle -> ${DIST_PLUGIN}`);
+  trySyncDistToNearestObsidian(ROOT);
 }

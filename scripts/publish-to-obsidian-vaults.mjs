@@ -12,15 +12,10 @@
  *   node scripts/publish-to-obsidian-vaults.mjs --help
  */
 
-import {
-  copyFileSync,
-  existsSync,
-  mkdirSync,
-  readdirSync,
-  statSync,
-} from 'node:fs';
+import { existsSync, statSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { copyFlatFiles } from './lib/copy-obsidian-plugin-flat.mjs';
 import { readPluginId } from './lib/read-plugin-id.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -58,37 +53,6 @@ function parseArgs(argv) {
     }
   }
   return { dryRun, maxDepth };
-}
-
-/**
- * 仅复制 src 目录下的「一层」文件（不递归子目录），覆盖同名文件。
- * Obsidian 插件目录通常为扁平文件列表。
- */
-function copyFlatFiles(srcDir, destDir, dryRun) {
-  const names = readdirSync(srcDir);
-  const files = names.filter((name) => {
-    const p = join(srcDir, name);
-    try {
-      return statSync(p).isFile();
-    } catch {
-      return false;
-    }
-  });
-  if (files.length === 0) {
-    throw new Error(`源目录中没有可复制的文件: ${srcDir}`);
-  }
-  if (!dryRun) {
-    mkdirSync(destDir, { recursive: true });
-  }
-  for (const name of files) {
-    const from = join(srcDir, name);
-    const to = join(destDir, name);
-    if (dryRun) {
-      process.stdout.write(`[dry-run] ${from} -> ${to}\n`);
-    } else {
-      copyFileSync(from, to);
-    }
-  }
 }
 
 /**
