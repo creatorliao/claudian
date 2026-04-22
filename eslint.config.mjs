@@ -20,6 +20,16 @@ export default defineConfig([
     },
   },
   js.configs.recommended,
+  {
+    files: ['esbuild.config.mjs', 'scripts/**/*.js', 'scripts/**/*.mjs'],
+    languageOptions: {
+      globals: {
+        console: 'readonly',
+        module: 'readonly',
+        process: 'readonly',
+      },
+    },
+  },
   ...tseslint.configs['flat/recommended'],
   {
     files: ['src/**/*.ts', 'tests/**/*.ts'],

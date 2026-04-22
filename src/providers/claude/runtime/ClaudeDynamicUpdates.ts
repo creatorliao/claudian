@@ -12,9 +12,8 @@ import type {
 import type { ClaudianSettings, PermissionMode } from '../../../core/types/settings';
 import { t } from '../../../i18n/i18n';
 import {
-  isAdaptiveThinkingModel,
-  normalizeEffortLevel,
-  THINKING_BUDGETS,
+  resolveAdaptiveEffortLevel,
+  resolveThinkingTokens,
 } from '../types/models';
 import type {
   ClosePersistentQueryOptions,
@@ -80,32 +79,26 @@ export async function applyClaudeDynamicUpdates(
     }
   }
 
-  if (!isAdaptiveThinkingModel(selectedModel)) {
-    deps.mutateCurrentConfig(config => {
-      config.effortLevel = null;
-    });
-
-    const budgetConfig = THINKING_BUDGETS.find(b => b.value === settings.thinkingBudget);
-    const thinkingTokens = budgetConfig?.tokens ?? null;
-    const currentThinking = deps.getCurrentConfig()?.thinkingTokens ?? null;
-    if (thinkingTokens !== currentThinking) {
-      try {
-        await persistentQuery.setMaxThinkingTokens(thinkingTokens);
-        deps.mutateCurrentConfig(config => {
-          config.thinkingTokens = thinkingTokens;
-        });
-      } catch {
-        deps.notifyFailure(t('chat.notices.dynamicUpdateThinkingFailed'));
-      }
+  // 与上游 #548 一致：按所选模型用 resolveThinkingTokens 解析 thinking，避免与模型能力错位
+  const thinkingTokens = resolveThinkingTokens(selectedModel, settings.thinkingBudget);
+  const currentThinking = deps.getCurrentConfig()?.thinkingTokens ?? null;
+  if (thinkingTokens !== currentThinking) {
+    try {
+      await persistentQuery.setMaxThinkingTokens(thinkingTokens);
+      deps.mutateCurrentConfig(config => {
+        config.thinkingTokens = thinkingTokens;
+      });
+    } catch {
+      deps.notifyFailure(t('chat.notices.dynamicUpdateThinkingFailed'));
     }
+  } else {
+    deps.mutateCurrentConfig(config => {
+      config.thinkingTokens = thinkingTokens;
+    });
   }
 
-  if (isAdaptiveThinkingModel(selectedModel)) {
-    deps.mutateCurrentConfig(config => {
-      config.thinkingTokens = null;
-    });
-
-    const effortLevel = normalizeEffortLevel(selectedModel, settings.effortLevel);
+  const effortLevel = resolveAdaptiveEffortLevel(selectedModel, settings.effortLevel);
+  if (effortLevel !== null) {
     const currentEffort = deps.getCurrentConfig()?.effortLevel ?? null;
     if (effortLevel !== currentEffort) {
       try {
@@ -119,6 +112,10 @@ export async function applyClaudeDynamicUpdates(
         deps.notifyFailure(t('chat.notices.dynamicUpdateEffortFailed'));
       }
     }
+  } else {
+    deps.mutateCurrentConfig(config => {
+      config.effortLevel = null;
+    });
   }
 
   const configBeforePermissionUpdate = deps.getCurrentConfig();
