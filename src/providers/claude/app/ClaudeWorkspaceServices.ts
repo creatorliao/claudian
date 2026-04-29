@@ -12,6 +12,7 @@ import type {
   ProviderWorkspaceRegistration,
   ProviderWorkspaceServices,
 } from '../../../core/providers/types';
+import { HomeFileAdapter } from '../../../core/storage/HomeFileAdapter';
 import type { VaultFileAdapter } from '../../../core/storage/VaultFileAdapter';
 import type ClaudianPlugin from '../../../main';
 import { getVaultPath } from '../../../utils/path';
@@ -20,6 +21,9 @@ import { ClaudeCommandCatalog } from '../commands/ClaudeCommandCatalog';
 import { probeRuntimeCommands } from '../commands/probeRuntimeCommands';
 import { PluginManager } from '../plugins/PluginManager';
 import { ClaudeCliResolver } from '../runtime/ClaudeCliResolver';
+import { getClaudeProviderSettings } from '../settings';
+import { SkillStorage } from '../storage/SkillStorage';
+import { SlashCommandStorage } from '../storage/SlashCommandStorage';
 import { StorageService } from '../storage/StorageService';
 import { claudeSettingsTabRenderer } from '../ui/ClaudeSettingsTab';
 
@@ -55,10 +59,20 @@ export async function createClaudeWorkspaceServices(
   const agentManager = new AgentManager(vaultPath, pluginManager);
   await agentManager.loadAgents();
 
+  const homeAdapter = new HomeFileAdapter();
+  const homeCommands = new SlashCommandStorage(homeAdapter);
+  const homeSkills = new SkillStorage(homeAdapter);
+
   const commandCatalog = new ClaudeCommandCatalog(
     claudeStorage.commands,
     claudeStorage.skills,
-    () => probeRuntimeCommands(plugin),
+    {
+      probe: () => probeRuntimeCommands(plugin),
+      homeCommands,
+      homeSkills,
+      getSlashAssetScope: () =>
+        getClaudeProviderSettings(plugin.settings as unknown as Record<string, unknown>).slashAssetScope,
+    },
   );
 
   return {

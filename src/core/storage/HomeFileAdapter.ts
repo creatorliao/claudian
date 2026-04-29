@@ -10,7 +10,7 @@ import type { VaultFileAdapter } from './VaultFileAdapter';
  * classes (like CodexSkillStorage) can scan home-level paths.
  */
 export class HomeFileAdapter implements Pick<VaultFileAdapter,
-  'exists' | 'read' | 'write' | 'delete' | 'deleteFolder' | 'listFolders' | 'ensureFolder'
+  'exists' | 'read' | 'write' | 'delete' | 'deleteFolder' | 'listFolders' | 'listFilesRecursive' | 'ensureFolder'
 > {
   private readonly root: string;
 
@@ -67,6 +67,32 @@ export class HomeFileAdapter implements Pick<VaultFileAdapter,
     } catch {
       return [];
     }
+  }
+
+  /** 递归列出文件夹下所有文件（相对路径片段统一使用 `/`，与 Vault 侧约定一致）。 */
+  async listFilesRecursive(folder: string): Promise<string[]> {
+    const allFiles: string[] = [];
+
+    const walk = async (rel: string): Promise<void> => {
+      const full = this.resolve(rel);
+      let entries: fs.Dirent[];
+      try {
+        entries = await fs.promises.readdir(full, { withFileTypes: true });
+      } catch {
+        return;
+      }
+      for (const e of entries) {
+        const childRel = `${rel}/${e.name}`;
+        if (e.isDirectory()) {
+          await walk(childRel);
+        } else if (e.isFile()) {
+          allFiles.push(childRel);
+        }
+      }
+    };
+
+    await walk(folder);
+    return allFiles;
   }
 
   async ensureFolder(p: string): Promise<void> {

@@ -110,7 +110,7 @@ describe('ClaudeCommandCatalog', () => {
       const probe = jest.fn().mockResolvedValue([
         { id: 'sdk:commit', name: 'commit', description: 'Create git commit', content: '', source: 'sdk' },
       ]);
-      const catalog = new ClaudeCommandCatalog(commands, skills, probe);
+      const catalog = new ClaudeCommandCatalog(commands, skills, { probe });
 
       const entries = await catalog.listDropdownEntries({ includeBuiltIns: false });
 
@@ -134,7 +134,7 @@ Deploy the app`,
       const commands = new SlashCommandStorage(adapter);
       const skills = new SkillStorage(adapter);
       const probe = jest.fn().mockResolvedValue([]);
-      const catalog = new ClaudeCommandCatalog(commands, skills, probe);
+      const catalog = new ClaudeCommandCatalog(commands, skills, { probe });
 
       const entries = await catalog.listDropdownEntries({ includeBuiltIns: false });
 
@@ -149,7 +149,7 @@ Deploy the app`,
       const commands = new SlashCommandStorage(adapter);
       const skills = new SkillStorage(adapter);
       const probe = jest.fn().mockResolvedValue([]);
-      const catalog = new ClaudeCommandCatalog(commands, skills, probe);
+      const catalog = new ClaudeCommandCatalog(commands, skills, { probe });
 
       catalog.setRuntimeCommands([
         { id: 'sdk:commit', name: 'commit', description: 'Commit', content: '', source: 'sdk' },
@@ -167,7 +167,7 @@ Deploy the app`,
       const probe = jest.fn().mockResolvedValue([
         { id: 'sdk:commit', name: 'commit', description: 'Commit', content: '', source: 'sdk' },
       ]);
-      const catalog = new ClaudeCommandCatalog(commands, skills, probe);
+      const catalog = new ClaudeCommandCatalog(commands, skills, { probe });
 
       const [a, b] = await Promise.all([
         catalog.listDropdownEntries({ includeBuiltIns: false }),
@@ -186,7 +186,7 @@ Deploy the app`,
 
       let resolveProbe: (v: SlashCommand[]) => void;
       const probe = jest.fn().mockReturnValue(new Promise<SlashCommand[]>((r) => { resolveProbe = r; }));
-      const catalog = new ClaudeCommandCatalog(commands, skills, probe);
+      const catalog = new ClaudeCommandCatalog(commands, skills, { probe });
 
       // Start probe (it will hang)
       const entriesPromise = catalog.listDropdownEntries({ includeBuiltIns: false });
@@ -234,11 +234,119 @@ Deploy the app`,
 
       expect(entries).toHaveLength(2);
       expect(entries.every(e => e.scope === 'vault')).toBe(true);
+      expect(entries.every(e => e.slashFileProvenance === 'vault')).toBe(true);
       expect(entries.find(e => e.name === 'commit')).toBeUndefined();
+    });
+
+    it('merges user-home slash files when scope is vault-and-user-home', async () => {
+      const vaultAdapter = createMockAdapter({
+        '.claude/commands/vault-only-name.md': `---
+description: V
+---
+v`,
+      });
+      const homeAdapter = createMockAdapter({
+        '.claude/commands/from-home.md': `---
+description: H
+---
+h`,
+      });
+      const vaultCmd = new SlashCommandStorage(vaultAdapter);
+      const vaultSkill = new SkillStorage(vaultAdapter);
+      const homeCmd = new SlashCommandStorage(homeAdapter);
+      const homeSkill = new SkillStorage(homeAdapter);
+      const catalog = new ClaudeCommandCatalog(vaultCmd, vaultSkill, {
+        homeCommands: homeCmd,
+        homeSkills: homeSkill,
+        getSlashAssetScope: () => 'vault-and-user-home',
+      });
+
+      const entries = await catalog.listVaultEntries();
+      const names = entries.map(e => e.name).sort();
+      expect(names).toEqual(['from-home', 'vault-only-name']);
+      expect(entries.find(e => e.name === 'from-home')?.slashFileProvenance).toBe('user-home');
+    });
+
+    it('vault entry wins when user-home has the same command name', async () => {
+      const vaultAdapter = createMockAdapter({
+        '.claude/commands/shared.md': `---
+description: From vault
+---
+v`,
+      });
+      const homeAdapter = createMockAdapter({
+        '.claude/commands/shared.md': `---
+description: From home
+---
+h`,
+      });
+      const vaultCmd = new SlashCommandStorage(vaultAdapter);
+      const vaultSkill = new SkillStorage(vaultAdapter);
+      const homeCmd = new SlashCommandStorage(homeAdapter);
+      const homeSkill = new SkillStorage(homeAdapter);
+      const catalog = new ClaudeCommandCatalog(vaultCmd, vaultSkill, {
+        homeCommands: homeCmd,
+        homeSkills: homeSkill,
+        getSlashAssetScope: () => 'vault-and-user-home',
+      });
+
+      const entries = await catalog.listVaultEntries().then(e => e.filter(x => x.name === 'shared'));
+      expect(entries).toHaveLength(1);
+      expect(entries[0].description).toBe('From vault');
+      expect(entries[0].slashFileProvenance).toBe('vault');
+    });
+
+    it('does not merge user-home when scope is vault-only', async () => {
+      const vaultAdapter = createMockAdapter({
+        '.claude/commands/vault-only-name.md': `---
+description: V
+---
+v`,
+      });
+      const homeAdapter = createMockAdapter({
+        '.claude/commands/from-home.md': `---
+description: H
+---
+h`,
+      });
+      const vaultCmd = new SlashCommandStorage(vaultAdapter);
+      const vaultSkill = new SkillStorage(vaultAdapter);
+      const homeCmd = new SlashCommandStorage(homeAdapter);
+      const homeSkill = new SkillStorage(homeAdapter);
+      const catalog = new ClaudeCommandCatalog(vaultCmd, vaultSkill, {
+        homeCommands: homeCmd,
+        homeSkills: homeSkill,
+        getSlashAssetScope: () => 'vault-only',
+      });
+
+      const names = (await catalog.listVaultEntries()).map(e => e.name);
+      expect(names).toEqual(['vault-only-name']);
     });
   });
 
   describe('saveVaultEntry', () => {
+    it('rejects saving user-home provenance entries', async () => {
+      const adapter = createMockAdapter({});
+      const commands = new SlashCommandStorage(adapter);
+      const skills = new SkillStorage(adapter);
+      const catalog = new ClaudeCommandCatalog(commands, skills);
+
+      await expect(catalog.saveVaultEntry({
+        id: 'home:cmd-x',
+        providerId: 'claude',
+        kind: 'command',
+        name: 'x',
+        content: 'c',
+        scope: 'vault',
+        source: 'user',
+        slashFileProvenance: 'user-home',
+        isEditable: false,
+        isDeletable: false,
+        displayPrefix: '/',
+        insertPrefix: '/',
+      })).rejects.toThrow('claudian: cannot modify');
+    });
+
     it('saves a command entry via command storage', async () => {
       const adapter = createMockAdapter({});
       const commands = new SlashCommandStorage(adapter);

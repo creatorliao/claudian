@@ -511,7 +511,20 @@
     },
     "slashCommands": {
       "name": "Commands and Skills",
-      "desc": "Manage vault-level commands and skills stored in .claude/commands/ and .claude/skills/. Triggered by /name."
+      "desc": "Manage custom commands and skills used in chat with /.",
+      "previewLabel": "Preview",
+      "viewAll": "View all ({count})",
+      "viewAllModalTitle": "All commands and skills ({count})",
+      "provenanceVault": "This vault",
+      "provenanceUserHome": "Shared on this computer",
+      "readOnlyHomeNotice": "Commands and skills in the shared computer folder cannot be edited inside the plugin. Edit the files in your file manager instead."
+    },
+    "slashAssetScope": {
+      "name": "Source of commands and skills",
+      "optionVaultAndHome": "This vault + shared on this computer",
+      "optionVaultOnly": "This vault only",
+      "descVaultOnly": "Use only commands and skills from this vault, not configuration from your computer user folder. Pick “This vault + shared” to match other Claude Code setups on this machine.",
+      "descVaultAndHome": "Matches typical Claude Code behavior on this computer: shared commands, skills, and permission-related settings. Permission rules in shared settings may affect Safe mode; only enable if you trust their source."
     },
     "hiddenSlashCommands": {
       "name": "Hidden Commands",

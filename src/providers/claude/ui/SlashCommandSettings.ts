@@ -21,6 +21,39 @@ function isSkillEntry(entry: ProviderCommandEntry): boolean {
   return entry.kind === 'skill';
 }
 
+/** 设置页主列表预览条数上限（C03/C04） */
+const SLASH_COMMANDS_PREVIEW_LIMIT = 5;
+
+/**
+ * 在弹窗中展示全部命令与技能，避免主设置页过长。
+ */
+class SlashCommandsFullListModal extends Modal {
+  constructor(
+    app: App,
+    private readonly entries: ProviderCommandEntry[],
+    private readonly renderRow: (parent: HTMLElement, cmd: ProviderCommandEntry) => void,
+  ) {
+    super(app);
+  }
+
+  onOpen(): void {
+    this.titleEl.setText(
+      t('settings.slashCommands.viewAllModalTitle', { count: String(this.entries.length) }),
+    );
+    this.modalEl.addClass('claudian-sp-modal');
+    const scroll = this.contentEl.createDiv({ cls: 'claudian-sp-modal-scroll' });
+    scroll.style.maxHeight = '70vh';
+    scroll.style.overflow = 'auto';
+    for (const cmd of this.entries) {
+      this.renderRow(scroll, cmd);
+    }
+  }
+
+  onClose(): void {
+    this.contentEl.empty();
+  }
+}
+
 export class SlashCommandModal extends Modal {
   private entries: ProviderCommandEntry[];
   private existingEntry: ProviderCommandEntry | null;
@@ -354,9 +387,18 @@ export class SlashCommandSettings {
     this.containerEl.empty();
 
     const headerEl = this.containerEl.createDiv({ cls: 'claudian-sp-header' });
-    headerEl.createSpan({ text: t('settings.slashCommands.name'), cls: 'claudian-sp-label' });
+    headerEl.createSpan({ text: t('settings.slashCommands.previewLabel'), cls: 'claudian-sp-label' });
 
     const actionsEl = headerEl.createDiv({ cls: 'claudian-sp-header-actions' });
+
+    if (this.commands.length > SLASH_COMMANDS_PREVIEW_LIMIT) {
+      const viewAllBtn = actionsEl.createEl('button', {
+        cls: 'claudian-settings-action-btn',
+        attr: { 'aria-label': t('settings.slashCommands.viewAll', { count: String(this.commands.length) }) },
+      });
+      viewAllBtn.setText(t('settings.slashCommands.viewAll', { count: String(this.commands.length) }));
+      viewAllBtn.addEventListener('click', () => this.openViewAllModal());
+    }
 
     const addBtn = actionsEl.createEl('button', {
       cls: 'claudian-settings-action-btn',
@@ -373,12 +415,27 @@ export class SlashCommandSettings {
 
     const listEl = this.containerEl.createDiv({ cls: 'claudian-sp-list' });
 
-    for (const cmd of this.commands) {
-      this.renderCommandItem(listEl, cmd);
+    const preview = this.commands.slice(0, SLASH_COMMANDS_PREVIEW_LIMIT);
+    for (const cmd of preview) {
+      this.renderCommandRow(listEl, cmd);
     }
   }
 
-  private renderCommandItem(listEl: HTMLElement, cmd: ProviderCommandEntry): void {
+  private openViewAllModal(): void {
+    const modal = new SlashCommandsFullListModal(
+      this.app,
+      this.commands,
+      (parent, cmd) => this.renderCommandRow(parent, cmd),
+    );
+    modal.open();
+  }
+
+  /** 存在「本机共用」条目时，为「本库」行也显示来源标签，便于区分。 */
+  private shouldShowVaultProvenanceTag(): boolean {
+    return this.commands.some(c => c.slashFileProvenance === 'user-home');
+  }
+
+  private renderCommandRow(listEl: HTMLElement, cmd: ProviderCommandEntry): void {
     const itemEl = listEl.createDiv({ cls: 'claudian-sp-item' });
 
     const infoEl = itemEl.createDiv({ cls: 'claudian-sp-info' });
@@ -390,6 +447,18 @@ export class SlashCommandSettings {
 
     if (isSkillEntry(cmd)) {
       headerRow.createSpan({ text: t('settings.codexSkills.badgeSkill'), cls: 'claudian-slash-item-badge' });
+    }
+
+    if (cmd.slashFileProvenance === 'user-home') {
+      headerRow.createSpan({
+        text: t('settings.slashCommands.provenanceUserHome'),
+        cls: 'claudian-slash-provenance-tag',
+      });
+    } else if (this.shouldShowVaultProvenanceTag() && cmd.slashFileProvenance === 'vault') {
+      headerRow.createSpan({
+        text: t('settings.slashCommands.provenanceVault'),
+        cls: 'claudian-slash-provenance-tag',
+      });
     }
 
     if (cmd.argumentHint) {
@@ -465,7 +534,12 @@ export class SlashCommandSettings {
       return;
     }
 
-    await this.catalog.saveVaultEntry(cmd);
+    try {
+      await this.catalog.saveVaultEntry(cmd);
+    } catch {
+      new Notice(t('settings.slashCommands.readOnlyHomeNotice'));
+      return;
+    }
 
     if (existing && existing.name !== cmd.name) {
       await this.catalog.deleteVaultEntry(existing);
@@ -522,6 +596,7 @@ export class SlashCommandSettings {
       description: cmd.description || extractFirstParagraph(cmd.content),
       source: 'user',
       scope: 'vault',
+      slashFileProvenance: 'vault',
       isEditable: true,
       isDeletable: true,
       displayPrefix: '/',

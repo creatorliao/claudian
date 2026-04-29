@@ -5,11 +5,16 @@ import type {
 import type { ProviderCommandEntry } from '../../../core/providers/commands/ProviderCommandEntry';
 import type { SlashCommand } from '../../../core/types';
 import { isSkill } from '../../../utils/slashCommand';
+import type { SlashAssetScope } from '../settings';
 import type { SkillStorage } from '../storage/SkillStorage';
 import type { SlashCommandStorage } from '../storage/SlashCommandStorage';
 
-function slashCommandToEntry(cmd: SlashCommand): ProviderCommandEntry {
+function slashCommandToEntry(
+  cmd: SlashCommand,
+  fileProvenance?: 'vault' | 'user-home',
+): ProviderCommandEntry {
   const skill = isSkill(cmd);
+  const fromUserHome = fileProvenance === 'user-home';
   return {
     id: cmd.id,
     providerId: 'claude',
@@ -27,11 +32,17 @@ function slashCommandToEntry(cmd: SlashCommand): ProviderCommandEntry {
     hooks: cmd.hooks,
     scope: cmd.source === 'sdk' ? 'runtime' : 'vault',
     source: cmd.source ?? 'user',
-    isEditable: cmd.source !== 'sdk',
-    isDeletable: cmd.source !== 'sdk',
+    isEditable: cmd.source !== 'sdk' && !fromUserHome,
+    isDeletable: cmd.source !== 'sdk' && !fromUserHome,
     displayPrefix: '/',
     insertPrefix: '/',
+    ...(fileProvenance ? { slashFileProvenance: fileProvenance } : {}),
   };
+}
+
+/** 用户主目录扫描结果使用独立 id 前缀，避免与库内条目 id 冲突。 */
+function prefixHomeSlashId(cmd: SlashCommand): SlashCommand {
+  return { ...cmd, id: `home:${cmd.id}` };
 }
 
 function entryToSlashCommand(entry: ProviderCommandEntry): SlashCommand {
@@ -61,6 +72,23 @@ const BUILTIN_HIDDEN_COMMANDS = new Set([
 
 export type CommandProbe = () => Promise<SlashCommand[]>;
 
+export interface ClaudeCommandCatalogDeps {
+  probe?: CommandProbe;
+  homeCommands?: SlashCommandStorage;
+  homeSkills?: SkillStorage;
+  /** 未注入时视为「本库与主目录合并」，便于单测 */
+  getSlashAssetScope?: () => SlashAssetScope;
+}
+
+function sortFileEntries(entries: ProviderCommandEntry[]): ProviderCommandEntry[] {
+  const isUserHome = (e: ProviderCommandEntry) => e.slashFileProvenance === 'user-home';
+  const vault = entries.filter(e => !isUserHome(e));
+  const home = entries.filter(e => isUserHome(e));
+  const byName = (a: ProviderCommandEntry, b: ProviderCommandEntry) =>
+    a.name.localeCompare(b.name);
+  return [...vault.sort(byName), ...home.sort(byName)];
+}
+
 export class ClaudeCommandCatalog implements ProviderCommandCatalog {
   private sdkCommands: SlashCommand[] = [];
   private probePromise: Promise<void> | null = null;
@@ -68,11 +96,19 @@ export class ClaudeCommandCatalog implements ProviderCommandCatalog {
   constructor(
     private commandStorage: SlashCommandStorage,
     private skillStorage: SkillStorage,
-    private probe?: CommandProbe,
+    private deps: ClaudeCommandCatalogDeps = {},
   ) {}
 
   setRuntimeCommands(commands: SlashCommand[]): void {
     this.sdkCommands = commands;
+  }
+
+  private getProbe(): CommandProbe | undefined {
+    return this.deps.probe;
+  }
+
+  private currentScope(): SlashAssetScope {
+    return this.deps.getSlashAssetScope?.() ?? 'vault-and-user-home';
   }
 
   async listDropdownEntries(context: { includeBuiltIns: boolean }): Promise<ProviderCommandEntry[]> {
@@ -80,12 +116,12 @@ export class ClaudeCommandCatalog implements ProviderCommandCatalog {
     // SDK commands already include vault commands/skills (the SDK scans
     // .claude/commands/ and .claude/skills/ internally). No file scan needed.
     // When the cache is empty (cold start, no active runtime), probe the SDK.
-    if (this.sdkCommands.length === 0 && this.probe) {
+    if (this.sdkCommands.length === 0 && this.getProbe()) {
       await this.ensureProbed();
     }
     const runtimeEntries = this.sdkCommands
       .filter(cmd => !BUILTIN_HIDDEN_COMMANDS.has(cmd.name.toLowerCase()))
-      .map(slashCommandToEntry);
+      .map(c => slashCommandToEntry(c));
     if (runtimeEntries.length > 0) {
       return runtimeEntries;
     }
@@ -94,9 +130,10 @@ export class ClaudeCommandCatalog implements ProviderCommandCatalog {
 
   /** Probe the SDK for commands. Deduplicates concurrent calls. */
   private async ensureProbed(): Promise<void> {
-    if (!this.probe) return;
+    const probe = this.getProbe();
+    if (!probe) return;
     if (!this.probePromise) {
-      this.probePromise = this.probe().then((commands) => {
+      this.probePromise = probe().then((commands) => {
         // Only apply probe results if the runtime hasn't provided fresher data
         if (this.sdkCommands.length === 0 && commands.length > 0) {
           this.sdkCommands = commands;
@@ -111,12 +148,44 @@ export class ClaudeCommandCatalog implements ProviderCommandCatalog {
   }
 
   async listVaultEntries(): Promise<ProviderCommandEntry[]> {
-    const commands = await this.commandStorage.loadAll();
-    const skills = await this.skillStorage.loadAll();
-    return [...commands, ...skills].map(slashCommandToEntry);
+    const vaultCommands = await this.commandStorage.loadAll();
+    const vaultSkills = await this.skillStorage.loadAll();
+    const vaultEntries = [
+      ...vaultCommands.map(c => slashCommandToEntry(c, 'vault')),
+      ...vaultSkills.map(c => slashCommandToEntry(c, 'vault')),
+    ];
+
+    if (this.currentScope() !== 'vault-and-user-home') {
+      return sortFileEntries(vaultEntries);
+    }
+
+    const homeCmdStore = this.deps.homeCommands;
+    const homeSkillStore = this.deps.homeSkills;
+    if (!homeCmdStore || !homeSkillStore) {
+      return sortFileEntries(vaultEntries);
+    }
+
+    const homeCommandsRaw = await homeCmdStore.loadAll();
+    const homeSkillsRaw = await homeSkillStore.loadAll();
+    const vaultNames = new Set(vaultEntries.map(e => e.name.toLowerCase()));
+
+    const homeEntries: ProviderCommandEntry[] = [];
+    for (const c of homeCommandsRaw) {
+      if (vaultNames.has(c.name.toLowerCase())) continue;
+      homeEntries.push(slashCommandToEntry(prefixHomeSlashId(c), 'user-home'));
+    }
+    for (const c of homeSkillsRaw) {
+      if (vaultNames.has(c.name.toLowerCase())) continue;
+      homeEntries.push(slashCommandToEntry(prefixHomeSlashId(c), 'user-home'));
+    }
+
+    return sortFileEntries([...vaultEntries, ...homeEntries]);
   }
 
   async saveVaultEntry(entry: ProviderCommandEntry): Promise<void> {
+    if (entry.slashFileProvenance === 'user-home') {
+      throw new Error('claudian: cannot modify commands or skills in user home from settings');
+    }
     const cmd = entryToSlashCommand(entry);
     if (entry.kind === 'skill') {
       await this.skillStorage.save(cmd);
@@ -126,10 +195,13 @@ export class ClaudeCommandCatalog implements ProviderCommandCatalog {
   }
 
   async deleteVaultEntry(entry: ProviderCommandEntry): Promise<void> {
+    if (entry.slashFileProvenance === 'user-home') {
+      throw new Error('claudian: cannot delete commands or skills in user home from settings');
+    }
     if (entry.kind === 'skill') {
-      await this.skillStorage.delete(entry.id);
+      await this.skillStorage.delete(entry.id.replace(/^home:/, ''));
     } else {
-      await this.commandStorage.delete(entry.id);
+      await this.commandStorage.delete(entry.id.replace(/^home:/, ''));
     }
   }
 

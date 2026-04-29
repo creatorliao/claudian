@@ -30,4 +30,9 @@ export interface ProviderCommandEntry {
    * across edits, renames, and deletes in shared settings UIs.
    */
   persistenceKey?: string;
+  /**
+   * 文件型命令/技能：来自当前库 .claude 还是用户主目录 .claude（Claude 提供商设置 UI）。
+   * SDK 运行时条目不应设置此项。
+   */
+  slashFileProvenance?: 'vault' | 'user-home';
 }

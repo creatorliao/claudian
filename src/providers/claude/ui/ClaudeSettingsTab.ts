@@ -59,18 +59,6 @@ function renderSafetySection(
           await context.plugin.saveSettings();
         });
     });
-
-  new Setting(container)
-    .setName(t('settings.loadUserSettings.name'))
-    .setDesc(t('settings.loadUserSettings.desc'))
-    .addToggle((toggle) =>
-      toggle
-        .setValue(claudeSettings.loadUserSettings)
-        .onChange(async (value) => {
-          updateClaudeProviderSettings(settingsBag, { loadUserSettings: value });
-          await context.plugin.saveSettings();
-        })
-    );
 }
 
 function renderModelsSection(
@@ -177,6 +165,31 @@ function renderSlashSkillsSection(
     text: t('common.learnMore'),
     href: 'https://code.claude.com/docs/en/skills',
   });
+
+  const settingsBag = context.plugin.settings as unknown as Record<string, unknown>;
+  const claudeSettings = getClaudeProviderSettings(settingsBag);
+
+  const scopeDesc =
+    claudeSettings.slashAssetScope === 'vault-only'
+      ? t('settings.slashAssetScope.descVaultOnly')
+      : t('settings.slashAssetScope.descVaultAndHome');
+
+  new Setting(container)
+    .setName(t('settings.slashAssetScope.name'))
+    .setDesc(scopeDesc)
+    .addDropdown((dropdown) => {
+      dropdown
+        .addOption('vault-and-user-home', t('settings.slashAssetScope.optionVaultAndHome'))
+        .addOption('vault-only', t('settings.slashAssetScope.optionVaultOnly'))
+        .setValue(claudeSettings.slashAssetScope)
+        .onChange(async (value) => {
+          updateClaudeProviderSettings(settingsBag, {
+            slashAssetScope: value as 'vault-only' | 'vault-and-user-home',
+          });
+          await context.plugin.saveSettings();
+          context.redisplay();
+        });
+    });
 
   const slashCommandsContainer = container.createDiv({ cls: 'claudian-slash-commands-container' });
   new SlashCommandSettings(

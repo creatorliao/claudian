@@ -5,7 +5,12 @@ import { parsedToSlashCommand, parseSlashCommandContent, serializeCommand } from
 export const SKILLS_PATH = '.claude/skills';
 
 export class SkillStorage {
-  constructor(private adapter: VaultFileAdapter) {}
+  constructor(
+    private adapter: Pick<
+      VaultFileAdapter,
+      'exists' | 'read' | 'write' | 'delete' | 'deleteFolder' | 'listFolders' | 'ensureFolder'
+    >,
+  ) {}
 
   async loadAll(): Promise<SlashCommand[]> {
     const skills: SlashCommand[] = [];

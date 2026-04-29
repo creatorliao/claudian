@@ -5,7 +5,12 @@ import { parsedToSlashCommand, parseSlashCommandContent, serializeCommand } from
 export const COMMANDS_PATH = '.claude/commands';
 
 export class SlashCommandStorage {
-  constructor(private adapter: VaultFileAdapter) {}
+  constructor(
+    private adapter: Pick<
+      VaultFileAdapter,
+      'exists' | 'read' | 'write' | 'delete' | 'listFilesRecursive'
+    >,
+  ) {}
 
   async loadAll(): Promise<SlashCommand[]> {
     const commands: SlashCommand[] = [];

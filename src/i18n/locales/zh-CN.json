@@ -511,7 +511,20 @@
     },
     "slashCommands": {
       "name": "命令与技能",
-      "desc": "管理存储在 .claude/commands/ 和 .claude/skills/ 中的 Vault 级命令与技能。由 /名称 触发。"
+      "desc": "管理对话中通过 / 使用的自定义命令与技能。",
+      "previewLabel": "预览",
+      "viewAll": "查看全部（{count}）",
+      "viewAllModalTitle": "全部命令与技能（{count}）",
+      "provenanceVault": "本库",
+      "provenanceUserHome": "本机共用",
+      "readOnlyHomeNotice": "无法在本插件中修改「本机共用」目录下的命令与技能，请在资源管理器中编辑对应文件。"
+    },
+    "slashAssetScope": {
+      "name": "命令与技能的来源",
+      "optionVaultAndHome": "本库和本机共用",
+      "optionVaultOnly": "仅本库",
+      "descVaultOnly": "只使用当前库里的命令与技能，不使用本机用户目录下的配置。若希望与电脑上其他 Claude Code 环境习惯一致，请选择「本库和本机共用」。",
+      "descVaultAndHome": "与 Claude Code 在本机其他目录中的习惯一致，包含本机中的共用命令、技能与权限类设置。共用设置中的权限规则可能影响安全模式行为，请确认来源可信。"
     },
     "hiddenSlashCommands": {
       "name": "隐藏命令",
