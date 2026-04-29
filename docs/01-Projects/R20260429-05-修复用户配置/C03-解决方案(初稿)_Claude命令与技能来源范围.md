@@ -62,6 +62,7 @@
 | 排序 | 与实现一致即可（例如：库内优先于用户目录；同来源按名称排序），便于用户预判前 5 条是谁 |
 | 超出部分 | 在主列表下方（或标题行右侧）提供 **「更多…」/「查看全部（N）」** 类入口，`N` 为总条数可选 |
 | 弹窗内容 | 点击后在 **Modal 弹窗** 内**完整、可滚动**列出全部命令与技能；每条可保留与主列表一致的摘要信息（名称、类型、来源 vault/home、描述一行等）；**编辑/删除**仅在符合 4.2 策略的条目上可用（库内可改，用户目录只读） |
+| 主动刷新 | 预览区头部提供 **刷新** 按钮（图标与 **子代理 / Codex 技能 / 插件** 一致），**位于操作区最右侧**（「查看全部」「+」在左）；点击后重新执行 `listVaultEntries()`，便于外部改文件后同步列表 |
 | 空状态 | 总数 ≤ 主界面限额时，不强制出现「更多」；总数为 0 时保持现有空状态文案 |
 
 **原则**：主设置页保持**短、稳**；**全量浏览与管理**在弹窗内完成，避免单次渲染与 DOM 规模过大。
@@ -85,8 +86,8 @@
 1. **`getClaudeProviderSettings`**：读取 `slashAssetScope`，默认 **`vault-and-user-home`**；兼容旧 `loadUserClaudeSettings`（见 2.2 迁移规则）。
 2. **构建 `HomeFileAdapter`**：`~/.claude` 下的相对路径与 `SkillStorage`/`SlashCommandStorage` 共用同一相对路径常量（`.claude/commands`、`.claude/skills`）。
 3. **`ClaudeCommandCatalog.listVaultEntries`**（或重命名为 `listManagedEntries`）：按 scope 合并 vault + 可选 home 扫描结果；`saveVaultEntry` / `deleteVaultEntry` 遇到 `user-home` 来源时拒绝或引导外部编辑。
-4. **`SlashCommandSettings`（及同类 UI）**：继续调用 catalog 的「列举」API；依赖合并后的列表与 `provenance` 控制按钮。**主区域仅渲染前 ~5 条**；「查看全部」打开独立 Modal，内嵌完整列表与滚动容器（见 3.1）。
-5. **运行时**：所有组装 `settingSources` 处（如 `probeRuntimeCommands`、会话 query 构建）统一使用 `slashAssetScope` 映射到 `['project']` 或 `['user', 'project']`，与列表一致。
+4. **`SlashCommandSettings`（及同类 UI）**：继续调用 catalog 的「列举」API；依赖合并后的列表与 `provenance` 控制按钮。**主区域仅渲染前 ~5 条**；「查看全部」打开独立 Modal，内嵌完整列表与滚动容器（见 3.1）。头部 **刷新** 按钮：`refresh-cw` + **`claudian-sp-header-action-trailing`**，与「查看全部」「+」**左对齐组**并排，行为对齐插件列表刷新（成功后可 Notice）。
+5. **运行时**：所有组装 `settingSources` 处（如 `probeRuntimeCommands`、会话 query 构建）统一使用 `slashAssetScope` 映射到 `['project']` 或 `['user', 'project']`，与列表一致。用户在下拉中切换来源后，应对 **`ClaudeCommandCatalog.refresh()`**（清空缓存的 SDK 命令与 probe 状态）再 **`redisplay()`**，避免旧探测结果占位。
 6. **`listDropdownEntries`**：在冷启动/无 runtime 缓存时，与「文件合并结果」或 SDK 探测策略统一，避免出现「下拉里有一套、设置页只有库内」的长期分裂（具体以「优先 runtime SDK、缺省回落合并文件」的现有逻辑上**增加** home 扫描为准）。
 
 ## 6. 验收要点（评价线索）
@@ -95,6 +96,8 @@
 - `vault-only`：设置页列表仅有库内条目；无活动会话时探测命令也不应依赖 user 目录（与 `settingSources` 一致）。
 - `vault-and-user-home`：列表数据含 `~/.claude` 下合法技能/命令；用户目录项不可在插件内删除；`settings.json` 行为与当前「加载用户设置」预期一致。
 - **展示**：总条数明显大于主界面限额（如 >5）时，主区域**仅显示约 5 条**，且存在「更多/查看全部」入口；弹窗内可浏览**完整列表**且滚动流畅，主设置页**不因条数过多而布局失控**。
+- **手动刷新**：预览区头部 **刷新** 按钮点击后重新 `listVaultEntries()`，成功可有 Notice。
+- **来源切换**：更改「命令与技能的来源」后应 **刷新 catalog 缓存并重绘设置页**，预览列表立即反映仅本库 / 本库+本机；下拉在下次打开时按新 `settingSources` 重新探测或回落文件列表。
 - 配置迁移：旧用户 `loadUserClaudeSettings === false` 仍落在 `vault-only`；为 `true` 或缺省时与默认「工作区 + 用户目录」一致。
 
 ## 7. 暂不纳入（本初稿范围外）

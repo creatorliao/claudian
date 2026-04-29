@@ -81,9 +81,9 @@
       "maxAllowedNotice": "Maximum {maxTabs} tabs allowed"
     },
     "header": {
-      "newTab": "New tab",
-      "newConversation": "New conversation",
-      "history": "Chat history"
+      "newTab": "New tab: start a separate conversation—chat in parallel with this one",
+      "newConversation": "Clear this tab: wipe messages and context, start fresh here (no new tab)",
+      "history": "History: open, switch, or delete past conversations"
     },
     "history": {
       "header": "Conversations",
@@ -489,14 +489,14 @@
       "btnSet": "Set hotkey"
     },
     "newSessionHotkey": {
-      "name": "New Session",
+      "name": "Clear current tab",
       "descWithKey": "Current hotkey: {hotkey}",
       "descNoKey": "No hotkey set",
       "btnChange": "Change",
       "btnSet": "Set hotkey"
     },
     "newTabHotkey": {
-      "name": "New Tab",
+      "name": "New tab (parallel)",
       "descWithKey": "Current hotkey: {hotkey}",
       "descNoKey": "No hotkey set",
       "btnChange": "Change",
@@ -517,7 +517,19 @@
       "viewAllModalTitle": "All commands and skills ({count})",
       "provenanceVault": "This vault",
       "provenanceUserHome": "Shared on this computer",
-      "readOnlyHomeNotice": "Commands and skills in the shared computer folder cannot be edited inside the plugin. Edit the files in your file manager instead."
+      "readOnlyHomeNotice": "Commands and skills in the shared computer folder cannot be edited inside the plugin. Edit the files in your file manager instead.",
+      "noticeRefreshed": "Commands and skills list refreshed",
+      "refreshFailed": "Failed to refresh commands and skills list",
+      "modalFolderHint": "Edit items in the list below, or use these buttons to open the matching folders in your file manager to see where vault vs. user-home slash assets live on disk.",
+      "modalOpenVaultCommands": "Open vault commands folder",
+      "modalOpenVaultSkills": "Open vault skills folder",
+      "modalOpenHomeCommands": "Open user-home commands folder",
+      "modalOpenHomeSkills": "Open user-home skills folder",
+      "revealInFileManagerAria": "Show in file manager",
+      "openFolderVaultPathUnknown": "This vault has no file-system path, so folders cannot be opened.",
+      "openFolderPathUnresolved": "Could not resolve a file path for this command or skill.",
+      "openFolderUnavailable": "This environment cannot open paths in the system file manager.",
+      "openFolderFailed": "Could not open folder: {message}"
     },
     "slashAssetScope": {
       "name": "Source of commands and skills",
@@ -1030,8 +1042,8 @@
     "openChatView": "Open chat view",
     "toggleChatView": "Toggle chat view",
     "inlineEdit": "Inline edit",
-    "newTab": "New tab",
-    "newSession": "New session (in current tab)",
+    "newTab": "New tab (parallel)",
+    "newSession": "Clear current tab (no new tab)",
     "closeCurrentTab": "Close current tab",
     "resetWorkspace": "Reset workspace"
   },
@@ -1043,7 +1055,7 @@
   },
   "workspace": {
     "vaultRoot": "Vault root",
-    "resetTooltip": "Reset workspace to vault root"
+    "resetTooltip": "Reset every tab's workspace to the vault root"
   },
   "ribbon": {
     "toggleClaudian": "Toggle Claudian chat panel"

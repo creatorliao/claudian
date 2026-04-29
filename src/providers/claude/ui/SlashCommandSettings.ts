@@ -4,7 +4,15 @@ import { Modal, Notice, setIcon, Setting } from 'obsidian';
 import type { ProviderCommandCatalog } from '../../../core/providers/commands/ProviderCommandCatalog';
 import type { ProviderCommandEntry } from '../../../core/providers/commands/ProviderCommandEntry';
 import { t } from '../../../i18n/i18n';
+import type { OpenInFileManagerResult } from '../../../utils/openInFileManager';
+import { openAbsolutePathInFileManager, revealFileOrOpenParentDirectory } from '../../../utils/openInFileManager';
 import { extractFirstParagraph, normalizeArgumentHint, parseSlashCommandContent, validateCommandName } from '../../../utils/slashCommand';
+import type { SlashAssetScope } from '../settings';
+import {
+  resolveSlashCommandsRootDir,
+  resolveSlashFileAbsolutePath,
+  resolveSlashSkillsRootDir,
+} from '../storage/slashAssetAbsolutePaths';
 
 function resolveAllowedTools(inputValue: string, parsedTools?: string[]): string[] | undefined {
   const trimmed = inputValue.trim();
@@ -31,7 +39,9 @@ class SlashCommandsFullListModal extends Modal {
   constructor(
     app: App,
     private readonly entries: ProviderCommandEntry[],
+    private readonly slashAssetScope: SlashAssetScope,
     private readonly renderRow: (parent: HTMLElement, cmd: ProviderCommandEntry) => void,
+    private readonly openFolderInManager: (absolutePath: string) => Promise<OpenInFileManagerResult>,
   ) {
     super(app);
   }
@@ -41,6 +51,57 @@ class SlashCommandsFullListModal extends Modal {
       t('settings.slashCommands.viewAllModalTitle', { count: String(this.entries.length) }),
     );
     this.modalEl.addClass('claudian-sp-modal');
+
+    const toolbar = this.contentEl.createDiv({ cls: 'claudian-sp-modal-folder-toolbar' });
+    toolbar.createEl('p', {
+      cls: 'setting-item-description',
+      text: t('settings.slashCommands.modalFolderHint'),
+    });
+    const btnRow = toolbar.createDiv({ cls: 'claudian-sp-modal-folder-btns' });
+
+    const addFolderButton = (label: string, target: string | null): void => {
+      const btn = btnRow.createEl('button', {
+        type: 'button',
+        cls: 'claudian-settings-action-btn claudian-settings-action-btn--text claudian-sp-modal-folder-btn',
+      });
+      btn.setText(label);
+      btn.addEventListener('click', () => {
+        void (async () => {
+          if (!target) {
+            new Notice(t('settings.slashCommands.openFolderVaultPathUnknown'));
+            return;
+          }
+          const result = await this.openFolderInManager(target);
+          if (!result.ok) {
+            if (result.reason === 'no-shell') {
+              new Notice(t('settings.slashCommands.openFolderUnavailable'));
+            } else {
+              new Notice(t('settings.slashCommands.openFolderFailed', { message: result.detail }));
+            }
+          }
+        })();
+      });
+    };
+
+    addFolderButton(
+      t('settings.slashCommands.modalOpenVaultCommands'),
+      resolveSlashCommandsRootDir(this.app, 'vault'),
+    );
+    addFolderButton(
+      t('settings.slashCommands.modalOpenVaultSkills'),
+      resolveSlashSkillsRootDir(this.app, 'vault'),
+    );
+    if (this.slashAssetScope === 'vault-and-user-home') {
+      addFolderButton(
+        t('settings.slashCommands.modalOpenHomeCommands'),
+        resolveSlashCommandsRootDir(this.app, 'user-home'),
+      );
+      addFolderButton(
+        t('settings.slashCommands.modalOpenHomeSkills'),
+        resolveSlashSkillsRootDir(this.app, 'user-home'),
+      );
+    }
+
     const scroll = this.contentEl.createDiv({ cls: 'claudian-sp-modal-scroll' });
     scroll.style.maxHeight = '70vh';
     scroll.style.overflow = 'auto';
@@ -355,16 +416,41 @@ export class SlashCommandSettings {
   private containerEl: HTMLElement;
   private catalog: ProviderCommandCatalog | null;
   private commands: ProviderCommandEntry[] = [];
+  private slashAssetScope: SlashAssetScope;
 
   constructor(
     containerEl: HTMLElement,
     app: App,
     catalog: ProviderCommandCatalog | null,
+    slashAssetScope: SlashAssetScope = 'vault-and-user-home',
   ) {
     this.app = app;
     this.containerEl = containerEl;
     this.catalog = catalog;
+    this.slashAssetScope = slashAssetScope;
     void this.loadAndRender();
+  }
+
+  private handleOpenFolderResult(result: OpenInFileManagerResult): void {
+    if (result.ok) {
+      return;
+    }
+    if (result.reason === 'no-shell') {
+      new Notice(t('settings.slashCommands.openFolderUnavailable'));
+    } else {
+      new Notice(t('settings.slashCommands.openFolderFailed', { message: result.detail }));
+    }
+  }
+
+  /** 在系统文件管理器中打开某一命令/技能对应的文件或目录 */
+  private async revealSlashEntryPath(cmd: ProviderCommandEntry): Promise<void> {
+    const absolute = resolveSlashFileAbsolutePath(this.app, cmd);
+    if (!absolute) {
+      new Notice(t('settings.slashCommands.openFolderPathUnresolved'));
+      return;
+    }
+    const result = await revealFileOrOpenParentDirectory(absolute);
+    this.handleOpenFolderResult(result);
   }
 
   private async loadAndRender(): Promise<void> {
@@ -375,6 +461,16 @@ export class SlashCommandSettings {
 
     this.commands = await this.catalog.listVaultEntries();
     this.render();
+  }
+
+  /** 用户主动重扫库内与本机（若已启用）命令/技能文件，行为对齐插件列表「刷新」。 */
+  private async onRefreshClicked(): Promise<void> {
+    try {
+      await this.loadAndRender();
+      new Notice(t('settings.slashCommands.noticeRefreshed'));
+    } catch {
+      new Notice(t('settings.slashCommands.refreshFailed'));
+    }
   }
 
   private renderUnavailable(): void {
@@ -393,7 +489,7 @@ export class SlashCommandSettings {
 
     if (this.commands.length > SLASH_COMMANDS_PREVIEW_LIMIT) {
       const viewAllBtn = actionsEl.createEl('button', {
-        cls: 'claudian-settings-action-btn',
+        cls: 'claudian-settings-action-btn claudian-settings-action-btn--text',
         attr: { 'aria-label': t('settings.slashCommands.viewAll', { count: String(this.commands.length) }) },
       });
       viewAllBtn.setText(t('settings.slashCommands.viewAll', { count: String(this.commands.length) }));
@@ -406,6 +502,15 @@ export class SlashCommandSettings {
     });
     setIcon(addBtn, 'plus');
     addBtn.addEventListener('click', () => this.openCommandModal(null));
+
+    const refreshBtn = actionsEl.createEl('button', {
+      cls: 'claudian-settings-action-btn claudian-sp-header-action-trailing',
+      attr: { 'aria-label': t('common.refresh') },
+    });
+    setIcon(refreshBtn, 'refresh-cw');
+    refreshBtn.addEventListener('click', () => {
+      void this.onRefreshClicked();
+    });
 
     if (this.commands.length === 0) {
       const emptyEl = this.containerEl.createDiv({ cls: 'claudian-sp-empty-state' });
@@ -425,7 +530,9 @@ export class SlashCommandSettings {
     const modal = new SlashCommandsFullListModal(
       this.app,
       this.commands,
+      this.slashAssetScope,
       (parent, cmd) => this.renderCommandRow(parent, cmd),
+      (absolutePath) => openAbsolutePathInFileManager(absolutePath),
     );
     modal.open();
   }
@@ -480,6 +587,17 @@ export class SlashCommandSettings {
       });
       setIcon(editBtn, 'pencil');
       editBtn.addEventListener('click', () => this.openCommandModal(cmd));
+    }
+
+    if (cmd.slashFileProvenance) {
+      const revealBtn = actionsEl.createEl('button', {
+        cls: 'claudian-settings-action-btn',
+        attr: { 'aria-label': t('settings.slashCommands.revealInFileManagerAria') },
+      });
+      setIcon(revealBtn, 'folder-open');
+      revealBtn.addEventListener('click', () => {
+        void this.revealSlashEntryPath(cmd);
+      });
     }
 
     if (!isSkillEntry(cmd) && cmd.isEditable) {

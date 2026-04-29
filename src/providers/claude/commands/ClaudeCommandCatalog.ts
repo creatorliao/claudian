@@ -216,6 +216,9 @@ export class ClaudeCommandCatalog implements ProviderCommandCatalog {
   }
 
   async refresh(): Promise<void> {
-    // Claude revalidation happens externally via setRuntimeCommands
+    // 丢弃运行时缓存的 SDK 命令列表与进行中的 probe，便于在设置中切换「命令与技能来源」后
+    // listDropdownEntries 按新的 settingSources 重新探测或回落到 listVaultEntries。
+    this.sdkCommands = [];
+    this.probePromise = null;
   }
 }

@@ -486,6 +486,24 @@ Deploy`,
     });
   });
 
+  describe('refresh', () => {
+    it('clears SDK cache when refresh() is called', async () => {
+      const adapter = createMockAdapter({});
+      const commands = new SlashCommandStorage(adapter);
+      const skills = new SkillStorage(adapter);
+      const catalog = new ClaudeCommandCatalog(commands, skills);
+
+      catalog.setRuntimeCommands([
+        { id: 'sdk:x', name: 'x', description: '', content: '', source: 'sdk' },
+      ]);
+
+      await catalog.refresh();
+
+      const entries = await catalog.listDropdownEntries({ includeBuiltIns: false });
+      expect(entries).toHaveLength(0);
+    });
+  });
+
   describe('getDropdownConfig', () => {
     it('returns Claude-specific config', () => {
       const adapter = createMockAdapter({});

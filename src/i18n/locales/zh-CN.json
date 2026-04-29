@@ -81,9 +81,9 @@
       "maxAllowedNotice": "最多允许 {maxTabs} 个标签页"
     },
     "header": {
-      "newTab": "新建标签",
-      "newConversation": "新对话",
-      "history": "聊天历史"
+      "newTab": "新建标签：另起一段新对话，与当前页并行讨论、互不打扰",
+      "newConversation": "清空本页：对话与上下文一并清除，在本栏从零重新开始（不开新标签）",
+      "history": "历史对话：打开、切换或删除过往会话"
     },
     "history": {
       "header": "对话",
@@ -489,14 +489,14 @@
       "btnSet": "设置快捷键"
     },
     "newSessionHotkey": {
-      "name": "新会话",
+      "name": "清空当前标签",
       "descWithKey": "当前快捷键：{hotkey}",
       "descNoKey": "未设置快捷键",
       "btnChange": "更改",
       "btnSet": "设置快捷键"
     },
     "newTabHotkey": {
-      "name": "新标签页",
+      "name": "新建标签页（并行）",
       "descWithKey": "当前快捷键：{hotkey}",
       "descNoKey": "未设置快捷键",
       "btnChange": "更改",
@@ -517,7 +517,19 @@
       "viewAllModalTitle": "全部命令与技能（{count}）",
       "provenanceVault": "本库",
       "provenanceUserHome": "本机共用",
-      "readOnlyHomeNotice": "无法在本插件中修改「本机共用」目录下的命令与技能，请在资源管理器中编辑对应文件。"
+      "readOnlyHomeNotice": "无法在本插件中修改「本机共用」目录下的命令与技能，请在资源管理器中编辑对应文件。",
+      "noticeRefreshed": "命令与技能列表已刷新",
+      "refreshFailed": "刷新命令与技能列表失败",
+      "modalFolderHint": "在下面列表中编辑条目，或使用下列按钮在系统的文件管理器中打开对应目录，便于查看「本库」与「本机共用」下的真实路径。",
+      "modalOpenVaultCommands": "打开本库命令目录",
+      "modalOpenVaultSkills": "打开本库技能目录",
+      "modalOpenHomeCommands": "打开本机共用命令目录",
+      "modalOpenHomeSkills": "打开本机共用技能目录",
+      "revealInFileManagerAria": "在文件管理器中显示",
+      "openFolderVaultPathUnknown": "当前库没有可用的磁盘路径，无法打开文件夹。",
+      "openFolderPathUnresolved": "无法解析该命令或技能对应的文件路径。",
+      "openFolderUnavailable": "当前环境无法在系统文件管理器中打开路径。",
+      "openFolderFailed": "打开文件夹失败：{message}"
     },
     "slashAssetScope": {
       "name": "命令与技能的来源",
@@ -1030,8 +1042,8 @@
     "openChatView": "打开聊天视图",
     "toggleChatView": "切换聊天视图",
     "inlineEdit": "内联编辑",
-    "newTab": "新建标签页",
-    "newSession": "新会话（当前标签页）",
+    "newTab": "新建标签页（并行）",
+    "newSession": "清空当前标签（不新增标签页）",
     "closeCurrentTab": "关闭当前标签页",
     "resetWorkspace": "重置工作空间"
   },
@@ -1043,7 +1055,7 @@
   },
   "workspace": {
     "vaultRoot": "Vault 根目录",
-    "resetTooltip": "重置工作空间为 Vault 根目录"
+    "resetTooltip": "将所有标签的工作区恢复为库（Vault）根目录"
   },
   "ribbon": {
     "toggleClaudian": "切换 Claudian 聊天面板"

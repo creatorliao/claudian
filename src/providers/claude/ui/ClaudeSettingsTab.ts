@@ -187,6 +187,8 @@ function renderSlashSkillsSection(
             slashAssetScope: value as 'vault-only' | 'vault-and-user-home',
           });
           await context.plugin.saveSettings();
+          // 清除 catalog 内 SDK/探测缓存，并重绘设置页，使预览列表与下拉与新的来源范围一致
+          await claudeWorkspace.commandCatalog.refresh();
           context.redisplay();
         });
     });
@@ -196,6 +198,7 @@ function renderSlashSkillsSection(
     slashCommandsContainer,
     context.plugin.app,
     claudeWorkspace.commandCatalog,
+    claudeSettings.slashAssetScope,
   );
 }
 
