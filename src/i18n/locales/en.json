@@ -422,7 +422,13 @@
         "claude": "Claude CLI not found on this computer. Install the Claude Code CLI, or open the Claude tab and set the CLI path.",
         "cursor": "Cursor CLI (agent) not found on this computer. Install the Cursor CLI or set the CLI path under Cursor settings.",
         "codex": "Codex CLI not found on this computer. Install Codex or set the CLI path under Codex settings."
-      }
+      },
+      "simpleModeHint": "Start with one provider enabled, then add more when you are comfortable."
+    },
+    "moreOptions": {
+      "name": "Show more options",
+      "desc": "When off, only common settings are shown—enough for everyday use. When on, you can configure system prompts, hotkey shortcuts, environment variables, and more. You do not need this for normal chatting.",
+      "hintWhenExpanded": "Optional settings below—adjust only if you need them."
     },
     "display": "Display",
     "conversations": "Conversations",
@@ -432,12 +438,14 @@
     "models": "Models",
     "experimental": "Experimental",
     "userName": {
-      "name": "What should Claudian call you?",
-      "desc": "Your name for personalized greetings (leave empty for generic greetings)"
+      "name": "What should we call you?",
+      "desc": "Used for greetings; optional.",
+      "placeholder": "e.g. nickname or name"
     },
     "agentName": {
       "name": "Agent display name",
-      "desc": "Name shown beside the logo in the top-left of the chat. Leave empty to use \"Claudian\"."
+      "desc": "Shown in the top-left of the chat. Leave empty to use the default assistant name.",
+      "placeholder": "Display name"
     },
     "excludedTags": {
       "name": "Excluded tags",
@@ -635,7 +643,9 @@
     },
     "maxTabs": {
       "name": "Maximum chat tabs",
-      "desc": "Maximum number of concurrent chat tabs (3-10). Each tab uses a separate Claude session.",
+      "desc": "Maximum number of concurrent chat tabs (3-10). Each tab uses a separate conversation session.",
+      "simpleName": "Concurrent chat tabs",
+      "simpleDesc": "How many chat tabs can stay open at once; higher values use more space. Default is 5, which is enough for most use.",
       "warning": "More than 5 tabs may impact performance and memory usage."
     },
     "tabBarPosition": {

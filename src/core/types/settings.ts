@@ -129,6 +129,9 @@ export interface ClaudianSettings {
   // State (provider-specific, round-tripped opaquely)
   lastCustomModel?: string;
 
+  /** 通用设置页是否展开「更多选项」（显示系统提示词、环境变量等）；默认关闭以降低初次上手门槛 */
+  showMoreGeneralOptions: boolean;
+
   // UI preferences
   maxTabs: number;
   tabBarPosition: TabBarPosition;

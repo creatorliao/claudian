@@ -17,6 +17,7 @@ import { getClaudeProviderSettings, updateClaudeProviderSettings } from '../../p
 import { getCodexProviderSettings, updateCodexProviderSettings } from '../../providers/codex/settings';
 import { getCursorProviderSettings, updateCursorProviderSettings } from '../../providers/cursor/settings';
 import { formatContextLimit, parseContextLimit, parseEnvironmentVariables } from '../../utils/env';
+import { DEFAULT_MAX_TABS } from '../chat/tabs/types';
 import { buildNavMappingText, parseNavMappings } from './keyboardNavigation';
 import { isProviderCliPresent } from './providerCliPresence';
 import { renderEnvironmentSettingsSection } from './ui/EnvironmentSettingsSection';
@@ -42,7 +43,7 @@ function formatHotkey(hotkey: { modifiers: string[]; key: string }): string {
   return isMac ? [...mods, key].join('') : [...mods, key].join('+');
 }
 
-function openHotkeySettings(app: App): void {
+function openHotkeySettings(app: App, hotkeySearchQuery: string): void {
   const setting = (app as any).setting;
   setting.open();
   setting.openTabById('hotkeys');
@@ -57,7 +58,7 @@ function openHotkeySettings(app: App): void {
       return;
     }
 
-    searchEl.value = 'Claudian';
+    searchEl.value = hotkeySearchQuery;
     tab.updateHotkeyVisibility?.();
   }, 100);
 }
@@ -80,6 +81,7 @@ function addHotkeySettingRow(
   app: App,
   commandId: string,
   translationPrefix: string,
+  hotkeySearchQuery: string,
 ): void {
   const hotkey = getHotkeyForCommand(app, commandId);
   const item = containerEl.createDiv({ cls: 'claudian-hotkey-item' });
@@ -90,7 +92,7 @@ function addHotkeySettingRow(
   if (hotkey) {
     item.createSpan({ cls: 'claudian-hotkey-badge', text: hotkey });
   }
-  item.addEventListener('click', () => openHotkeySettings(app));
+  item.addEventListener('click', () => openHotkeySettings(app, hotkeySearchQuery));
 }
 
 export class ClaudianSettingTab extends PluginSettingTab {
@@ -173,6 +175,71 @@ export class ClaudianSettingTab extends PluginSettingTab {
   }
 
   private renderGeneralTab(container: HTMLElement): void {
+    const showMore = this.plugin.settings.showMoreGeneralOptions ?? false;
+
+    new Setting(container)
+      .setName(t('settings.moreOptions.name'))
+      .setDesc(t('settings.moreOptions.desc'))
+      .addToggle((toggle) =>
+        toggle.setValue(showMore).onChange(async (value) => {
+          this.plugin.settings.showMoreGeneralOptions = value;
+          await this.plugin.saveSettings();
+          this.display();
+        }),
+      );
+
+    this.renderGeneralUserAndAgent(container);
+    this.renderProviderToggles(container, { simpleModeHint: !showMore });
+    this.renderGeneralLanguage(container);
+    this.renderGeneralMaxTabs(container, !showMore);
+
+    if (!showMore) {
+      return;
+    }
+
+    const hintEl = container.createDiv({
+      cls: 'setting-item-description claudian-more-options-expanded-hint',
+    });
+    hintEl.style.marginBottom = '1rem';
+    hintEl.setText(t('settings.moreOptions.hintWhenExpanded'));
+
+    this.renderGeneralAdvancedSections(container);
+  }
+
+  /** 称呼与助手展示名称（通用页置顶） */
+  private renderGeneralUserAndAgent(container: HTMLElement): void {
+    new Setting(container)
+      .setName(t('settings.userName.name'))
+      .setDesc(t('settings.userName.desc'))
+      .addText((text) => {
+        text
+          .setPlaceholder(t('settings.userName.placeholder'))
+          .setValue(this.plugin.settings.userName)
+          .onChange(async (value) => {
+            this.plugin.settings.userName = value;
+            await this.plugin.saveSettings();
+          });
+        text.inputEl.addEventListener('blur', () => this.restartServiceForPromptChange());
+      });
+
+    new Setting(container)
+      .setName(t('settings.agentName.name'))
+      .setDesc(t('settings.agentName.desc'))
+      .addText((text) => {
+        text
+          .setPlaceholder(t('settings.agentName.placeholder'))
+          .setValue(this.plugin.settings.agentName)
+          .onChange(async (value) => {
+            this.plugin.settings.agentName = value;
+            await this.plugin.saveSettings();
+            for (const view of this.plugin.getAllViews()) {
+              view.syncAgentDisplayNameInHeader();
+            }
+          });
+      });
+  }
+
+  private renderGeneralLanguage(container: HTMLElement): void {
     new Setting(container)
       .setName(t('settings.language.name'))
       .setDesc(t('settings.language.desc'))
@@ -194,11 +261,50 @@ export class ClaudianSettingTab extends PluginSettingTab {
             this.display();
           });
       });
+  }
 
-    this.renderProviderToggles(container);
+  /**
+   * @param simpleLabels 简易模式用人话标题/描述（与「显示更多选项」关闭时一致）
+   */
+  private renderGeneralMaxTabs(container: HTMLElement, simpleLabels: boolean): void {
+    const nameKey = (
+      simpleLabels ? 'settings.maxTabs.simpleName' : 'settings.maxTabs.name'
+    ) as TranslationKey;
+    const descKey = (
+      simpleLabels ? 'settings.maxTabs.simpleDesc' : 'settings.maxTabs.desc'
+    ) as TranslationKey;
 
-    // --- Display ---
+    const maxTabsSetting = new Setting(container).setName(t(nameKey)).setDesc(t(descKey));
 
+    const maxTabsWarningEl = container.createDiv({ cls: 'claudian-max-tabs-warning' });
+    maxTabsWarningEl.style.color = 'var(--text-warning)';
+    maxTabsWarningEl.style.fontSize = '0.85em';
+    maxTabsWarningEl.style.marginTop = '-0.5em';
+    maxTabsWarningEl.style.marginBottom = '0.5em';
+    maxTabsWarningEl.style.display = 'none';
+    maxTabsWarningEl.setText(t('settings.maxTabs.warning'));
+
+    const updateMaxTabsWarning = (value: number): void => {
+      maxTabsWarningEl.style.display = value > 5 ? 'block' : 'none';
+    };
+
+    maxTabsSetting.addSlider((slider) => {
+      const initial = this.plugin.settings.maxTabs ?? DEFAULT_MAX_TABS;
+      slider
+        .setLimits(3, 10, 1)
+        .setValue(initial)
+        .setDynamicTooltip()
+        .onChange(async (value) => {
+          this.plugin.settings.maxTabs = value;
+          await this.plugin.saveSettings();
+          updateMaxTabsWarning(value);
+        });
+      updateMaxTabsWarning(initial);
+    });
+  }
+
+  /** 「显示更多选项」开启后：显示 / 对话 / 内容（不含称呼）/ 输入 / 快捷键 / 环境 */
+  private renderGeneralAdvancedSections(container: HTMLElement): void {
     new Setting(container).setName(t('settings.display')).setHeading();
 
     new Setting(container)
@@ -219,35 +325,6 @@ export class ClaudianSettingTab extends PluginSettingTab {
           });
       });
 
-    const maxTabsSetting = new Setting(container)
-      .setName(t('settings.maxTabs.name'))
-      .setDesc(t('settings.maxTabs.desc'));
-
-    const maxTabsWarningEl = container.createDiv({ cls: 'claudian-max-tabs-warning' });
-    maxTabsWarningEl.style.color = 'var(--text-warning)';
-    maxTabsWarningEl.style.fontSize = '0.85em';
-    maxTabsWarningEl.style.marginTop = '-0.5em';
-    maxTabsWarningEl.style.marginBottom = '0.5em';
-    maxTabsWarningEl.style.display = 'none';
-    maxTabsWarningEl.setText(t('settings.maxTabs.warning'));
-
-    const updateMaxTabsWarning = (value: number): void => {
-      maxTabsWarningEl.style.display = value > 5 ? 'block' : 'none';
-    };
-
-    maxTabsSetting.addSlider((slider) => {
-      slider
-        .setLimits(3, 10, 1)
-        .setValue(this.plugin.settings.maxTabs ?? 3)
-        .setDynamicTooltip()
-        .onChange(async (value) => {
-          this.plugin.settings.maxTabs = value;
-          await this.plugin.saveSettings();
-          updateMaxTabsWarning(value);
-        });
-      updateMaxTabsWarning(this.plugin.settings.maxTabs ?? 3);
-    });
-
     new Setting(container)
       .setName(t('settings.openInMainTab.name'))
       .setDesc(t('settings.openInMainTab.desc'))
@@ -257,7 +334,7 @@ export class ClaudianSettingTab extends PluginSettingTab {
           .onChange(async (value) => {
             this.plugin.settings.openInMainTab = value;
             await this.plugin.saveSettings();
-          })
+          }),
       );
 
     new Setting(container)
@@ -269,10 +346,8 @@ export class ClaudianSettingTab extends PluginSettingTab {
           .onChange(async (value) => {
             this.plugin.settings.enableAutoScroll = value;
             await this.plugin.saveSettings();
-          })
+          }),
       );
-
-    // --- Conversations ---
 
     new Setting(container).setName(t('settings.conversations')).setHeading();
 
@@ -286,7 +361,7 @@ export class ClaudianSettingTab extends PluginSettingTab {
             this.plugin.settings.enableAutoTitleGeneration = value;
             await this.plugin.saveSettings();
             this.display();
-          })
+          }),
       );
 
     if (this.plugin.settings.enableAutoTitleGeneration) {
@@ -317,39 +392,7 @@ export class ClaudianSettingTab extends PluginSettingTab {
         });
     }
 
-    // --- Content ---
-
     new Setting(container).setName(t('settings.content')).setHeading();
-
-    new Setting(container)
-      .setName(t('settings.userName.name'))
-      .setDesc(t('settings.userName.desc'))
-      .addText((text) => {
-        text
-          .setPlaceholder(t('settings.userName.name'))
-          .setValue(this.plugin.settings.userName)
-          .onChange(async (value) => {
-            this.plugin.settings.userName = value;
-            await this.plugin.saveSettings();
-          });
-        text.inputEl.addEventListener('blur', () => this.restartServiceForPromptChange());
-      });
-
-    new Setting(container)
-      .setName(t('settings.agentName.name'))
-      .setDesc(t('settings.agentName.desc'))
-      .addText((text) => {
-        text
-          .setPlaceholder(t('settings.agentName.name'))
-          .setValue(this.plugin.settings.agentName)
-          .onChange(async (value) => {
-            this.plugin.settings.agentName = value;
-            await this.plugin.saveSettings();
-            for (const view of this.plugin.getAllViews()) {
-              view.syncAgentDisplayNameInHeader();
-            }
-          });
-      });
 
     new Setting(container)
       .setName(t('settings.systemPrompt.name'))
@@ -399,8 +442,6 @@ export class ClaudianSettingTab extends PluginSettingTab {
         text.inputEl.addClass('claudian-settings-media-input');
         text.inputEl.addEventListener('blur', () => this.restartServiceForPromptChange());
       });
-
-    // --- Input ---
 
     new Setting(container).setName(t('settings.input')).setHeading();
 
@@ -458,18 +499,15 @@ export class ClaudianSettingTab extends PluginSettingTab {
         });
       });
 
-    // --- Hotkeys ---
-
     new Setting(container).setName(t('settings.hotkeys')).setHeading();
 
+    const hotkeySearchQuery = this.plugin.manifest.name;
     const hotkeyGrid = container.createDiv({ cls: 'claudian-hotkey-grid' });
-    addHotkeySettingRow(hotkeyGrid, this.app, 'claudian:inline-edit', 'settings.inlineEditHotkey');
-    addHotkeySettingRow(hotkeyGrid, this.app, 'claudian:open-view', 'settings.openChatHotkey');
-    addHotkeySettingRow(hotkeyGrid, this.app, 'claudian:new-session', 'settings.newSessionHotkey');
-    addHotkeySettingRow(hotkeyGrid, this.app, 'claudian:new-tab', 'settings.newTabHotkey');
-    addHotkeySettingRow(hotkeyGrid, this.app, 'claudian:close-current-tab', 'settings.closeTabHotkey');
-
-    // --- Environment ---
+    addHotkeySettingRow(hotkeyGrid, this.app, 'claudian:inline-edit', 'settings.inlineEditHotkey', hotkeySearchQuery);
+    addHotkeySettingRow(hotkeyGrid, this.app, 'claudian:open-view', 'settings.openChatHotkey', hotkeySearchQuery);
+    addHotkeySettingRow(hotkeyGrid, this.app, 'claudian:new-session', 'settings.newSessionHotkey', hotkeySearchQuery);
+    addHotkeySettingRow(hotkeyGrid, this.app, 'claudian:new-tab', 'settings.newTabHotkey', hotkeySearchQuery);
+    addHotkeySettingRow(hotkeyGrid, this.app, 'claudian:close-current-tab', 'settings.closeTabHotkey', hotkeySearchQuery);
 
     renderEnvironmentSettingsSection({
       container,
@@ -592,10 +630,20 @@ export class ClaudianSettingTab extends PluginSettingTab {
    * - 至少保留一个启用；
    * - 从关闭切为开启时，若本机解析不到对应 CLI，则拒绝开启并提示（与运行时使用同一套解析逻辑）。
    */
-  private renderProviderToggles(container: HTMLElement): void {
+  private renderProviderToggles(
+    container: HTMLElement,
+    options?: { simpleModeHint?: boolean },
+  ): void {
     const settingsBag = this.plugin.settings as unknown as Record<string, unknown>;
 
     new Setting(container).setName(t('settings.providers.heading')).setHeading();
+
+    if (options?.simpleModeHint) {
+      const hint = container.createDiv({ cls: 'setting-item-description' });
+      hint.style.marginTop = '-0.5em';
+      hint.style.marginBottom = '0.75em';
+      hint.setText(t('settings.providers.simpleModeHint'));
+    }
 
     const bindToggle = (
       providerId: 'claude' | 'cursor' | 'codex',
@@ -666,7 +714,7 @@ export class ClaudianSettingTab extends PluginSettingTab {
 
     try {
       await tabManager.broadcastToAllTabs(
-        async (service) => { await service.ensureReady({ force: true }); }
+        async (service) => { await service.ensureReady({ force: true }); },
       );
     } catch {
       // Changes will apply on the next conversation if the restart fails.

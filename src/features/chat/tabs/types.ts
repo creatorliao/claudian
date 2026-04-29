@@ -39,7 +39,7 @@ import type { StatusPanel } from '../ui/StatusPanel';
  * - More tabs = more memory and potential SDK processes
  * - 3 tabs allows multi-tasking without excessive overhead
  */
-export const DEFAULT_MAX_TABS = 3;
+export const DEFAULT_MAX_TABS = 5;
 
 /**
  * Minimum number of tabs allowed (settings floor).

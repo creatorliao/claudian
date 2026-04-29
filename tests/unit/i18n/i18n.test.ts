@@ -51,12 +51,12 @@ describe('i18n', () => {
 
     it('handles nested keys correctly', () => {
       const result = t('settings.userName.name' as TranslationKey);
-      expect(result).toBe('What should Claudian call you?');
+      expect(result).toBe('What should we call you?');
     });
 
     it('handles deeply nested keys', () => {
       const result = t('settings.userName.desc' as TranslationKey);
-      expect(result).toBe('Your name for personalized greetings (leave empty for generic greetings)');
+      expect(result).toBe('Used for greetings; optional.');
     });
 
     it('returns key when value is not a string', () => {

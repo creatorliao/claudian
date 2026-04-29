@@ -48,7 +48,9 @@ export const DEFAULT_CLAUDIAN_SETTINGS: ClaudianSettings = {
 
   lastCustomModel: '',
 
-  maxTabs: 3,
+  showMoreGeneralOptions: false,
+
+  maxTabs: 5,
   tabBarPosition: 'input',
   enableAutoScroll: true,
   openInMainTab: false,

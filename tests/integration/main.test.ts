@@ -670,8 +670,10 @@ describe('ClaudianPlugin', () => {
             { tabId: 'tab-1', conversationId: null },
             { tabId: 'tab-2', conversationId: null },
             { tabId: 'tab-3', conversationId: null },
+            { tabId: 'tab-4', conversationId: null },
+            { tabId: 'tab-5', conversationId: null },
           ],
-          activeTabId: 'tab-3',
+          activeTabId: 'tab-5',
         },
       });
 

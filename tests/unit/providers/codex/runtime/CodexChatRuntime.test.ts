@@ -1190,7 +1190,7 @@ describe('CodexChatRuntime', () => {
 
       expect(imageInput).toBeDefined();
       // Windows 上临时目录多为用户 Local\\Temp，而非 /tmp 映射的 C:\\tmp
-      expect(String(imageInput?.path)).toMatch(/^C:\\/);
+      expect(String(imageInput?.path)).toMatch(/^[A-Z]:\\/);
       expect(String(imageInput?.path)).toContain('claudian-codex-images');
     });
   });
