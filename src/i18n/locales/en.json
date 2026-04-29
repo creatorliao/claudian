@@ -548,7 +548,9 @@
       "openFolderVaultPathUnknown": "This vault has no file-system path, so folders cannot be opened.",
       "openFolderPathUnresolved": "Could not resolve a file path for this command or skill.",
       "openFolderUnavailable": "This environment cannot open paths in the system file manager.",
-      "openFolderFailed": "Could not open folder: {message}"
+      "openFolderFailed": "Could not open folder: {message}",
+      "deleteUnavailableUserHomeAria": "Delete unavailable (shared-on-this-computer items)",
+      "deleteUnavailableUserHomeHint": "Items shared from your user folder cannot be deleted inside this plugin. Delete the files or folders in your file manager instead."
     },
     "slashAssetScope": {
       "name": "Source of commands and skills",

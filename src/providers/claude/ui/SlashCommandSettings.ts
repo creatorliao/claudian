@@ -718,6 +718,18 @@ export class SlashCommandSettings {
           }
         })();
       });
+    } else if (cmd.slashFileProvenance === 'user-home') {
+      // 本机共用条目不可在插件内删除（catalog 限制）；显示灰色图标避免用户误以为「没有删除按钮」
+      const deleteBlockedBtn = actionsEl.createEl('button', {
+        cls: 'claudian-settings-action-btn claudian-settings-delete-btn',
+        attr: {
+          type: 'button',
+          'aria-label': t('settings.slashCommands.deleteUnavailableUserHomeAria'),
+          title: t('settings.slashCommands.deleteUnavailableUserHomeHint'),
+        },
+      });
+      deleteBlockedBtn.disabled = true;
+      setIcon(deleteBlockedBtn, 'trash-2');
     }
 
     if (!isSkillEntry(cmd) && cmd.isEditable) {

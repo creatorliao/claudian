@@ -446,6 +446,8 @@ export type TranslationKey =
   | "settings.slashCommands.openFolderPathUnresolved"
   | "settings.slashCommands.openFolderUnavailable"
   | "settings.slashCommands.openFolderFailed"
+  | "settings.slashCommands.deleteUnavailableUserHomeAria"
+  | "settings.slashCommands.deleteUnavailableUserHomeHint"
   | "settings.slashAssetScope.name"
   | "settings.slashAssetScope.optionVaultAndHome"
   | "settings.slashAssetScope.optionVaultOnly"

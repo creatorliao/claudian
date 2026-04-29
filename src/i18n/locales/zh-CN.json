@@ -548,7 +548,9 @@
       "openFolderVaultPathUnknown": "当前库没有可用的磁盘路径，无法打开文件夹。",
       "openFolderPathUnresolved": "无法解析该命令或技能对应的文件路径。",
       "openFolderUnavailable": "当前环境无法在系统文件管理器中打开路径。",
-      "openFolderFailed": "打开文件夹失败：{message}"
+      "openFolderFailed": "打开文件夹失败：{message}",
+      "deleteUnavailableUserHomeAria": "删除不可用（本机共用条目）",
+      "deleteUnavailableUserHomeHint": "本机共用条目不能在本插件内删除。请在系统的文件管理器中删除对应文件或文件夹。"
     },
     "slashAssetScope": {
       "name": "命令与技能的来源",

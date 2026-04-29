@@ -145,6 +145,17 @@
   color: var(--text-error);
 }
 
+.claudian-settings-action-btn:disabled,
+.claudian-settings-action-btn[disabled] {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.claudian-settings-action-btn:disabled:hover {
+  background: transparent !important;
+  color: var(--text-muted) !important;
+}
+
 /* Hotkey grid - 3 columns */
 .claudian-hotkey-grid {
   display: grid;
