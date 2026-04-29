@@ -495,7 +495,7 @@ export const claudeSettingsTabRenderer: ProviderSettingsTabRenderer = {
           context.redisplay();
         }),
       );
-    moreOptionsSetting.settingEl.addClass('claudian-settings-claude-more-options');
+    moreOptionsSetting.settingEl?.addClass('claudian-settings-claude-more-options');
 
     if (!showMore) {
       return;

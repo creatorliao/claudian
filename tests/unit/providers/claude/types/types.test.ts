@@ -101,6 +101,7 @@ describe('types.ts', () => {
         tabBarPosition: 'input',
         enableAutoScroll: true,
         openInMainTab: false,
+        allowWorkspaceSwitch: false,
         hiddenProviderCommands: {
           claude: [],
           codex: [],
@@ -153,6 +154,7 @@ describe('types.ts', () => {
         tabBarPosition: 'input',
         enableAutoScroll: true,
         openInMainTab: false,
+        allowWorkspaceSwitch: false,
         hiddenProviderCommands: {
           claude: [],
           codex: [],
@@ -206,6 +208,7 @@ describe('types.ts', () => {
         tabBarPosition: 'header',
         enableAutoScroll: false,
         openInMainTab: false,
+        allowWorkspaceSwitch: false,
         hiddenProviderCommands: {
           claude: [],
           codex: [],

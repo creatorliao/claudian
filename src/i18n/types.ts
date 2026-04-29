@@ -356,6 +356,8 @@ export type TranslationKey =
   | "settings.moreOptions.desc"
   | "settings.moreOptions.hintWhenExpanded"
   | "settings.moreOptions.providerDescClaude"
+  | "settings.workspaceSwitch.name"
+  | "settings.workspaceSwitch.desc"
   | "settings.display"
   | "settings.conversations"
   | "settings.content"

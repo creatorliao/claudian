@@ -42,6 +42,9 @@ export class ClaudianView extends ItemView {
   private headerActionsEl: HTMLElement | null = null;
   private headerActionsContent: HTMLElement | null = null;
 
+  /** 顶部「回到库根」工作空间按钮（与工作空间开关联动显隐） */
+  private workspaceResetBtnEl: HTMLElement | null = null;
+
   // Header elements
   private historyDropdown: HTMLElement | null = null;
 
@@ -115,6 +118,15 @@ export class ClaudianView extends ItemView {
     this.workspaceSubtitleEl.textContent = ` · ${label}`;
     this.workspaceSubtitleEl.setAttribute('title', displayAbs);
     this.workspaceSubtitleEl.style.display = 'inline';
+  }
+
+  /**
+   * 与设置项「允许切换工作空间」联动：隐藏时仍保留副标题（库根语义），仅藏「回到库根」按钮。
+   */
+  setWorkspaceSwitchChromeVisible(visible: boolean): void {
+    if (this.workspaceResetBtnEl) {
+      this.workspaceResetBtnEl.style.display = visible ? '' : 'none';
+    }
   }
 
   /** 插件「重置工作空间」：清空本视图内所有 Tab 的 workspace 快照 */
@@ -236,6 +248,7 @@ export class ClaudianView extends ItemView {
     await this.restoreOrCreateTabs();
     this.syncProviderBrandColor();
     this.updateWorkspaceSubtitle();
+    this.plugin.syncWorkspaceChromeAcrossViews();
     this.updateLayoutForPosition();
   }
 
@@ -322,6 +335,7 @@ export class ClaudianView extends ItemView {
     });
 
     const resetWsBtn = this.headerActionsContent.createDiv({ cls: 'claudian-header-btn' });
+    this.workspaceResetBtnEl = resetWsBtn;
     // 使用 home 表达「回到库根工作区」，避免 folder-x 被误读为删目录/清空
     setIcon(resetWsBtn, 'home');
     const resetWsTip = t('workspace.resetTooltip');

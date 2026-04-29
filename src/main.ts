@@ -82,6 +82,7 @@ export default class ClaudianPlugin extends Plugin {
 
     this.registerEvent(
       this.app.workspace.on("file-menu", (menu, file) => {
+        if (this.settings.allowWorkspaceSwitch !== true) return;
         if (file instanceof TFolder) {
           menu.addItem((item) =>
             item
@@ -95,9 +96,8 @@ export default class ClaudianPlugin extends Plugin {
                   new Notice(t("contextMenu.invalidPath"));
                   return;
                 }
-                await this.storage.setWorkspace(file.path);
+                await this.applyWorkspaceSwitch(file.path);
                 new Notice(t("contextMenu.workspaceSet"));
-                await this.updateRibbonTooltipFromStorage();
               }),
           );
         }
@@ -234,8 +234,12 @@ export default class ClaudianPlugin extends Plugin {
     this.addCommand({
       id: "reset-workspace",
       name: t("commands.resetWorkspace"),
-      callback: () => {
-        void this.resetWorkspaceAndNotify();
+      checkCallback: (checking: boolean) => {
+        if (this.settings.allowWorkspaceSwitch !== true) return false;
+        if (!checking) {
+          void this.resetWorkspaceAndNotify();
+        }
+        return true;
       },
     });
 
@@ -406,6 +410,15 @@ export default class ClaudianPlugin extends Plugin {
       ...DEFAULT_CLAUDIAN_SETTINGS,
       ...claudian,
     } as ClaudianSettings;
+
+    // 关闭「切换工作空间」时：不保留独立的默认工作目录快照（仅存空串等价库根）
+    if (this.settings.allowWorkspaceSwitch !== true) {
+      try {
+        await this.storage.setWorkspace("");
+      } catch {
+        /* best-effort */
+      }
+    }
 
     // Plan mode is ephemeral — normalize back to normal on load so the app
     // doesn't start stuck in plan mode after a restart (prePlanPermissionMode is lost)
@@ -899,6 +912,153 @@ export default class ClaudianPlugin extends Plugin {
     return null;
   }
 
+  /**
+   * Claude 斜杠命令冷探测使用的 cwd：与当前激活 Tab 的 effective cwd 一致；
+   * 尚无聊天视图时退化为 Vault 根。
+   */
+  getProbeCwdForClaudeSlashCommands(): string {
+    const vp = getVaultPath(this.app);
+    if (!vp) {
+      return process.cwd();
+    }
+    const primaryLeaf =
+      this.app.workspace.getLeavesOfType(VIEW_TYPE_CLAUDIAN)[0];
+    const view = primaryLeaf?.view as ClaudianView | undefined;
+    const tab = view?.getTabManager()?.getActiveTab();
+    if (!tab) {
+      return vp;
+    }
+    return resolveWorkspacePath(tab.workspace, vp) ?? vp;
+  }
+
+  /** 是否与 C01/R07 对齐：露出文件树与工作区标题栏相关工作空间控件 */
+  allowsWorkspaceSwitch(): boolean {
+    return this.settings.allowWorkspaceSwitch === true;
+  }
+
+  /**
+   * 将默认工作目录设为给定 Vault 相对路径（空串即库根），并同步所有已打开 Tab、
+   * 下拉命令缓存与就绪中的运行时 cwd。
+   */
+  async applyWorkspaceSwitch(vaultRelativePath: string): Promise<void> {
+    const vp = getVaultPath(this.app);
+    if (!vp) return;
+
+    const rel = (vaultRelativePath ?? "").trim();
+    await this.storage.setWorkspace(rel);
+
+    let absForTabs: string | null = null;
+    if (rel) {
+      const resolved = resolveWorkspacePath(rel, vp);
+      if (!resolved) {
+        new Notice(t("contextMenu.invalidPath"));
+        await this.storage.setWorkspace("");
+        absForTabs = null;
+      } else {
+        absForTabs = resolved;
+      }
+    }
+
+    for (const view of this.getAllViews()) {
+      const tabManager = view.getTabManager();
+      if (!tabManager) continue;
+      for (const tab of tabManager.getAllTabs()) {
+        tab.workspace = absForTabs;
+      }
+      view.updateWorkspaceSubtitle();
+    }
+
+    await this.updateRibbonTooltipFromStorage();
+    await this.refreshWorkspaceDerivedStateAfterPathChange();
+
+    await this.persistWorkspaceTabLayouts();
+  }
+
+  /** 将所有已打开的聊天视图布局（含 workspace 快照）写入 data.json */
+  async persistWorkspaceTabLayouts(): Promise<void> {
+    for (const view of this.getAllViews()) {
+      const tabManager = view.getTabManager();
+      if (tabManager) {
+        await this.persistTabManagerState(tabManager.getPersistedState());
+      }
+    }
+  }
+
+  private async refreshWorkspaceDerivedStateAfterPathChange(): Promise<void> {
+    for (const providerId of ProviderRegistry.getRegisteredProviderIds()) {
+      const catalog =
+        ProviderWorkspaceRegistry.getCommandCatalog(providerId);
+      if (catalog) {
+        await catalog.refresh().catch(() => {});
+      }
+    }
+
+    await ProviderWorkspaceRegistry.refreshAgentMentions(
+      "claude",
+    ).catch(() => {});
+
+    for (const view of this.getAllViews()) {
+      const tabManager = view.getTabManager();
+      if (!tabManager) continue;
+      for (const tab of tabManager.getAllTabs()) {
+        tab.ui.slashCommandDropdown?.resetSdkSkillsCache();
+      }
+    }
+
+    const vp = getVaultPath(this.app);
+    if (!vp) return;
+
+    let failedTabs = 0;
+
+    for (const view of this.getAllViews()) {
+      const tabManager = view.getTabManager();
+      if (!tabManager) continue;
+
+      for (const tab of tabManager.getAllTabs()) {
+        if (tab.state.isStreaming) {
+          tab.controllers.inputController?.cancelStreaming();
+        }
+
+        if (!tab.service || !tab.serviceInitialized) {
+          continue;
+        }
+
+        try {
+          const externalContextPaths =
+            tab.ui.externalContextSelector?.getExternalContexts() ?? [];
+          const effectiveCwd =
+            resolveWorkspacePath(tab.workspace, vp) ?? vp;
+          tab.service.resetSession();
+          await tab.service.ensureReady({
+            externalContextPaths,
+            effectiveCwd,
+            force: true,
+          });
+        } catch {
+          failedTabs++;
+        }
+      }
+    }
+
+    if (failedTabs > 0) {
+      new Notice(
+        t("chat.notices.envPartialTabRestart", {
+          count: String(failedTabs),
+        }),
+      );
+    }
+
+    this.syncWorkspaceChromeAcrossViews();
+  }
+
+  /** 与工作空间切换相关的标题栏控件显隐（设置项切换时调用）。 */
+  syncWorkspaceChromeAcrossViews(): void {
+    const visible = this.allowsWorkspaceSwitch();
+    for (const view of this.getAllViews()) {
+      view.setWorkspaceSwitchChromeVisible(visible);
+    }
+  }
+
   /** 根据持久化工作空间更新 Ribbon 提示（全局默认目录） */
   async updateRibbonTooltipFromStorage(): Promise<void> {
     const vaultPath = getVaultPath(this.app);
@@ -913,14 +1073,10 @@ export default class ClaudianPlugin extends Plugin {
     this.ribbonIconEl.setAttribute("title", tip);
   }
 
-  /** 清空持久化并将所有已打开视图下的 Tab 工作空间快照置为 Vault 根 */
+  /** 将工作目录重置为库根并在所有视图与运行时中收敛（等价于对工作空间快照全员刷新） */
   async resetWorkspaceAndNotify(): Promise<void> {
-    await this.storage.setWorkspace("");
+    await this.applyWorkspaceSwitch("");
     new Notice(t("contextMenu.workspaceReset"));
-    await this.updateRibbonTooltipFromStorage();
-    for (const view of this.getAllViews()) {
-      view.resetWorkspaceToVaultRoot();
-    }
   }
 
   private getLastKnownOpenTabCount(): number {

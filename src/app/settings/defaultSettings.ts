@@ -57,5 +57,8 @@ export const DEFAULT_CLAUDIAN_SETTINGS: ClaudianSettings = {
   enableAutoScroll: true,
   openInMainTab: false,
 
+  /** 默认不暴露工作空间切换；与 C03 单工作空间选项一致 */
+  allowWorkspaceSwitch: false,
+
   hiddenProviderCommands: getDefaultHiddenProviderCommands(),
 };

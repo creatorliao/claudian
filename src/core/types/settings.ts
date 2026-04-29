@@ -144,6 +144,12 @@ export interface ClaudianSettings {
   enableAutoScroll: boolean;
   openInMainTab: boolean;
 
+  /**
+   * 是否允许用户在文件库右键与标题栏重置工作空间等处切换会话工作目录（子文件夹）。
+   * 默认关闭，语义为始终在 Vault 根运行；关闭时也会清空持久化的默认工作空间路径。
+   */
+  allowWorkspaceSwitch: boolean;
+
   // Provider command visibility
   hiddenProviderCommands: HiddenProviderCommands;
 

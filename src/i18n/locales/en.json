@@ -432,6 +432,10 @@
       "hintWhenExpanded": "Optional settings below—adjust only if you need them.",
       "providerDescClaude": "Placed below the common blocks above. When off, only those stay visible; when on, advanced settings expand below as one contiguous section: models, hidden commands, MCP, environment variables, CLI path, etc."
     },
+    "workspaceSwitch": {
+      "name": "Allow switching workspace",
+      "desc": "When on, set a folder as the session working directory from the file tree and use Reset workspace in the chat header. When off, chats use the vault root; related UI is hidden and the saved default workspace path is cleared."
+    },
     "display": "Display",
     "conversations": "Conversations",
     "content": "Content",

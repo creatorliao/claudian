@@ -44,7 +44,7 @@ describe('probeRuntimeCommands', () => {
 
     const commands = await probeRuntimeCommands(createMockPlugin({
       loadUserClaudeSettings: false,
-    }));
+    }), '/test/vault');
 
     expect(commands).toEqual([{
       id: 'sdk:commit',
@@ -66,7 +66,7 @@ describe('probeRuntimeCommands', () => {
     await probeRuntimeCommands(createMockPlugin({
       loadUserClaudeSettings: true,
       enableChrome: true,
-    }));
+    }), '/test/vault');
 
     const options = sdkMock.getLastOptions();
     expect(options?.settingSources).toEqual(['user', 'project']);

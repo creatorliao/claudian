@@ -67,7 +67,9 @@ export async function createClaudeWorkspaceServices(
     claudeStorage.commands,
     claudeStorage.skills,
     {
-      probe: () => probeRuntimeCommands(plugin),
+      // 与当前会话 Tab 的 effective cwd 对齐，避免子文件夹工作空间下仍探测库根的 slash 清单
+      probe: () =>
+        probeRuntimeCommands(plugin, plugin.getProbeCwdForClaudeSlashCommands()),
       homeCommands,
       homeSkills,
       getSlashAssetScope: () =>

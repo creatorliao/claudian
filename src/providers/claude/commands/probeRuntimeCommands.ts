@@ -25,8 +25,13 @@ function mapSdkCommands(sdkCommands: SDKSlashCommand[]): SlashCommand[] {
  * Fires a throwaway query with an empty prompt — the SDK emits a system/init
  * event from local config parsing alone (no API call, no cost). The probe
  * captures that event, calls supportedCommands() for full metadata, then aborts.
+ *
+ * @param cwdOverride SDK 探测用的工作目录，应与当前 Tab 的 effective cwd 对齐（通常为库根或子文件夹）
  */
-export async function probeRuntimeCommands(plugin: ClaudianPlugin): Promise<SlashCommand[]> {
+export async function probeRuntimeCommands(
+  plugin: ClaudianPlugin,
+  cwdOverride: string,
+): Promise<SlashCommand[]> {
   const vaultPath = getVaultPath(plugin.app);
   if (!vaultPath) return [];
 
@@ -43,12 +48,14 @@ export async function probeRuntimeCommands(plugin: ClaudianPlugin): Promise<Slas
 
   const abortController = new AbortController();
   let commands: SlashCommand[] = [];
+  /** 规范为库内已知目录路径，避免出现无效 cwd */
+  const cwd = cwdOverride.trim() ? cwdOverride.trim() : vaultPath;
 
   try {
     const conversation = agentQuery({
       prompt: '',
       options: {
-        cwd: vaultPath,
+        cwd,
         abortController,
         pathToClaudeCodeExecutable: cliPath,
         env: { ...process.env, ...customEnv, PATH: enhancedPath },

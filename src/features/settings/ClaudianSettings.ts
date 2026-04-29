@@ -191,6 +191,23 @@ export class ClaudianSettingTab extends PluginSettingTab {
         }),
       );
 
+    new Setting(container)
+      .setName(t('settings.workspaceSwitch.name'))
+      .setDesc(t('settings.workspaceSwitch.desc'))
+      .addToggle((toggle) =>
+        toggle
+          .setValue(this.plugin.settings.allowWorkspaceSwitch === true)
+          .onChange(async (value) => {
+            this.plugin.settings.allowWorkspaceSwitch = value;
+            await this.plugin.saveSettings();
+            if (!value) {
+              await this.plugin.applyWorkspaceSwitch('');
+            } else {
+              this.plugin.syncWorkspaceChromeAcrossViews();
+            }
+          }),
+      );
+
     this.renderGeneralUserAndAgent(container);
     this.renderProviderToggles(container, { simpleModeHint: !showMore });
     this.renderGeneralLanguage(container);

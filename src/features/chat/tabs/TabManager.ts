@@ -142,10 +142,14 @@ export class TabManager implements TabManagerInterface {
       ? undefined
       : (activeTab ? getTabProviderId(activeTab, this.plugin) : undefined);
 
+    const allowWs = this.plugin.settings.allowWorkspaceSwitch === true;
+
     const vaultPath = getVaultPath(this.plugin.app);
     let initialWorkspace: string | null = null;
     if (vaultPath) {
-      if (persistedWorkspace !== undefined) {
+      if (!allowWs) {
+        initialWorkspace = null;
+      } else if (persistedWorkspace !== undefined) {
         initialWorkspace = resolveWorkspacePath(persistedWorkspace, vaultPath);
       } else {
         const rel = await this.plugin.storage.getWorkspace();
