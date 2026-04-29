@@ -48,6 +48,8 @@ class SlashCommandsFullListModal extends Modal {
     private readonly slashAssetScope: SlashAssetScope,
     /** 已由调用方按类型选好 i18n 文案（含条数） */
     private readonly modalTitle: string,
+    /** 与列表一致：命令弹窗只展示命令目录按钮，技能弹窗只展示技能目录按钮 */
+    private readonly listKind: SlashKindSection,
     private readonly renderRow: (parent: HTMLElement, cmd: ProviderCommandEntry) => void,
     private readonly openFolderInManager: (absolutePath: string) => Promise<OpenInFileManagerResult>,
   ) {
@@ -61,7 +63,11 @@ class SlashCommandsFullListModal extends Modal {
     const toolbar = this.contentEl.createDiv({ cls: 'claudian-sp-modal-folder-toolbar' });
     toolbar.createEl('p', {
       cls: 'setting-item-description',
-      text: t('settings.slashCommands.modalFolderHint'),
+      text: t(
+        this.listKind === 'skill'
+          ? 'settings.slashCommands.modalFolderHintSkills'
+          : 'settings.slashCommands.modalFolderHintCommands',
+      ),
     });
     const btnRow = toolbar.createDiv({ cls: 'claudian-sp-modal-folder-btns' });
 
@@ -89,23 +95,28 @@ class SlashCommandsFullListModal extends Modal {
       });
     };
 
-    addFolderButton(
-      t('settings.slashCommands.modalOpenVaultCommands'),
-      resolveSlashCommandsRootDir(this.app, 'vault'),
-    );
-    addFolderButton(
-      t('settings.slashCommands.modalOpenVaultSkills'),
-      resolveSlashSkillsRootDir(this.app, 'vault'),
-    );
-    if (this.slashAssetScope === 'vault-and-user-home') {
+    if (this.listKind === 'command') {
       addFolderButton(
-        t('settings.slashCommands.modalOpenHomeCommands'),
-        resolveSlashCommandsRootDir(this.app, 'user-home'),
+        t('settings.slashCommands.modalOpenVaultCommands'),
+        resolveSlashCommandsRootDir(this.app, 'vault'),
       );
+      if (this.slashAssetScope === 'vault-and-user-home') {
+        addFolderButton(
+          t('settings.slashCommands.modalOpenHomeCommands'),
+          resolveSlashCommandsRootDir(this.app, 'user-home'),
+        );
+      }
+    } else {
       addFolderButton(
-        t('settings.slashCommands.modalOpenHomeSkills'),
-        resolveSlashSkillsRootDir(this.app, 'user-home'),
+        t('settings.slashCommands.modalOpenVaultSkills'),
+        resolveSlashSkillsRootDir(this.app, 'vault'),
       );
+      if (this.slashAssetScope === 'vault-and-user-home') {
+        addFolderButton(
+          t('settings.slashCommands.modalOpenHomeSkills'),
+          resolveSlashSkillsRootDir(this.app, 'user-home'),
+        );
+      }
     }
 
     const scroll = this.contentEl.createDiv({ cls: 'claudian-sp-modal-scroll' });
@@ -144,7 +155,7 @@ export class SlashCommandModal extends Modal {
 
   onOpen() {
     const existingIsSkill = this.existingEntry ? isSkillEntry(this.existingEntry) : false;
-    let selectedType: 'command' | 'skill' = this.existingEntry
+    const selectedType: 'command' | 'skill' = this.existingEntry
       ? (existingIsSkill ? 'skill' : 'command')
       : (this.defaultKindWhenCreating ?? 'command');
 
@@ -167,6 +178,9 @@ export class SlashCommandModal extends Modal {
     this.modalEl.addClass('claudian-sp-modal');
 
     const { contentEl } = this;
+
+    /** 新建：入口已区分命令/技能，不再展示「类型」行；编辑：保留类型行（禁用切换） */
+    const isEditingExisting = this.existingEntry !== null;
 
     let nameInput: HTMLInputElement;
     let descInput: HTMLInputElement;
@@ -192,31 +206,37 @@ export class SlashCommandModal extends Modal {
       }
     };
 
-    new Setting(contentEl)
-      .setName(t('settings.slashCommandModal.typeName'))
-      .setDesc(t('settings.slashCommandModal.typeDesc'))
-      .addDropdown(dropdown => {
-        dropdown
-          .addOption('command', t('settings.slashCommandModal.typeCommand'))
-          .addOption('skill', t('settings.slashCommandModal.typeSkill'))
-          .setValue(selectedType)
-          .onChange(value => {
-            selectedType = value as 'command' | 'skill';
-            refreshTitle();
-            updateSkillOnlyFields();
-          });
-        if (this.existingEntry) {
-          dropdown.setDisabled(true);
-        }
-      });
+    if (isEditingExisting) {
+      new Setting(contentEl)
+        .setName(t('settings.slashCommandModal.typeName'))
+        .setDesc(t('settings.slashCommandModal.typeDesc'))
+        .addDropdown((dropdown) => {
+          dropdown
+            .addOption('command', t('settings.slashCommandModal.typeCommand'))
+            .addOption('skill', t('settings.slashCommandModal.typeSkill'))
+            .setValue(selectedType)
+            .setDisabled(true);
+        });
+    }
 
     new Setting(contentEl)
-      .setName(t('settings.slashCommandModal.commandName'))
-      .setDesc(t('settings.slashCommandModal.commandNameDesc'))
-      .addText(text => {
+      .setName(
+        t(
+          selectedType === 'skill'
+            ? 'settings.slashCommandModal.skillName'
+            : 'settings.slashCommandModal.commandName',
+        ),
+      )
+      .setDesc(
+        t(
+          selectedType === 'skill'
+            ? 'settings.slashCommandModal.skillNameDesc'
+            : 'settings.slashCommandModal.commandNameDesc',
+        ),
+      )
+      .addText((text) => {
         nameInput = text.inputEl;
-        text.setValue(this.existingEntry?.name || '')
-          .setPlaceholder('review-code');
+        text.setValue(this.existingEntry?.name || '').setPlaceholder('review-code');
       });
 
     new Setting(contentEl)
@@ -595,6 +615,7 @@ export class SlashCommandSettings {
       filtered,
       this.slashAssetScope,
       modalTitle,
+      kind,
       (parent, cmd) => this.renderCommandRow(parent, cmd, kind),
       (absolutePath) => openAbsolutePathInFileManager(absolutePath),
     );
@@ -671,21 +692,6 @@ export class SlashCommandSettings {
       });
     }
 
-    if (!isSkillEntry(cmd) && cmd.isEditable) {
-      const convertBtn = actionsEl.createEl('button', {
-        cls: 'claudian-settings-action-btn',
-        attr: { 'aria-label': t('settings.slashCommandModal.convertToSkillAria') },
-      });
-      setIcon(convertBtn, 'package');
-      convertBtn.addEventListener('click', async () => {
-        try {
-          await this.transformToSkill(cmd);
-        } catch {
-          new Notice(t('settings.slashCommandModal.convertToSkillFailed'));
-        }
-      });
-    }
-
     if (cmd.isDeletable) {
       const deleteBtn = actionsEl.createEl('button', {
         cls: 'claudian-settings-action-btn claudian-settings-delete-btn',
@@ -711,6 +717,21 @@ export class SlashCommandSettings {
             );
           }
         })();
+      });
+    }
+
+    if (!isSkillEntry(cmd) && cmd.isEditable) {
+      const convertBtn = actionsEl.createEl('button', {
+        cls: 'claudian-settings-action-btn',
+        attr: { 'aria-label': t('settings.slashCommandModal.convertToSkillAria') },
+      });
+      setIcon(convertBtn, 'package');
+      convertBtn.addEventListener('click', async () => {
+        try {
+          await this.transformToSkill(cmd);
+        } catch {
+          new Notice(t('settings.slashCommandModal.convertToSkillFailed'));
+        }
       });
     }
   }
