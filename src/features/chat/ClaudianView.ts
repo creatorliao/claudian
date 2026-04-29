@@ -330,9 +330,9 @@ export class ClaudianView extends ItemView {
       void this.plugin.resetWorkspaceAndNotify();
     });
 
-    // New conversation button (square-pen icon - new conversation in current tab)
+    // 新会话：清空本标签消息与上下文（文案见 chat.header.newConversation）；用橡皮擦表达「清空」而非「编辑」
     const newBtn = this.headerActionsContent.createDiv({ cls: 'claudian-header-btn' });
-    setIcon(newBtn, 'square-pen');
+    setIcon(newBtn, 'eraser');
     const newConvTip = t('chat.header.newConversation');
     newBtn.setAttribute('aria-label', newConvTip);
     newBtn.addEventListener('click', async () => {
