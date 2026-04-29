@@ -27,7 +27,7 @@ alwaysApply: false
 ## 命令
 
 ```bash
-npm run build      # 生产：CSS + esbuild → dist/claudian/
+npm run build      # 生产：CSS + esbuild → dist/claudian/，并尝试同步到最近的 .obsidian/plugins/{id}/
 npm run dev        # 开发：watch（产物默认在根目录）
 npm run build:css  # 仅 CSS（通常由 build/dev 间接调用）
 ```
@@ -39,20 +39,24 @@ npm run build:css  # 仅 CSS（通常由 build/dev 间接调用）
 3. 执行 `node esbuild.config.mjs production` → `dist/{manifest.id}/main.js`。
 4. 复制根目录 `manifest.json` → `dist/{manifest.id}/manifest.json`。
 5. 清理根目录及 `dist/` 根下可能遗留的 `main.js` / `styles.css` / `manifest.json`（避免与 `dist/claudian` 混淆）。
+6. （默认）自 **`process.cwd()`** 向父目录查找**第一个** `.obsidian`，将 **`dist/{id}/`** 覆盖同步到 **`{库根}/.obsidian/plugins/{id}/`**（`scripts/lib/sync-dist-to-nearest-obsidian.mjs`）。找不到库时静默跳过（不失败、不把构建当错误）。设置 **`CLAUDIAN_SKIP_OBSIDIAN_SYNC=1`** 可跳过此步。
 
 **关键文件**（均在仓库根目录或 `scripts/`）：
 
 | 文件 | 作用 |
 |------|------|
 | `scripts/build.mjs` | 生产构建编排 |
+| `scripts/lib/sync-dist-to-nearest-obsidian.mjs` | 生产构建后同步到最近的 Obsidian 库 |
+| `scripts/lib/copy-obsidian-plugin-flat.mjs` | 扁平文件覆盖复制（与 copy:obsidian 共用） |
 | `scripts/build-css.mjs` | CSS 合并 |
 | `esbuild.config.mjs` | esbuild 配置与可选复制到 Obsidian |
 | `manifest.json` | `id`: claudian，`name`: Claudian |
 
 ## 同步到 Obsidian 插件目录（可选）
 
+- **生产构建（`npm run build`）**：默认在步骤 6 若向上能找到 `.obsidian` 则将产物同步到对应库；找不到则静默跳过；跳过同步亦可设 **`CLAUDIAN_SKIP_OBSIDIAN_SYNC=1`**（或 `true`）。
 - **开发（watch）**：在 `.env.local` 中设置 `OBSIDIAN_VAULT` 指向库根；构建结束且路径存在时，`esbuild.config.mjs` 会将产物复制到 **`{OBSIDIAN_VAULT}/.obsidian/plugins/{manifest.id}/`**。未配置则跳过。
-- **发版/多库验证（脚本优先）**：执行 **`npm run copy:obsidian`**（`scripts/publish-to-obsidian-vaults.mjs`）从项目根**向上**查找所有 `.obsidian`，将 **`dist/{id}/`** 覆盖复制到各库的 **`plugins/{id}/`**；或一键 **`npm run build:try`**（先 build 再 copy）。详见 `docs/02-Areas/最佳实践_构建产物同步到上层Obsidian库.md`。
+- **发版/多库验证（脚本优先）**：执行 **`npm run copy:obsidian`**（`scripts/publish-to-obsidian-vaults.mjs`）从项目根**向上**查找**所有** `.obsidian`，将 **`dist/{id}/`** 覆盖复制到各库的 **`plugins/{id}/`**；或一键 **`npm run build:try`**（先 build 再全库 copy）。详见 `docs/02-Areas/最佳实践_构建产物同步到上层Obsidian库.md`。
 
 ## 构建验证检查清单
 

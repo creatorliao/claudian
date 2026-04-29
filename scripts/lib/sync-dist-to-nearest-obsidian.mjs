@@ -2,7 +2,7 @@
  * 生产构建完成后：从 process.cwd() 逐级向上查找**第一个** `.obsidian`，
  * 将 dist/{manifest.id}/ 下扁平文件同步到该库的 .obsidian/plugins/{id}/。
  *
- * 未找到库时仅输出警告，不抛错（不导致 npm run build 失败）。
+ * 未找到库时不输出任何内容（独立克隆仓库构建属正常情况，不当作错误或警告）。
  * 设置 CLAUDIAN_SKIP_OBSIDIAN_SYNC=1 或 true 时跳过同步。
  */
 
@@ -58,10 +58,6 @@ export function trySyncDistToNearestObsidian(repoRoot, options = {}) {
 
   const vaultRoot = findNearestObsidianVaultRoot(process.cwd(), maxDepth);
   if (!vaultRoot) {
-    process.stderr.write(
-      `[claudian] 未在向上 ${maxDepth} 层内找到 .obsidian，未同步插件目录。` +
-        `可将项目置于某 Obsidian 库路径下后再构建，或使用 npm run copy:obsidian 指定行为。\n`,
-    );
     return { synced: false, reason: 'no-vault' };
   }
 
