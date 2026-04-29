@@ -24,6 +24,7 @@ jest.mock('@/shared/components/SlashCommandDropdown', () => ({
     handleKeydown: jest.fn().mockReturnValue(false),
     destroy: jest.fn(),
   })),
+  scheduleSlashDropdownPrefetchIdle: jest.fn(),
 }));
 
 jest.mock('@/utils/externalContextScanner', () => ({

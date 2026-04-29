@@ -29,6 +29,24 @@ export interface SlashCommandDropdownOptions {
   getProviderEntries?: () => Promise<ProviderCommandEntry[]>;
 }
 
+/**
+ * 在浏览器空闲时预热斜杠条目缓存，避免阻塞首屏布局；无 requestIdleCallback 时退化为 setTimeout(0)。
+ */
+export function scheduleSlashDropdownPrefetchIdle(
+  dropdown: SlashCommandDropdown | null | undefined,
+): void {
+  if (!dropdown) return;
+  const run = () => void dropdown.prefetch();
+  const w = globalThis as unknown as {
+    requestIdleCallback?: (cb: () => void, opts?: { timeout?: number }) => number;
+  };
+  if (typeof w.requestIdleCallback === 'function') {
+    w.requestIdleCallback(run, { timeout: 2500 });
+  } else {
+    setTimeout(run, 0);
+  }
+}
+
 export class SlashCommandDropdown {
   private containerEl: HTMLElement;
   private dropdownEl: HTMLElement | null = null;
@@ -47,6 +65,9 @@ export class SlashCommandDropdown {
   private getProviderEntries: (() => Promise<ProviderCommandEntry[]>) | null;
   private cachedProviderEntries: ProviderCommandEntry[] = [];
   private providerEntriesFetched = false;
+
+  /** 合并并发 getProviderEntries，避免预热与首次打开重复触发完整 probe。 */
+  private sharedFetchPromise: Promise<ProviderCommandEntry[]> | null = null;
 
   private requestId = 0;
 
@@ -87,6 +108,7 @@ export class SlashCommandDropdown {
     this.getProviderEntries = getEntries;
     this.cachedProviderEntries = [];
     this.providerEntriesFetched = false;
+    this.sharedFetchPromise = null;
     this.requestId = 0;
   }
 
@@ -215,7 +237,17 @@ export class SlashCommandDropdown {
   resetSdkSkillsCache(): void {
     this.cachedProviderEntries = [];
     this.providerEntriesFetched = false;
+    this.sharedFetchPromise = null;
     this.requestId = 0;
+  }
+
+  /**
+   * 与打开下拉共用 getProviderEntries 与缓存字段，但不执行 render；供 Tab 就绪后空闲预热。
+   */
+  async prefetch(): Promise<void> {
+    if (!this.getProviderEntries || this.providerEntriesFetched) return;
+    const currentRequest = ++this.requestId;
+    await this.fetchProviderEntries(currentRequest);
   }
 
   private getInputValue(): string {
@@ -267,15 +299,24 @@ export class SlashCommandDropdown {
   private async fetchProviderEntries(currentRequest: number): Promise<void> {
     if (this.providerEntriesFetched || !this.getProviderEntries) return;
 
+    if (!this.sharedFetchPromise) {
+      const p = this.getProviderEntries();
+      this.sharedFetchPromise = p.finally(() => {
+        this.sharedFetchPromise = null;
+      });
+    }
+
     try {
-      const entries = await this.getProviderEntries();
+      const entries = await this.sharedFetchPromise;
       if (currentRequest !== this.requestId) return;
-      if (entries.length > 0) {
-        this.cachedProviderEntries = entries;
-        this.providerEntriesFetched = true;
-      }
+      // 空结果也视为已拉取，避免每次打开都重复走 probe / 枚举（与 C03 §3.1 一致）
+      this.cachedProviderEntries = entries;
+      this.providerEntriesFetched = true;
     } catch {
       if (currentRequest !== this.requestId) return;
+      // 失败记一次空缓存，避免无限重试；resetSdkSkillsCache / 换 Tab 会再拉
+      this.cachedProviderEntries = [];
+      this.providerEntriesFetched = true;
     }
   }
 

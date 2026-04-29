@@ -50,6 +50,7 @@ import {
   CLAUDIAN_APP_ICON_ID,
   getClaudeBrandMarkAddIconInnerHtml,
 } from "./shared/claudeBrandMark";
+import { scheduleSlashDropdownPrefetchIdle } from "./shared/components/SlashCommandDropdown";
 import { buildCursorContext } from "./utils/editor";
 import {
   formatWorkspaceDisplayShort,
@@ -938,6 +939,11 @@ export default class ClaudianPlugin extends Plugin {
       for (const tab of tabManager.getAllTabs()) {
         tab.ui.slashCommandDropdown?.resetSdkSkillsCache();
       }
+    }
+    for (const view of this.getAllViews()) {
+      const tabManager = view.getTabManager();
+      const active = tabManager?.getActiveTab();
+      scheduleSlashDropdownPrefetchIdle(active?.ui?.slashCommandDropdown);
     }
   }
 

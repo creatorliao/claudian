@@ -23,7 +23,7 @@ import type { ChatMessage, Conversation } from '../../../core/types';
 import { VIEW_TYPE_CLAUDIAN } from '../../../core/types';
 import { t } from '../../../i18n/i18n';
 import type ClaudianPlugin from '../../../main';
-import { SlashCommandDropdown } from '../../../shared/components/SlashCommandDropdown';
+import { scheduleSlashDropdownPrefetchIdle, SlashCommandDropdown } from '../../../shared/components/SlashCommandDropdown';
 import { getEnhancedPath } from '../../../utils/env';
 import {
   absoluteWorkspaceToVaultRelative,
@@ -210,6 +210,7 @@ function syncSlashCommandDropdownForProvider(
   }
 
   dropdown.setHiddenCommands(getTabHiddenCommands(tab, plugin, conversation));
+  scheduleSlashDropdownPrefetchIdle(dropdown);
 }
 
 async function updateTabProviderSettings(
@@ -331,6 +332,7 @@ export function onProviderAvailabilityChanged(tab: TabData, plugin: ClaudianPlug
   syncTabProviderServices(tab, plugin);
   tab.ui.slashCommandDropdown?.setHiddenCommands(getTabHiddenCommands(tab, plugin));
   tab.ui.slashCommandDropdown?.resetSdkSkillsCache();
+  scheduleSlashDropdownPrefetchIdle(tab.ui.slashCommandDropdown);
   refreshTabProviderUI(tab, plugin);
   applyProviderUIGating(tab, plugin);
 }
@@ -1343,8 +1345,14 @@ export function initializeTabControllers(
         applyProviderUIGating(tab, plugin);
         syncSlashCommandDropdownForProvider(tab, plugin, getProviderCatalogConfig);
       },
-      onConversationLoaded: () => ui.slashCommandDropdown?.resetSdkSkillsCache(),
-      onConversationSwitched: () => ui.slashCommandDropdown?.resetSdkSkillsCache(),
+      onConversationLoaded: () => {
+        ui.slashCommandDropdown?.resetSdkSkillsCache();
+        scheduleSlashDropdownPrefetchIdle(ui.slashCommandDropdown);
+      },
+      onConversationSwitched: () => {
+        ui.slashCommandDropdown?.resetSdkSkillsCache();
+        scheduleSlashDropdownPrefetchIdle(ui.slashCommandDropdown);
+      },
     }
   );
 

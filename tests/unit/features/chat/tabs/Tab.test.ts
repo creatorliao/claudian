@@ -84,6 +84,7 @@ const createMockSlashCommandDropdown = () => ({
   setHiddenCommands: jest.fn(),
   setEnabled: jest.fn(),
   openSlashPickerFromToolbar: jest.fn(),
+  prefetch: jest.fn().mockResolvedValue(undefined),
   destroy: jest.fn(),
 });
 
@@ -298,6 +299,7 @@ jest.mock('@/shared/components/SlashCommandDropdown', () => ({
     mockSlashCommandDropdown = createMockSlashCommandDropdown();
     return mockSlashCommandDropdown;
   }),
+  scheduleSlashDropdownPrefetchIdle: jest.fn(),
 }));
 
 // Mock rendering

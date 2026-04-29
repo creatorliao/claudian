@@ -9,6 +9,7 @@ jest.mock('@/shared/components/SelectionHighlight', () => ({
 
 jest.mock('@/shared/components/SlashCommandDropdown', () => ({
   SlashCommandDropdown: function SlashCommandDropdown() {},
+  scheduleSlashDropdownPrefetchIdle: jest.fn(),
 }));
 
 jest.mock('@/shared/icons', () => ({

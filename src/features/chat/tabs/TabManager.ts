@@ -6,6 +6,7 @@ import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
 import type { SlashCommand } from '../../../core/types';
 import { t } from '../../../i18n/i18n';
 import type ClaudianPlugin from '../../../main';
+import { scheduleSlashDropdownPrefetchIdle } from '../../../shared/components/SlashCommandDropdown';
 import { chooseForkTarget } from '../../../shared/modals/ForkTargetModal';
 import { getVaultPath, resolveWorkspacePath } from '../../../utils/path';
 import { wireComposerResize } from '../ui/ComposerResizeHandle';
@@ -67,6 +68,9 @@ export class TabManager implements TabManagerInterface {
 
   /** Guard to prevent concurrent tab switches. */
   private isSwitchingTab = false;
+
+  /** 快速连切 Tab 时合并为一次空闲预热，避免连跑多次 getEntries。 */
+  private slashPrefetchDebounce: ReturnType<typeof setTimeout> | null = null;
 
   /**
    * Gets the current max tabs limit from settings.
@@ -275,7 +279,22 @@ export class TabManager implements TabManagerInterface {
       this.callbacks.onTabSwitched?.(previousTabId, tabId);
     } finally {
       this.isSwitchingTab = false;
+      this.scheduleActiveTabSlashPrefetch();
     }
+  }
+
+  /**
+   * 当前激活 Tab 斜杠下拉空闲预热（与 C03：侧栏就绪 / 切 Tab 后后台拉缓存）。
+   */
+  private scheduleActiveTabSlashPrefetch(): void {
+    if (this.slashPrefetchDebounce !== null) {
+      clearTimeout(this.slashPrefetchDebounce);
+    }
+    this.slashPrefetchDebounce = setTimeout(() => {
+      this.slashPrefetchDebounce = null;
+      const active = this.getActiveTab();
+      scheduleSlashDropdownPrefetchIdle(active?.ui?.slashCommandDropdown);
+    }, 150);
   }
 
   /**
@@ -722,5 +741,9 @@ export class TabManager implements TabManagerInterface {
 
     this.tabs.clear();
     this.activeTabId = null;
+    if (this.slashPrefetchDebounce !== null) {
+      clearTimeout(this.slashPrefetchDebounce);
+      this.slashPrefetchDebounce = null;
+    }
   }
 }

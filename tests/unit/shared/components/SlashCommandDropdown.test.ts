@@ -236,7 +236,7 @@ describe('SlashCommandDropdown', () => {
       d.destroy();
     });
 
-    it('should retry fetch when previous result was empty', async () => {
+    it('空结果也缓存，连续打开不重复拉取；reset 后可再拉', async () => {
       const getProviderEntries = jest.fn()
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce(PROVIDER_ENTRIES);
@@ -256,11 +256,22 @@ describe('SlashCommandDropdown', () => {
       d.handleInputChange();
       await new Promise(resolve => setTimeout(resolve, 10));
 
+      expect(getProviderEntries).toHaveBeenCalledTimes(1);
+
+      d.resetSdkSkillsCache();
+
+      inputEl.value = '/';
+      inputEl.selectionStart = 1;
+      d.handleInputChange();
+      await new Promise(resolve => setTimeout(resolve, 10));
+
       expect(getProviderEntries).toHaveBeenCalledTimes(2);
+      expect(getRenderedCommandNames(containerEl)).toContain('commit');
+
       d.destroy();
     });
 
-    it('should retry fetch when previous call threw error', async () => {
+    it('失败后缓存空数组，连续打开不重复拉取；reset 后可再拉', async () => {
       const getProviderEntries = jest.fn()
         .mockRejectedValueOnce(new Error('Not ready'))
         .mockResolvedValueOnce(PROVIDER_ENTRIES);
@@ -280,19 +291,28 @@ describe('SlashCommandDropdown', () => {
       d.handleInputChange();
       await new Promise(resolve => setTimeout(resolve, 10));
 
+      expect(getProviderEntries).toHaveBeenCalledTimes(1);
+
+      d.resetSdkSkillsCache();
+
+      inputEl.value = '/';
+      inputEl.selectionStart = 1;
+      d.handleInputChange();
+      await new Promise(resolve => setTimeout(resolve, 10));
+
       expect(getProviderEntries).toHaveBeenCalledTimes(2);
+      expect(getRenderedCommandNames(containerEl)).toContain('commit');
+
       d.destroy();
     });
   });
 
   describe('race condition handling', () => {
-    it('should discard stale results when newer request is made', async () => {
+    it('并发触发只调用一次 getProviderEntries，解析完成后以最新 request 写入缓存', async () => {
       let resolveFirst: (value: ProviderCommandEntry[]) => void;
       const firstPromise = new Promise<ProviderCommandEntry[]>(resolve => { resolveFirst = resolve; });
 
-      const getProviderEntries = jest.fn()
-        .mockReturnValueOnce(firstPromise)
-        .mockResolvedValueOnce([makeEntry('new-command', 'New')]);
+      const getProviderEntries = jest.fn().mockReturnValueOnce(firstPromise);
 
       const d = new SlashCommandDropdown(
         containerEl, inputEl, callbacks,
@@ -306,10 +326,12 @@ describe('SlashCommandDropdown', () => {
       inputEl.value = '/n';
       inputEl.selectionStart = 2;
       d.handleInputChange();
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise(resolve => setTimeout(resolve, 5));
 
-      resolveFirst!(PROVIDER_ENTRIES);
-      await new Promise(resolve => setTimeout(resolve, 10));
+      expect(getProviderEntries).toHaveBeenCalledTimes(1);
+
+      resolveFirst!([makeEntry('resolved-later', 'L')]);
+      await new Promise(resolve => setTimeout(resolve, 15));
 
       inputEl.value = '/';
       inputEl.selectionStart = 1;
@@ -317,8 +339,8 @@ describe('SlashCommandDropdown', () => {
       await new Promise(resolve => setTimeout(resolve, 10));
 
       const names = getRenderedCommandNames(containerEl);
-      expect(names).toContain('new-command');
-      expect(names).not.toContain('commit');
+      expect(names).toContain('resolved-later');
+      expect(getProviderEntries).toHaveBeenCalledTimes(1);
 
       d.destroy();
     });
@@ -375,6 +397,77 @@ describe('SlashCommandDropdown', () => {
       d.handleInputChange();
       await new Promise(resolve => setTimeout(resolve, 10));
       expect(getProviderEntries).toHaveBeenCalledTimes(2);
+
+      d.destroy();
+    });
+  });
+
+  describe('空列表与失败缓存（C03 §3.1）', () => {
+    it('多次打开空结果时不重复调用 getProviderEntries', async () => {
+      const getProviderEntries = jest.fn().mockResolvedValue([]);
+      const d = new SlashCommandDropdown(
+        containerEl, inputEl, callbacks,
+        { providerConfig: CLAUDE_CONFIG, getProviderEntries }
+      );
+
+      inputEl.value = '/';
+      inputEl.selectionStart = 1;
+      d.handleInputChange();
+      await new Promise(r => setTimeout(r, 15));
+
+      inputEl.value = '/';
+      inputEl.selectionStart = 1;
+      d.handleInputChange();
+      await new Promise(r => setTimeout(r, 15));
+
+      expect(getProviderEntries).toHaveBeenCalledTimes(1);
+      d.destroy();
+    });
+
+    it('getProviderEntries 失败后记空缓存，不无限重试', async () => {
+      const getProviderEntries = jest.fn().mockRejectedValue(new Error('fail'));
+      const d = new SlashCommandDropdown(
+        containerEl, inputEl, callbacks,
+        { providerConfig: CLAUDE_CONFIG, getProviderEntries }
+      );
+
+      inputEl.value = '/';
+      inputEl.selectionStart = 1;
+      d.handleInputChange();
+      await new Promise(r => setTimeout(r, 15));
+
+      inputEl.value = '/';
+      inputEl.selectionStart = 1;
+      d.handleInputChange();
+      await new Promise(r => setTimeout(r, 15));
+
+      expect(getProviderEntries).toHaveBeenCalledTimes(1);
+      d.destroy();
+    });
+  });
+
+  describe('prefetch', () => {
+    it('填充缓存且并发 prefetch 与打开共用一次 getProviderEntries', async () => {
+      let resolveEntries!: (v: typeof PROVIDER_ENTRIES) => void;
+      const getProviderEntries = jest.fn().mockImplementation(
+        () => new Promise<typeof PROVIDER_ENTRIES>((res) => { resolveEntries = res; }),
+      );
+      const d = new SlashCommandDropdown(
+        containerEl, inputEl, callbacks,
+        { providerConfig: CLAUDE_CONFIG, getProviderEntries }
+      );
+
+      const p1 = d.prefetch();
+      const p2 = d.prefetch();
+      expect(getProviderEntries).toHaveBeenCalledTimes(1);
+      resolveEntries([]);
+      await Promise.all([p1, p2]);
+
+      inputEl.value = '/';
+      inputEl.selectionStart = 1;
+      d.handleInputChange();
+      await new Promise(r => setTimeout(r, 10));
+      expect(getProviderEntries).toHaveBeenCalledTimes(1);
 
       d.destroy();
     });

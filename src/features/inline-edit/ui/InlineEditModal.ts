@@ -11,7 +11,7 @@ import { DEFAULT_CHAT_PROVIDER_ID, type InlineEditMode, type InlineEditService, 
 import { t } from '../../../i18n/i18n';
 import type ClaudianPlugin from '../../../main';
 import { hideSelectionHighlight, showSelectionHighlight } from '../../../shared/components/SelectionHighlight';
-import { SlashCommandDropdown } from '../../../shared/components/SlashCommandDropdown';
+import { scheduleSlashDropdownPrefetchIdle, SlashCommandDropdown } from '../../../shared/components/SlashCommandDropdown';
 import { MentionDropdownController } from '../../../shared/mention/MentionDropdownController';
 import { VaultMentionDataProvider } from '../../../shared/mention/VaultMentionDataProvider';
 import {
@@ -460,6 +460,8 @@ class InlineEditController {
         } : {}),
       }
     );
+
+    scheduleSlashDropdownPrefetchIdle(this.slashCommandDropdown);
 
     slashOpenEl.addEventListener('click', (e) => {
       e.stopPropagation();
