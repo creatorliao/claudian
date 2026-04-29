@@ -485,7 +485,8 @@ export const claudeSettingsTabRenderer: ProviderSettingsTabRenderer = {
     renderSubagentsSection(container, context, claudeWorkspace);
     renderPluginsSection(container, context, claudeWorkspace);
 
-    new Setting(container)
+    // 「插件」区块含与 heading 不同的自定义空态卡片，与标准 Setting 行之间无 heading 分割线；单独加顶部分割以免与「显示更多选项」视觉混成一团
+    const moreOptionsSetting = new Setting(container)
       .setName(t('settings.moreOptions.name'))
       .setDesc(t('settings.moreOptions.providerDescClaude'))
       .addToggle((toggle) =>
@@ -494,6 +495,7 @@ export const claudeSettingsTabRenderer: ProviderSettingsTabRenderer = {
           context.redisplay();
         }),
       );
+    moreOptionsSetting.settingEl.addClass('claudian-settings-claude-more-options');
 
     if (!showMore) {
       return;
