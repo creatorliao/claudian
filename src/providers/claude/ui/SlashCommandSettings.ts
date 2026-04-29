@@ -4,6 +4,7 @@ import { Modal, Notice, setIcon, Setting } from 'obsidian';
 import type { ProviderCommandCatalog } from '../../../core/providers/commands/ProviderCommandCatalog';
 import type { ProviderCommandEntry } from '../../../core/providers/commands/ProviderCommandEntry';
 import { t } from '../../../i18n/i18n';
+import { confirmDelete } from '../../../shared/modals/ConfirmModal';
 import type { OpenInFileManagerResult } from '../../../utils/openInFileManager';
 import { openAbsolutePathInFileManager, revealFileOrOpenParentDirectory } from '../../../utils/openInFileManager';
 import { extractFirstParagraph, normalizeArgumentHint, parseSlashCommandContent, validateCommandName } from '../../../utils/slashCommand';
@@ -29,17 +30,24 @@ function isSkillEntry(entry: ProviderCommandEntry): boolean {
   return entry.kind === 'skill';
 }
 
-/** 设置页主列表预览条数上限（C03/C04） */
-const SLASH_COMMANDS_PREVIEW_LIMIT = 5;
+/** 每个分区（自定义命令 / 技能）主列表预览条数上限 */
+const SLASH_ASSET_PREVIEW_LIMIT = 3;
+
+/** 设置页内「自定义命令」与「技能」分区标识 */
+type SlashKindSection = 'command' | 'skill';
+
+export type SlashCommandSettingsListKind = SlashKindSection;
 
 /**
- * 在弹窗中展示全部命令与技能，避免主设置页过长。
+ * 在弹窗中展示某一侧的全部条目，避免主设置页过长。
  */
 class SlashCommandsFullListModal extends Modal {
   constructor(
     app: App,
     private readonly entries: ProviderCommandEntry[],
     private readonly slashAssetScope: SlashAssetScope,
+    /** 已由调用方按类型选好 i18n 文案（含条数） */
+    private readonly modalTitle: string,
     private readonly renderRow: (parent: HTMLElement, cmd: ProviderCommandEntry) => void,
     private readonly openFolderInManager: (absolutePath: string) => Promise<OpenInFileManagerResult>,
   ) {
@@ -47,9 +55,7 @@ class SlashCommandsFullListModal extends Modal {
   }
 
   onOpen(): void {
-    this.titleEl.setText(
-      t('settings.slashCommands.viewAllModalTitle', { count: String(this.entries.length) }),
-    );
+    this.titleEl.setText(this.modalTitle);
     this.modalEl.addClass('claudian-sp-modal');
 
     const toolbar = this.contentEl.createDiv({ cls: 'claudian-sp-modal-folder-toolbar' });
@@ -119,22 +125,28 @@ export class SlashCommandModal extends Modal {
   private entries: ProviderCommandEntry[];
   private existingEntry: ProviderCommandEntry | null;
   private onSave: (entry: ProviderCommandEntry) => Promise<void>;
+  /** 新建时下拉默认值（编辑已有条目时忽略） */
+  private readonly defaultKindWhenCreating?: 'command' | 'skill';
 
   constructor(
     app: App,
     entries: ProviderCommandEntry[],
     existingEntry: ProviderCommandEntry | null,
     onSave: (entry: ProviderCommandEntry) => Promise<void>,
+    defaultKindWhenCreating?: 'command' | 'skill',
   ) {
     super(app);
     this.entries = entries;
     this.existingEntry = existingEntry;
     this.onSave = onSave;
+    this.defaultKindWhenCreating = defaultKindWhenCreating;
   }
 
   onOpen() {
     const existingIsSkill = this.existingEntry ? isSkillEntry(this.existingEntry) : false;
-    let selectedType: 'command' | 'skill' = existingIsSkill ? 'skill' : 'command';
+    let selectedType: 'command' | 'skill' = this.existingEntry
+      ? (existingIsSkill ? 'skill' : 'command')
+      : (this.defaultKindWhenCreating ?? 'command');
 
     const refreshTitle = () => {
       if (this.existingEntry) {
@@ -415,6 +427,7 @@ export class SlashCommandSettings {
   private app: App;
   private containerEl: HTMLElement;
   private catalog: ProviderCommandCatalog | null;
+  /** 来自 catalog 的全量条目（命令 + 技能） */
   private commands: ProviderCommandEntry[] = [];
   private slashAssetScope: SlashAssetScope;
   /** 设置页变更库内条目后通知聊天视图清空斜杠下拉缓存 */
@@ -434,6 +447,11 @@ export class SlashCommandSettings {
     this.slashAssetScope = slashAssetScope;
     this.onVaultSlashCommandsMutated = onVaultSlashCommandsMutated;
     void this.loadAndRender();
+  }
+
+  /** 某一「自定义命令」或「技能」分区内的列表（与预览、「查看全部」一致） */
+  private filterByKind(kind: SlashKindSection): ProviderCommandEntry[] {
+    return this.commands.filter((e) => (kind === 'skill' ? isSkillEntry(e) : !isSkillEntry(e)));
   }
 
   /** 通知所有聊天 Tab：斜杠下拉须丢弃已缓存的条目列表，与设置页/磁盘一致 */
@@ -473,9 +491,15 @@ export class SlashCommandSettings {
     this.render();
   }
 
-  /** 用户主动重扫库内与本机（若已启用）命令/技能文件，行为对齐插件列表「刷新」。 */
+  /**
+   * 用户主动重扫库内与本机（若已启用）命令/技能文件。
+   * 一次刷新更新「自定义命令」「技能」两侧列表，避免分区状态不一致。
+   */
   private async onRefreshClicked(): Promise<void> {
     try {
+      if (this.catalog) {
+        await this.catalog.refresh();
+      }
       await this.loadAndRender();
       this.notifyVaultSlashCommandsMutated();
       new Notice(t('settings.slashCommands.noticeRefreshed'));
@@ -492,19 +516,38 @@ export class SlashCommandSettings {
 
   private render(): void {
     this.containerEl.empty();
+    this.renderKindSection('command');
+    this.renderKindSection('skill');
+  }
 
-    const headerEl = this.containerEl.createDiv({ cls: 'claudian-sp-header' });
+  /**
+   * 渲染一处分区：分组标题 + 预览工具条 + 列表（最多 {@link SLASH_ASSET_PREVIEW_LIMIT} 条）。
+   */
+  private renderKindSection(kind: SlashKindSection): void {
+    new Setting(this.containerEl)
+      .setName(
+        kind === 'skill'
+          ? t('settings.slashCommands.sectionSkillsHeading')
+          : t('settings.slashCommands.sectionCommandsHeading'),
+      )
+      .setHeading();
+
+    const sectionRoot = this.containerEl.createDiv({ cls: 'claudian-slash-kind-section' });
+
+    const filtered = this.filterByKind(kind);
+
+    const headerEl = sectionRoot.createDiv({ cls: 'claudian-sp-header' });
     headerEl.createSpan({ text: t('settings.slashCommands.previewLabel'), cls: 'claudian-sp-label' });
 
     const actionsEl = headerEl.createDiv({ cls: 'claudian-sp-header-actions' });
 
-    if (this.commands.length > SLASH_COMMANDS_PREVIEW_LIMIT) {
+    if (filtered.length > SLASH_ASSET_PREVIEW_LIMIT) {
       const viewAllBtn = actionsEl.createEl('button', {
         cls: 'claudian-settings-action-btn claudian-settings-action-btn--text',
-        attr: { 'aria-label': t('settings.slashCommands.viewAll', { count: String(this.commands.length) }) },
+        attr: { 'aria-label': t('settings.slashCommands.viewAll', { count: String(filtered.length) }) },
       });
-      viewAllBtn.setText(t('settings.slashCommands.viewAll', { count: String(this.commands.length) }));
-      viewAllBtn.addEventListener('click', () => this.openViewAllModal());
+      viewAllBtn.setText(t('settings.slashCommands.viewAll', { count: String(filtered.length) }));
+      viewAllBtn.addEventListener('click', () => this.openViewAllModal(kind));
     }
 
     const addBtn = actionsEl.createEl('button', {
@@ -512,7 +555,7 @@ export class SlashCommandSettings {
       attr: { 'aria-label': t('common.add') },
     });
     setIcon(addBtn, 'plus');
-    addBtn.addEventListener('click', () => this.openCommandModal(null));
+    addBtn.addEventListener('click', () => this.openCommandModal(null, kind));
 
     const refreshBtn = actionsEl.createEl('button', {
       cls: 'claudian-settings-action-btn claudian-sp-header-action-trailing',
@@ -523,37 +566,53 @@ export class SlashCommandSettings {
       void this.onRefreshClicked();
     });
 
-    if (this.commands.length === 0) {
-      const emptyEl = this.containerEl.createDiv({ cls: 'claudian-sp-empty-state' });
-      emptyEl.setText(t('settings.slashCommandModal.emptyList'));
+    if (filtered.length === 0) {
+      const emptyEl = sectionRoot.createDiv({ cls: 'claudian-sp-empty-state' });
+      emptyEl.setText(
+        kind === 'skill'
+          ? t('settings.slashCommands.emptyStateSkills')
+          : t('settings.slashCommands.emptyStateCommands'),
+      );
       return;
     }
 
-    const listEl = this.containerEl.createDiv({ cls: 'claudian-sp-list' });
+    const listEl = sectionRoot.createDiv({ cls: 'claudian-sp-list' });
 
-    const preview = this.commands.slice(0, SLASH_COMMANDS_PREVIEW_LIMIT);
+    const preview = filtered.slice(0, SLASH_ASSET_PREVIEW_LIMIT);
     for (const cmd of preview) {
-      this.renderCommandRow(listEl, cmd);
+      this.renderCommandRow(listEl, cmd, kind);
     }
   }
 
-  private openViewAllModal(): void {
+  private openViewAllModal(kind: SlashKindSection): void {
+    const filtered = this.filterByKind(kind);
+    const modalTitle =
+      kind === 'skill'
+        ? t('settings.slashCommands.viewAllSkillsModalTitle', { count: String(filtered.length) })
+        : t('settings.slashCommands.viewAllCommandsModalTitle', { count: String(filtered.length) });
     const modal = new SlashCommandsFullListModal(
       this.app,
-      this.commands,
+      filtered,
       this.slashAssetScope,
-      (parent, cmd) => this.renderCommandRow(parent, cmd),
+      modalTitle,
+      (parent, cmd) => this.renderCommandRow(parent, cmd, kind),
       (absolutePath) => openAbsolutePathInFileManager(absolutePath),
     );
     modal.open();
   }
 
-  /** 存在「本机共用」条目时，为「本库」行也显示来源标签，便于区分。 */
-  private shouldShowVaultProvenanceTag(): boolean {
-    return this.commands.some(c => c.slashFileProvenance === 'user-home');
+  /** 存在「本机共用」条目时，为「本库」行也显示来源标签，便于区分（当前分区列表内）。 */
+  private shouldShowVaultProvenanceTag(forEntries: ProviderCommandEntry[]): boolean {
+    return forEntries.some((c) => c.slashFileProvenance === 'user-home');
   }
 
-  private renderCommandRow(listEl: HTMLElement, cmd: ProviderCommandEntry): void {
+  private renderCommandRow(
+    listEl: HTMLElement,
+    cmd: ProviderCommandEntry,
+    sectionKind: SlashKindSection,
+  ): void {
+    const sectionEntries = this.filterByKind(sectionKind);
+
     const itemEl = listEl.createDiv({ cls: 'claudian-sp-item' });
 
     const infoEl = itemEl.createDiv({ cls: 'claudian-sp-info' });
@@ -563,7 +622,8 @@ export class SlashCommandSettings {
     const nameEl = headerRow.createSpan({ cls: 'claudian-sp-item-name' });
     nameEl.setText(`/${cmd.name}`);
 
-    if (isSkillEntry(cmd)) {
+    // 技能独占分区时不重复「技能」角标；命令分区仅有命令，此处也不会误标
+    if (isSkillEntry(cmd) && sectionKind !== 'skill') {
       headerRow.createSpan({ text: t('settings.codexSkills.badgeSkill'), cls: 'claudian-slash-item-badge' });
     }
 
@@ -572,7 +632,7 @@ export class SlashCommandSettings {
         text: t('settings.slashCommands.provenanceUserHome'),
         cls: 'claudian-slash-provenance-tag',
       });
-    } else if (this.shouldShowVaultProvenanceTag() && cmd.slashFileProvenance === 'vault') {
+    } else if (this.shouldShowVaultProvenanceTag(sectionEntries) && cmd.slashFileProvenance === 'vault') {
       headerRow.createSpan({
         text: t('settings.slashCommands.provenanceVault'),
         cls: 'claudian-slash-provenance-tag',
@@ -597,7 +657,7 @@ export class SlashCommandSettings {
         attr: { 'aria-label': t('common.edit') },
       });
       setIcon(editBtn, 'pencil');
-      editBtn.addEventListener('click', () => this.openCommandModal(cmd));
+      editBtn.addEventListener('click', () => this.openCommandModal(cmd, sectionKind));
     }
 
     if (cmd.slashFileProvenance) {
@@ -632,21 +692,36 @@ export class SlashCommandSettings {
         attr: { 'aria-label': t('common.delete') },
       });
       setIcon(deleteBtn, 'trash-2');
-      deleteBtn.addEventListener('click', async () => {
-        try {
-          await this.deleteCommand(cmd);
-        } catch {
-          new Notice(
-            isSkillEntry(cmd)
-              ? t('settings.slashCommandModal.deleteFailedSkill')
-              : t('settings.slashCommandModal.deleteFailedCommand'),
-          );
-        }
+      deleteBtn.addEventListener('click', () => {
+        void (async () => {
+          const message = isSkillEntry(cmd)
+            ? t('settings.slashCommands.deleteConfirmMessageSkill', { name: cmd.name })
+            : t('settings.slashCommands.deleteConfirmMessageCommand', { name: cmd.name });
+          const ok = await confirmDelete(this.app, message);
+          if (!ok) {
+            return;
+          }
+          try {
+            await this.deleteCommand(cmd);
+          } catch {
+            new Notice(
+              isSkillEntry(cmd)
+                ? t('settings.slashCommandModal.deleteFailedSkill')
+                : t('settings.slashCommandModal.deleteFailedCommand'),
+            );
+          }
+        })();
       });
     }
   }
 
-  private openCommandModal(existingCmd: ProviderCommandEntry | null): void {
+  /**
+   * @param defaultKindWhenCreating 仅在新建时使用：由对应分区的「+」传入 command / skill。
+   */
+  private openCommandModal(
+    existingCmd: ProviderCommandEntry | null,
+    defaultKindWhenCreating: SlashKindSection = 'command',
+  ): void {
     const modal = new SlashCommandModal(
       this.app,
       this.commands,
@@ -654,6 +729,7 @@ export class SlashCommandSettings {
       async (cmd) => {
         await this.saveCommand(cmd, existingCmd);
       },
+      existingCmd ? undefined : defaultKindWhenCreating === 'skill' ? 'skill' : 'command',
     );
     modal.open();
   }
@@ -692,6 +768,7 @@ export class SlashCommandSettings {
     }
 
     await this.catalog.deleteVaultEntry(cmd);
+    await this.catalog.refresh();
 
     await this.reloadCommands();
 
@@ -712,7 +789,7 @@ export class SlashCommandSettings {
     const skillName = cmd.name.toLowerCase().replace(/[^a-z0-9-]/g, '-').slice(0, 64);
 
     const existingSkill = this.commands.find(
-      entry => isSkillEntry(entry) && entry.name === skillName,
+      (entry) => isSkillEntry(entry) && entry.name === skillName,
     );
     if (existingSkill) {
       new Notice(t('settings.slashCommandModal.skillExists', { name: skillName }));
