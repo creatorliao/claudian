@@ -2,8 +2,8 @@ import type { App } from 'obsidian';
 import { Notice, setIcon } from 'obsidian';
 
 import { tryParseClipboardConfig } from '../../../core/mcp/McpConfigParser';
+import type { McpServerManager } from '../../../core/mcp/McpServerManager';
 import { testMcpServer } from '../../../core/mcp/McpTester';
-import type { AppMcpStorage } from '../../../core/providers/types';
 import type { ManagedMcpServer, McpServerConfig, McpServerType } from '../../../core/types';
 import { DEFAULT_MCP_SERVER, getMcpServerType } from '../../../core/types';
 import { t } from '../../../i18n/i18n';
@@ -12,32 +12,36 @@ import { McpTestModal } from './McpTestModal';
 
 export interface McpSettingsManagerDeps {
   app: App;
-  mcpStorage: AppMcpStorage;
+  mcpManager: McpServerManager;
   broadcastMcpReload: () => Promise<void>;
 }
 
 export class McpSettingsManager {
   private app: App;
   private containerEl: HTMLElement;
-  private mcpStorage: AppMcpStorage;
+  private mcpManager: McpServerManager;
   private broadcastMcpReload: () => Promise<void>;
+  /** 当前展示的合并列表（项目 + 全局/本地），与 mcpManager.getServers() 同步。 */
   private servers: ManagedMcpServer[] = [];
 
   constructor(containerEl: HTMLElement, deps: McpSettingsManagerDeps) {
     this.app = deps.app;
     this.containerEl = containerEl;
-    this.mcpStorage = deps.mcpStorage;
+    this.mcpManager = deps.mcpManager;
     this.broadcastMcpReload = deps.broadcastMcpReload;
     this.loadAndRender();
   }
 
   private async loadAndRender() {
-    this.servers = await this.mcpStorage.load();
+    // 重新从磁盘加载（含全局/本地合并）
+    await this.mcpManager.loadServers();
+    this.servers = this.mcpManager.getServers();
     this.render();
   }
 
   /**
-   * 从磁盘重载 MCP 配置并重绘列表，再通知各聊天 Tab 调用 reloadMcpServers，使工具栏与运行时列表与文件一致。
+   * 从磁盘重载 MCP 配置并重绘列表，再通知各聊天 Tab 调用 reloadMcpServers，
+   * 使工具栏与运行时列表与文件一致。
    */
   private async refreshList(): Promise<void> {
     try {
@@ -129,15 +133,26 @@ export class McpSettingsManager {
   }
 
   private renderServerItem(listEl: HTMLElement, server: ManagedMcpServer) {
+    const source = server.source ?? 'project';
+    const isProject = source === 'project';
+
     const itemEl = listEl.createDiv({ cls: 'claudian-mcp-item' });
-    if (!server.enabled) {
+    if (!isProject) {
+      // 全局/本地来源：样式略有区别，始终视为启用
+      itemEl.addClass('claudian-mcp-item-external');
+    } else if (!server.enabled) {
       itemEl.addClass('claudian-mcp-item-disabled');
     }
 
+    // 状态点（全局/本地来源不可点击切换）
     const statusEl = itemEl.createDiv({ cls: 'claudian-mcp-status' });
-    statusEl.addClass(
-      server.enabled ? 'claudian-mcp-status-enabled' : 'claudian-mcp-status-disabled'
-    );
+    if (isProject) {
+      statusEl.addClass(
+        server.enabled ? 'claudian-mcp-status-enabled' : 'claudian-mcp-status-disabled'
+      );
+    } else {
+      statusEl.addClass('claudian-mcp-status-enabled'); // 外部来源始终显示为启用
+    }
 
     const infoEl = itemEl.createDiv({ cls: 'claudian-mcp-info' });
 
@@ -150,7 +165,11 @@ export class McpSettingsManager {
     const typeEl = nameRow.createSpan({ cls: 'claudian-mcp-type-badge' });
     typeEl.setText(serverType);
 
-    if (server.contextSaving) {
+    // 来源角标（项目 / 全局 / 本地）
+    const sourceBadgeEl = nameRow.createSpan({ cls: `claudian-mcp-source-badge claudian-mcp-source-${source}` });
+    sourceBadgeEl.setText(t(`settings.mcpList.source.${source}` as Parameters<typeof t>[0]));
+
+    if (isProject && server.contextSaving) {
       const csEl = nameRow.createSpan({ cls: 'claudian-mcp-context-saving-badge' });
       csEl.setText('@');
       csEl.setAttribute('title', t('settings.mcpList.contextSavingTitle', { name: server.name }));
@@ -165,6 +184,7 @@ export class McpSettingsManager {
 
     const actionsEl = itemEl.createDiv({ cls: 'claudian-mcp-actions' });
 
+    // 测试按钮（所有来源均可用）
     const testBtn = actionsEl.createEl('button', {
       cls: 'claudian-mcp-action-btn',
       attr: { 'aria-label': t('settings.mcpList.verifyAria') },
@@ -172,40 +192,57 @@ export class McpSettingsManager {
     setIcon(testBtn, 'zap');
     testBtn.addEventListener('click', () => this.testServer(server));
 
-    const toggleBtn = actionsEl.createEl('button', {
-      cls: 'claudian-mcp-action-btn',
-      attr: {
-        'aria-label': server.enabled ? t('settings.mcpList.disableAria') : t('settings.mcpList.enableAria'),
-      },
-    });
-    setIcon(toggleBtn, server.enabled ? 'toggle-right' : 'toggle-left');
-    toggleBtn.addEventListener('click', () => this.toggleServer(server));
+    if (isProject) {
+      // 项目级：启用/禁用、编辑、删除
+      const toggleBtn = actionsEl.createEl('button', {
+        cls: 'claudian-mcp-action-btn',
+        attr: {
+          'aria-label': server.enabled ? t('settings.mcpList.disableAria') : t('settings.mcpList.enableAria'),
+        },
+      });
+      setIcon(toggleBtn, server.enabled ? 'toggle-right' : 'toggle-left');
+      toggleBtn.addEventListener('click', () => this.toggleServer(server));
 
-    const editBtn = actionsEl.createEl('button', {
-      cls: 'claudian-mcp-action-btn',
-      attr: { 'aria-label': t('settings.mcpList.editAria') },
-    });
-    setIcon(editBtn, 'pencil');
-    editBtn.addEventListener('click', () => this.openModal(server));
+      const editBtn = actionsEl.createEl('button', {
+        cls: 'claudian-mcp-action-btn',
+        attr: { 'aria-label': t('settings.mcpList.editAria') },
+      });
+      setIcon(editBtn, 'pencil');
+      editBtn.addEventListener('click', () => this.openModal(server));
 
-    const deleteBtn = actionsEl.createEl('button', {
-      cls: 'claudian-mcp-action-btn claudian-mcp-delete-btn',
-      attr: { 'aria-label': t('settings.mcpList.deleteAria') },
-    });
-    setIcon(deleteBtn, 'trash-2');
-    deleteBtn.addEventListener('click', () => this.deleteServer(server));
+      const deleteBtn = actionsEl.createEl('button', {
+        cls: 'claudian-mcp-action-btn claudian-mcp-delete-btn',
+        attr: { 'aria-label': t('settings.mcpList.deleteAria') },
+      });
+      setIcon(deleteBtn, 'trash-2');
+      deleteBtn.addEventListener('click', () => this.deleteServer(server));
+    } else {
+      // 全局/本地来源：只显示「加入项目」按钮，将配置复制到 .mcp.json
+      const addToProjectBtn = actionsEl.createEl('button', {
+        cls: 'claudian-mcp-action-btn claudian-mcp-add-to-project-btn',
+        attr: { 'aria-label': t('settings.mcpList.addToProjectAria') },
+        text: t('settings.mcpList.addToProject'),
+      });
+      addToProjectBtn.addEventListener('click', () => this.addServerToProject(server));
+    }
   }
 
   private async testServer(server: ManagedMcpServer) {
+    const isProject = !server.source || server.source === 'project';
     const modal = new McpTestModal(
       this.app,
       server.name,
       server.disabledTools,
       async (toolName, enabled) => {
-        await this.updateDisabledTool(server, toolName, enabled);
+        // 只有项目级服务器才支持持久化 disabledTools 设置
+        if (isProject) {
+          await this.updateDisabledTool(server, toolName, enabled);
+        }
       },
       async (disabledTools) => {
-        await this.updateAllDisabledTools(server, disabledTools);
+        if (isProject) {
+          await this.updateAllDisabledTools(server, disabledTools);
+        }
       }
     );
     modal.open();
@@ -229,7 +266,7 @@ export class McpSettingsManager {
     server.disabledTools = newDisabledTools;
 
     try {
-      await this.mcpStorage.save(this.servers);
+      await this.mcpManager.saveProjectServers(this.servers);
     } catch (error) {
       server.disabledTools = previous;
       throw error;
@@ -329,7 +366,14 @@ export class McpSettingsManager {
     }
   }
 
+  /**
+   * 保存新增或编辑后的服务器（仅限项目级）。
+   * 新服务器强制设置 source = 'project'。
+   */
   private async saveServer(server: ManagedMcpServer, existing: ManagedMcpServer | null) {
+    // 强制项目来源
+    server = { ...server, source: 'project' };
+
     if (existing) {
       const index = this.servers.findIndex((s) => s.name === existing.name);
       if (index !== -1) {
@@ -351,7 +395,7 @@ export class McpSettingsManager {
       this.servers.push(server);
     }
 
-    await this.mcpStorage.save(this.servers);
+    await this.mcpManager.saveProjectServers(this.servers);
     await this.broadcastMcpReload();
     this.render();
     new Notice(
@@ -359,6 +403,42 @@ export class McpSettingsManager {
         ? t('settings.mcpList.serverUpdated', { name: server.name })
         : t('settings.mcpList.serverAdded', { name: server.name }),
     );
+  }
+
+  /**
+   * 将全局/本地来源的服务器复制到项目级（.mcp.json）。
+   * 若同名项目级服务器已存在，直接提示并退出。
+   */
+  private async addServerToProject(server: ManagedMcpServer) {
+    const existingProject = this.servers.find(
+      (s) => s.name === server.name && (!s.source || s.source === 'project')
+    );
+    if (existingProject) {
+      new Notice(t('settings.mcpList.serverExists', { name: server.name }));
+      return;
+    }
+
+    // 将服务器复制为项目级（保留 config，source 改为 'project'）
+    const projectServer: ManagedMcpServer = {
+      ...server,
+      enabled: DEFAULT_MCP_SERVER.enabled,
+      contextSaving: DEFAULT_MCP_SERVER.contextSaving,
+      disabledTools: undefined,
+      source: 'project',
+    };
+
+    // 替换列表中的外部条目为项目条目
+    const index = this.servers.findIndex((s) => s.name === server.name);
+    if (index !== -1) {
+      this.servers[index] = projectServer;
+    } else {
+      this.servers.push(projectServer);
+    }
+
+    await this.mcpManager.saveProjectServers(this.servers);
+    await this.broadcastMcpReload();
+    this.render();
+    new Notice(t('settings.mcpList.serverAddedToProject', { name: server.name }));
   }
 
   private async importServers(servers: Array<{ name: string; config: McpServerConfig }>) {
@@ -383,6 +463,7 @@ export class McpSettingsManager {
         config: server.config,
         enabled: DEFAULT_MCP_SERVER.enabled,
         contextSaving: DEFAULT_MCP_SERVER.contextSaving,
+        source: 'project',
       });
       added.push(name);
     }
@@ -392,7 +473,7 @@ export class McpSettingsManager {
       return;
     }
 
-    await this.mcpStorage.save(this.servers);
+    await this.mcpManager.saveProjectServers(this.servers);
     await this.broadcastMcpReload();
     this.render();
 
@@ -405,7 +486,7 @@ export class McpSettingsManager {
 
   private async toggleServer(server: ManagedMcpServer) {
     server.enabled = !server.enabled;
-    await this.mcpStorage.save(this.servers);
+    await this.mcpManager.saveProjectServers(this.servers);
     await this.broadcastMcpReload();
     this.render();
     new Notice(
@@ -424,7 +505,7 @@ export class McpSettingsManager {
     }
 
     this.servers = this.servers.filter((s) => s.name !== server.name);
-    await this.mcpStorage.save(this.servers);
+    await this.mcpManager.saveProjectServers(this.servers);
     await this.broadcastMcpReload();
     this.render();
     new Notice(t('settings.mcpList.serverDeleted', { name: server.name }));

@@ -1,4 +1,11 @@
-/** MCP (Model Context Protocol) type definitions used by the shared manager/UI. */
+/**
+ * MCP (Model Context Protocol) type definitions used by the shared manager/UI.
+ *
+ * 文件分工（CC 官方格式）：
+ *   {vault}/.mcp.json              → 项目级主配置，纯官方格式，无自创字段
+ *   {vault}/.claude/mcp-meta.json  → Claudian 专用元数据（enabled / contextSaving / disabledTools / description）
+ *   ~/.claude.json                 → 全局/本地 MCP，Claudian 只读不写
+ */
 
 /** Stdio server configuration (local command-line programs). */
 export interface McpStdioServerConfig {
@@ -31,6 +38,14 @@ export type McpServerConfig =
 /** Server type identifier. */
 export type McpServerType = 'stdio' | 'sse' | 'http';
 
+/**
+ * MCP 服务器的来源作用域：
+ *   project → {vault}/.mcp.json，可完整 CRUD
+ *   local   → ~/.claude.json projects[vaultPath].mcpServers，只读
+ *   user    → ~/.claude.json mcpServers（全局），只读
+ */
+export type McpServerSource = 'project' | 'local' | 'user';
+
 /** Managed MCP server configuration with UI/runtime metadata. */
 export interface ManagedMcpServer {
   /** Unique server name (key in mcpServers record). */
@@ -42,27 +57,32 @@ export interface ManagedMcpServer {
   /** Tool names disabled for this server. */
   disabledTools?: string[];
   description?: string;
+  /**
+   * 来源作用域；未定义时视为 'project'（向下兼容 & 默认值）。
+   * 只有 'project' 来源的服务器可被 Claudian 写入。
+   */
+  source?: McpServerSource;
 }
 
-/** MCP configuration file format used by the current CLI integrations. */
+/** .mcp.json 文件格式（CC 官方格式，无自创字段）。 */
 export interface McpConfigFile {
   mcpServers: Record<string, McpServerConfig>;
 }
 
-/** Extended config file with app-owned server metadata. */
-export interface ManagedMcpConfigFile extends McpConfigFile {
-  _claudian?: {
-    /** Per-server UI/runtime settings. */
-    servers: Record<
-      string,
-      {
-        enabled?: boolean;
-        contextSaving?: boolean;
-        disabledTools?: string[];
-        description?: string;
-      }
-    >;
-  };
+/**
+ * .claude/mcp-meta.json 文件格式（Claudian 专用元数据）。
+ * 与 .mcp.json 分离，保持主配置文件纯净。
+ */
+export interface McpMetaFile {
+  servers: Record<
+    string,
+    {
+      enabled?: boolean;
+      contextSaving?: boolean;
+      disabledTools?: string[];
+      description?: string;
+    }
+  >;
 }
 
 /** Result of parsing clipboard config. */

@@ -1,0 +1,75 @@
+---
+description: 跨平台路径与文件系统编码规范：主目录获取、路径比较大小写、VaultFileAdapter 约定
+alwaysApply: true
+---
+
+# S04 跨平台路径规范
+
+## 1. 主目录（Home Directory）
+
+**只用 `os.homedir()`**，不读环境变量（`USERPROFILE` / `HOME` 在不同 shell 下不可靠）。
+
+```typescript
+// ✅
+import * as os from 'os';
+import * as path from 'path';
+const claudeJsonPath = path.join(os.homedir(), '.claude.json');
+
+// ❌ 不要这样写
+const home = process.env.USERPROFILE ?? process.env.HOME;
+```
+
+## 2. 路径比较：大小写感知
+
+**Windows**（NTFS）不区分大小写；**macOS / Linux**（APFS / ext4）区分大小写。  
+读取外部配置文件中的路径 key 时，必须做平台感知比较。
+
+```typescript
+// ✅ 正确做法：路径比较要感知平台
+const isWindows = process.platform === 'win32';
+const normPath = (p: string) => {
+  const fwd = p.replace(/\\/g, '/');  // 统一正斜杠
+  return isWindows ? fwd.toLowerCase() : fwd;  // 仅 Windows 忽略大小写
+};
+const matched = Object.keys(projects).find(k => normPath(k) === normPath(vaultPath));
+
+// ❌ 错误：对所有平台都 toLowerCase()（macOS 路径区分大小写，会误匹配/漏匹配）
+const norm = p.replace(/\\/g, '/').toLowerCase();
+```
+
+## 3. VaultFileAdapter 路径约定
+
+传给 `VaultFileAdapter`（`adapter.read` / `adapter.write` / `adapter.exists`）的路径：
+- 统一使用**正斜杠** `/`，Obsidian 内部 API 会处理平台差异
+- 使用相对于 vault 根目录的**相对路径**，不拼绝对路径
+
+```typescript
+// ✅
+const MCP_CONFIG_PATH = '.mcp.json';
+const MCP_META_PATH = '.claude/mcp-meta.json';
+await adapter.write(MCP_CONFIG_PATH, content);
+
+// ❌ 不要拼接绝对路径后传给 adapter
+await adapter.write(path.join(vaultPath, '.mcp.json'), content);
+```
+
+## 4. Node.js 直接读文件（绕过 adapter）
+
+仅在需要读取 **vault 外部**文件（如 `~/.claude.json`）时使用 `fs.promises`，其余情况一律通过 adapter。
+
+```typescript
+// ✅ 读外部文件用 fs.promises + os.homedir()
+import * as fs from 'fs';
+const raw = await fs.promises.readFile(path.join(os.homedir(), '.claude.json'), 'utf-8');
+
+// ✅ 读 vault 内文件用 adapter
+const content = await adapter.read('.mcp.json');
+```
+
+## 5. 涉及路径的新代码检查点
+
+修改或新增任何读写文件系统的代码时，智能体应自问：
+- [ ] 是否用了 `os.homedir()` 而非环境变量？
+- [ ] 路径比较是否区分平台大小写？
+- [ ] 传给 adapter 的路径是否用正斜杠相对路径？
+- [ ] 是否避免了硬编码当前开发机才有的路径格式？

@@ -565,7 +565,7 @@
     },
     "mcpServers": {
       "name": "MCP Services",
-      "desc": "Manage vault-level MCP configuration in .claude/mcp.json. Services with context-saving mode require @mention to activate."
+      "desc": "Manage MCP configuration. Project-level servers are stored in .mcp.json (CC-compatible). Global and local servers from ~/.claude.json are shown as read-only. Services with context-saving mode require @mention to activate."
     },
     "plugins": {
       "name": "Plugins",
@@ -793,7 +793,7 @@
       "toggleErrorGeneric": "Failed to update tool setting",
       "toggleErrorPermission": "Permission denied. Check .claude/ folder permissions.",
       "toggleErrorDiskFull": "Disk full. Free up space and try again.",
-      "toggleErrorJson": "Config file corrupted. Check .claude/mcp.json"
+      "toggleErrorJson": "Config file corrupted. Check .mcp.json"
     },
     "mcpList": {
       "headerLabel": "MCP Services",
@@ -808,6 +808,8 @@
       "editAria": "Edit",
       "deleteAria": "Delete",
       "addAria": "Add",
+      "addToProject": "Add to project",
+      "addToProjectAria": "Copy this server to project config (.mcp.json)",
       "noticeListRefreshed": "MCP services refreshed",
       "noticeRefreshFailed": "Failed to refresh MCP services: {message}",
       "noticeReloadFailed": "Setting saved but reload failed. Changes will apply on next session.",
@@ -818,6 +820,7 @@
       "serverExists": "Service \"{name}\" already exists",
       "serverUpdated": "MCP service \"{name}\" updated",
       "serverAdded": "MCP service \"{name}\" added",
+      "serverAddedToProject": "\"{name}\" added to project config",
       "importNone": "No new MCP services imported",
       "imported": "Imported {count} MCP service(s)",
       "importedWithSkipped": "Imported {count} MCP service(s) ({skipped} skipped)",
@@ -825,7 +828,12 @@
       "serverEnabled": "enabled",
       "serverDisabled": "disabled",
       "serverDeleted": "MCP service \"{name}\" deleted",
-      "deleteConfirm": "Delete MCP service \"{name}\"?"
+      "deleteConfirm": "Delete MCP service \"{name}\"?",
+      "source": {
+        "project": "project",
+        "local": "local",
+        "user": "global"
+      }
     },
     "slashCommandModal": {
       "typeName": "Type",

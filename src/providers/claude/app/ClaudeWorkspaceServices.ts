@@ -48,10 +48,10 @@ export async function createClaudeWorkspaceServices(
 
   const cliResolver = new ClaudeCliResolver();
   const mcpStorage = claudeStorage.mcp;
-  const mcpManager = new McpServerManager(mcpStorage);
-  await mcpManager.loadServers();
-
   const vaultPath = getVaultPath(plugin.app) ?? '';
+  // 传入 vaultPath 以支持读取 ~/.claude.json 中的全局/本地 MCP
+  const mcpManager = new McpServerManager(mcpStorage, vaultPath);
+  await mcpManager.loadServers();
   const pluginManager = new PluginManager(vaultPath, claudeStorage.ccSettings);
   await pluginManager.loadPlugins();
 

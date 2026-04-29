@@ -1,0 +1,32 @@
+{
+  "mcpServers": {
+    "IFIND-stock": {
+      "headers": {
+        "Authorization": "Bearer eyJhbGciOiJSU0EtT0FFUC0yNTYiLCJlbmMiOiJBMjU2R0NNIn0.xMajnECCpGQ9AA8xubeLZETFyRt9OdTxeV8CqFkXZr7izEts4iEPhPkfeTTHM-zcverw0-TWOUsfLUQ0J0tMrBQFkPkn-EkgqO5q7GNhD95jp56oGu_5fi3cDeMIWFVyWuY3Km8-k6QIpfxIXUVJvNePB31rSRwq82lcIfn0Tr_5f2V-MTKTE7RcmbeW60Jd8LcdKXwVsJgsyeYSWlgaH1DellCZpCwGSKsReH8gDm_9u1lCQ3UT-I_wOAuyM8mkucUJNMA5RuPZXskLM4f1m20kn0erdBl4W4gFclMdKyTUm1ZRbAtVZELUe33mSOLpY6omwTbL45IlpUUxbE2b1w.d51av3YfVUk5PsVu.1t0AD4UEuLDVaTyfqFu-KkHpDlXq9A-qpVwQw0qU15_D6MgVjIhTYL2zYEM12ls9NBJNeu5Yp4tYw9PU0Nj6QjqNU079QhAtTEhWn4zCfiL7FhetkXzFr53ZYQCT9ZHkuU1KIrVhftYXF2jChFtThFA61jdSSYLj2zPg9FadhVeYf4dm5NgB9I313hFQy04czh09orSWpYTDyUCvB7THWRRaDCjkvy3z56e1ShWeXBJeDhs4DiukXa7SrZ-sCuntDfpdt4IDvSJ87h6OAci2gqQw9LRCsgKgV3cN-g.UTqMFofmxUd228EVOq05GQ"
+      },
+      "type": "streamablehttp",
+      "url": "https://api-mcp.51ifind.com:8643/ds-mcp-servers/hexin-ifind-ds-stock-mcp"
+    },
+    "IFIND-fund": {
+      "headers": {
+        "Authorization": "Bearer eyJhbGciOiJSU0EtT0FFUC0yNTYiLCJlbmMiOiJBMjU2R0NNIn0.xMajnECCpGQ9AA8xubeLZETFyRt9OdTxeV8CqFkXZr7izEts4iEPhPkfeTTHM-zcverw0-TWOUsfLUQ0J0tMrBQFkPkn-EkgqO5q7GNhD95jp56oGu_5fi3cDeMIWFVyWuY3Km8-k6QIpfxIXUVJvNePB31rSRwq82lcIfn0Tr_5f2V-MTKTE7RcmbeW60Jd8LcdKXwVsJgsyeYSWlgaH1DellCZpCwGSKsReH8gDm_9u1lCQ3UT-I_wOAuyM8mkucUJNMA5RuPZXskLM4f1m20kn0erdBl4W4gFclMdKyTUm1ZRbAtVZELUe33mSOLpY6omwTbL45IlpUUxbE2b1w.d51av3YfVUk5PsVu.1t0AD4UEuLDVaTyfqFu-KkHpDlXq9A-qpVwQw0qU15_D6MgVjIhTYL2zYEM12ls9NBJNeu5Yp4tYw9PU0Nj6QjqNU079QhAtTEhWn4zCfiL7FhetkXzFr53ZYQCT9ZHkuU1KIrVhftYXF2jChFtThFA61jdSSYLj2zPg9FadhVeYf4dm5NgB9I313hFQy04czh09orSWpYTDyUCvB7THWRRaDCjkvy3z56e1ShWeXBJeDhs4DiukXa7SrZ-sCuntDfpdt4IDvSJ87h6OAci2gqQw9LRCsgKgV3cN-g.UTqMFofmxUd228EVOq05GQ"
+      },
+      "type": "streamablehttp",
+      "url": "https://api-mcp.51ifind.com:8643/ds-mcp-servers/hexin-ifind-ds-fund-mcp"
+    },
+    "IFIND-edb": {
+      "headers": {
+        "Authorization": "Bearer eyJhbGciOiJSU0EtT0FFUC0yNTYiLCJlbmMiOiJBMjU2R0NNIn0.xMajnECCpGQ9AA8xubeLZETFyRt9OdTxeV8CqFkXZr7izEts4iEPhPkfeTTHM-zcverw0-TWOUsfLUQ0J0tMrBQFkPkn-EkgqO5q7GNhD95jp56oGu_5fi3cDeMIWFVyWuY3Km8-k6QIpfxIXUVJvNePB31rSRwq82lcIfn0Tr_5f2V-MTKTE7RcmbeW60Jd8LcdKXwVsJgsyeYSWlgaH1DellCZpCwGSKsReH8gDm_9u1lCQ3UT-I_wOAuyM8mkucUJNMA5RuPZXskLM4f1m20kn0erdBl4W4gFclMdKyTUm1ZRbAtVZELUe33mSOLpY6omwTbL45IlpUUxbE2b1w.d51av3YfVUk5PsVu.1t0AD4UEuLDVaTyfqFu-KkHpDlXq9A-qpVwQw0qU15_D6MgVjIhTYL2zYEM12ls9NBJNeu5Yp4tYw9PU0Nj6QjqNU079QhAtTEhWn4zCfiL7FhetkXzFr53ZYQCT9ZHkuU1KIrVhftYXF2jChFtThFA61jdSSYLj2zPg9FadhVeYf4dm5NgB9I313hFQy04czh09orSWpYTDyUCvB7THWRRaDCjkvy3z56e1ShWeXBJeDhs4DiukXa7SrZ-sCuntDfpdt4IDvSJ87h6OAci2gqQw9LRCsgKgV3cN-g.UTqMFofmxUd228EVOq05GQ"
+      },
+      "type": "streamablehttp",
+      "url": "https://api-mcp.51ifind.com:8643/ds-mcp-servers/hexin-ifind-ds-edb-mcp"
+    },
+    "IFIND-news": {
+      "headers": {
+        "Authorization": "Bearer eyJhbGciOiJSU0EtT0FFUC0yNTYiLCJlbmMiOiJBMjU2R0NNIn0.xMajnECCpGQ9AA8xubeLZETFyRt9OdTxeV8CqFkXZr7izEts4iEPhPkfeTTHM-zcverw0-TWOUsfLUQ0J0tMrBQFkPkn-EkgqO5q7GNhD95jp56oGu_5fi3cDeMIWFVyWuY3Km8-k6QIpfxIXUVJvNePB31rSRwq82lcIfn0Tr_5f2V-MTKTE7RcmbeW60Jd8LcdKXwVsJgsyeYSWlgaH1DellCZpCwGSKsReH8gDm_9u1lCQ3UT-I_wOAuyM8mkucUJNMA5RuPZXskLM4f1m20kn0erdBl4W4gFclMdKyTUm1ZRbAtVZELUe33mSOLpY6omwTbL45IlpUUxbE2b1w.d51av3YfVUk5PsVu.1t0AD4UEuLDVaTyfqFu-KkHpDlXq9A-qpVwQw0qU15_D6MgVjIhTYL2zYEM12ls9NBJNeu5Yp4tYw9PU0Nj6QjqNU079QhAtTEhWn4zCfiL7FhetkXzFr53ZYQCT9ZHkuU1KIrVhftYXF2jChFtThFA61jdSSYLj2zPg9FadhVeYf4dm5NgB9I313hFQy04czh09orSWpYTDyUCvB7THWRRaDCjkvy3z56e1ShWeXBJeDhs4DiukXa7SrZ-sCuntDfpdt4IDvSJ87h6OAci2gqQw9LRCsgKgV3cN-g.UTqMFofmxUd228EVOq05GQ"
+      },
+      "type": "streamablehttp",
+      "url": "https://api-mcp.51ifind.com:8643/ds-mcp-servers/hexin-ifind-ds-news-mcp"
+    }
+  }
+}

@@ -244,7 +244,7 @@ function renderMcpSection(
   const mcpContainer = container.createDiv({ cls: 'claudian-mcp-container' });
   new McpSettingsManager(mcpContainer, {
     app: context.plugin.app,
-    mcpStorage: claudeWorkspace.mcpStorage,
+    mcpManager: claudeWorkspace.mcpManager,
     broadcastMcpReload: async () => {
       for (const view of context.plugin.getAllViews()) {
         await view.getTabManager()?.broadcastToAllTabs(

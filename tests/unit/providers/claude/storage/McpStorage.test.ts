@@ -1,6 +1,6 @@
 import { parseClipboardConfig, tryParseClipboardConfig } from '@/core/mcp/McpConfigParser';
 import type { VaultFileAdapter } from '@/core/storage/VaultFileAdapter';
-import { McpStorage } from '@/providers/claude/storage/McpStorage';
+import { MCP_CONFIG_PATH, MCP_META_PATH, McpStorage } from '@/providers/claude/storage/McpStorage';
 
 /** Mock adapter with exposed store for test assertions. */
 type MockAdapter = VaultFileAdapter & { _store: Record<string, string> };
@@ -34,24 +34,25 @@ describe('McpStorage', () => {
       expect(servers).toEqual([]);
     });
 
-    it('loads servers with disabledTools from _claudian metadata', async () => {
+    it('loads servers from .mcp.json with meta from mcp-meta.json', async () => {
       const config = {
         mcpServers: {
           alpha: { command: 'alpha-cmd', args: ['--arg'] },
         },
-        _claudian: {
-          servers: {
-            alpha: {
-              enabled: true,
-              contextSaving: true,
-              disabledTools: ['tool_a', 'tool_b'],
-            },
+      };
+      const meta = {
+        servers: {
+          alpha: {
+            enabled: true,
+            contextSaving: true,
+            disabledTools: ['tool_a', 'tool_b'],
           },
         },
       };
 
       const adapter = createMockAdapter({
-        '.claude/mcp.json': JSON.stringify(config),
+        [MCP_CONFIG_PATH]: JSON.stringify(config),
+        [MCP_META_PATH]: JSON.stringify(meta),
       });
       const storage = new McpStorage(adapter);
       const servers = await storage.load();
@@ -63,6 +64,7 @@ describe('McpStorage', () => {
         enabled: true,
         contextSaving: true,
         disabledTools: ['tool_a', 'tool_b'],
+        source: 'project',
       });
     });
 
@@ -71,17 +73,18 @@ describe('McpStorage', () => {
         mcpServers: {
           alpha: { command: 'alpha-cmd' },
         },
-        _claudian: {
-          servers: {
-            alpha: {
-              disabledTools: ['valid', 123, null, 'also_valid'],
-            },
+      };
+      const meta = {
+        servers: {
+          alpha: {
+            disabledTools: ['valid', 123, null, 'also_valid'],
           },
         },
       };
 
       const adapter = createMockAdapter({
-        '.claude/mcp.json': JSON.stringify(config),
+        [MCP_CONFIG_PATH]: JSON.stringify(config),
+        [MCP_META_PATH]: JSON.stringify(meta),
       });
       const storage = new McpStorage(adapter);
       const servers = await storage.load();
@@ -94,17 +97,18 @@ describe('McpStorage', () => {
         mcpServers: {
           alpha: { command: 'alpha-cmd' },
         },
-        _claudian: {
-          servers: {
-            alpha: {
-              disabledTools: [],
-            },
+      };
+      const meta = {
+        servers: {
+          alpha: {
+            disabledTools: [],
           },
         },
       };
 
       const adapter = createMockAdapter({
-        '.claude/mcp.json': JSON.stringify(config),
+        [MCP_CONFIG_PATH]: JSON.stringify(config),
+        [MCP_META_PATH]: JSON.stringify(meta),
       });
       const storage = new McpStorage(adapter);
       const servers = await storage.load();
@@ -114,7 +118,7 @@ describe('McpStorage', () => {
 
     it('returns empty array on JSON parse error', async () => {
       const adapter = createMockAdapter({
-        '.claude/mcp.json': 'invalid json{',
+        [MCP_CONFIG_PATH]: 'invalid json{',
       });
       const storage = new McpStorage(adapter);
 
@@ -124,7 +128,7 @@ describe('McpStorage', () => {
 
     it('returns empty array when mcpServers is missing', async () => {
       const adapter = createMockAdapter({
-        '.claude/mcp.json': JSON.stringify({}),
+        [MCP_CONFIG_PATH]: JSON.stringify({}),
       });
       const storage = new McpStorage(adapter);
       const servers = await storage.load();
@@ -133,7 +137,7 @@ describe('McpStorage', () => {
 
     it('returns empty array when mcpServers is not an object', async () => {
       const adapter = createMockAdapter({
-        '.claude/mcp.json': JSON.stringify({ mcpServers: 'invalid' }),
+        [MCP_CONFIG_PATH]: JSON.stringify({ mcpServers: 'invalid' }),
       });
       const storage = new McpStorage(adapter);
       const servers = await storage.load();
@@ -148,7 +152,7 @@ describe('McpStorage', () => {
         },
       };
       const adapter = createMockAdapter({
-        '.claude/mcp.json': JSON.stringify(config),
+        [MCP_CONFIG_PATH]: JSON.stringify(config),
       });
       const storage = new McpStorage(adapter);
       const servers = await storage.load();
@@ -157,14 +161,14 @@ describe('McpStorage', () => {
       expect(servers[0].name).toBe('valid');
     });
 
-    it('applies defaults when no _claudian metadata exists', async () => {
+    it('applies defaults when no meta file exists', async () => {
       const config = {
         mcpServers: {
           alpha: { command: 'alpha-cmd' },
         },
       };
       const adapter = createMockAdapter({
-        '.claude/mcp.json': JSON.stringify(config),
+        [MCP_CONFIG_PATH]: JSON.stringify(config),
       });
       const storage = new McpStorage(adapter);
       const servers = await storage.load();
@@ -174,29 +178,101 @@ describe('McpStorage', () => {
         enabled: true,
         contextSaving: true,
         disabledTools: undefined,
+        source: 'project',
       });
     });
 
-    it('loads description from _claudian metadata', async () => {
+    it('loads description from meta file', async () => {
       const config = {
         mcpServers: { alpha: { command: 'cmd' } },
-        _claudian: {
-          servers: {
-            alpha: { description: 'My server' },
-          },
+      };
+      const meta = {
+        servers: {
+          alpha: { description: 'My server' },
         },
       };
       const adapter = createMockAdapter({
-        '.claude/mcp.json': JSON.stringify(config),
+        [MCP_CONFIG_PATH]: JSON.stringify(config),
+        [MCP_META_PATH]: JSON.stringify(meta),
       });
       const storage = new McpStorage(adapter);
       const servers = await storage.load();
       expect(servers[0].description).toBe('My server');
     });
+
+    it('does not read old .claude/mcp.json (废弃路径)', async () => {
+      // 旧路径有数据，新路径无数据 → 返回空（不再读旧路径）
+      const adapter = createMockAdapter({
+        '.claude/mcp.json': JSON.stringify({
+          mcpServers: { old: { command: 'old-cmd' } },
+        }),
+      });
+      const storage = new McpStorage(adapter);
+      const servers = await storage.load();
+      expect(servers).toEqual([]);
+    });
   });
 
   describe('save', () => {
-    it('saves disabledTools to _claudian metadata', async () => {
+    it('writes pure CC format to .mcp.json (no _claudian key)', async () => {
+      const adapter = createMockAdapter();
+      const storage = new McpStorage(adapter);
+
+      await storage.save([
+        {
+          name: 'alpha',
+          config: { command: 'alpha-cmd' },
+          enabled: true,
+          contextSaving: true,
+          source: 'project',
+        },
+      ]);
+
+      const saved = JSON.parse(adapter._store[MCP_CONFIG_PATH]);
+      expect(saved._claudian).toBeUndefined();
+      expect(saved.mcpServers.alpha).toEqual({ command: 'alpha-cmd' });
+    });
+
+    it('omits type field for stdio servers (CC default)', async () => {
+      const adapter = createMockAdapter();
+      const storage = new McpStorage(adapter);
+
+      await storage.save([
+        {
+          name: 'stdio-server',
+          config: { type: 'stdio', command: 'cmd', args: ['--flag'] },
+          enabled: true,
+          contextSaving: true,
+          source: 'project',
+        },
+      ]);
+
+      const saved = JSON.parse(adapter._store[MCP_CONFIG_PATH]);
+      // type 字段应被省略（CC 默认即 stdio）
+      expect(saved.mcpServers['stdio-server'].type).toBeUndefined();
+      expect(saved.mcpServers['stdio-server'].command).toBe('cmd');
+    });
+
+    it('preserves type for HTTP servers', async () => {
+      const adapter = createMockAdapter();
+      const storage = new McpStorage(adapter);
+
+      await storage.save([
+        {
+          name: 'http-server',
+          config: { type: 'http', url: 'https://example.com/mcp' },
+          enabled: true,
+          contextSaving: true,
+          source: 'project',
+        },
+      ]);
+
+      const saved = JSON.parse(adapter._store[MCP_CONFIG_PATH]);
+      expect(saved.mcpServers['http-server'].type).toBe('http');
+      expect(saved.mcpServers['http-server'].url).toBe('https://example.com/mcp');
+    });
+
+    it('saves disabledTools to mcp-meta.json', async () => {
       const adapter = createMockAdapter();
       const storage = new McpStorage(adapter);
 
@@ -207,11 +283,12 @@ describe('McpStorage', () => {
           enabled: true,
           contextSaving: true,
           disabledTools: ['tool_a', 'tool_b'],
+          source: 'project',
         },
       ]);
 
-      const saved = JSON.parse(adapter._store['.claude/mcp.json']);
-      expect(saved._claudian.servers.alpha.disabledTools).toEqual(['tool_a', 'tool_b']);
+      const meta = JSON.parse(adapter._store[MCP_META_PATH]);
+      expect(meta.servers.alpha.disabledTools).toEqual(['tool_a', 'tool_b']);
     });
 
     it('trims and filters blank disabledTools on save', async () => {
@@ -225,14 +302,15 @@ describe('McpStorage', () => {
           enabled: true,
           contextSaving: true,
           disabledTools: ['  tool_a  ', '', '  ', 'tool_b'],
+          source: 'project',
         },
       ]);
 
-      const saved = JSON.parse(adapter._store['.claude/mcp.json']);
-      expect(saved._claudian.servers.alpha.disabledTools).toEqual(['tool_a', 'tool_b']);
+      const meta = JSON.parse(adapter._store[MCP_META_PATH]);
+      expect(meta.servers.alpha.disabledTools).toEqual(['tool_a', 'tool_b']);
     });
 
-    it('omits disabledTools from metadata when empty', async () => {
+    it('omits server from meta when all fields are default', async () => {
       const adapter = createMockAdapter();
       const storage = new McpStorage(adapter);
 
@@ -243,45 +321,13 @@ describe('McpStorage', () => {
           enabled: true,  // default
           contextSaving: true,  // default
           disabledTools: [],
+          source: 'project',
         },
       ]);
 
-      const saved = JSON.parse(adapter._store['.claude/mcp.json']);
-      // No _claudian since all fields are default
-      expect(saved._claudian).toBeUndefined();
-    });
-
-    it('preserves existing _claudian metadata when saving', async () => {
-      const existing = {
-        mcpServers: {
-          alpha: { command: 'alpha-cmd' },
-        },
-        _claudian: {
-          customField: 'should be preserved',
-          servers: {
-            alpha: { enabled: false },
-          },
-        },
-      };
-
-      const adapter = createMockAdapter({
-        '.claude/mcp.json': JSON.stringify(existing),
-      });
-      const storage = new McpStorage(adapter);
-
-      await storage.save([
-        {
-          name: 'alpha',
-          config: { command: 'alpha-cmd' },
-          enabled: true,
-          contextSaving: true,
-          disabledTools: ['tool_a'],
-        },
-      ]);
-
-      const saved = JSON.parse(adapter._store['.claude/mcp.json']);
-      expect(saved._claudian.customField).toBe('should be preserved');
-      expect(saved._claudian.servers.alpha.disabledTools).toEqual(['tool_a']);
+      const meta = JSON.parse(adapter._store[MCP_META_PATH]);
+      // 所有字段均为默认值，meta 中不写入该服务器
+      expect(meta.servers.alpha).toBeUndefined();
     });
 
     it('round-trips disabledTools correctly', async () => {
@@ -295,6 +341,7 @@ describe('McpStorage', () => {
           enabled: true,
           contextSaving: true,
           disabledTools: ['tool_a', 'tool_b'],
+          source: 'project' as const,
         },
         {
           name: 'beta',
@@ -302,6 +349,7 @@ describe('McpStorage', () => {
           enabled: false,
           contextSaving: false,
           disabledTools: undefined,
+          source: 'project' as const,
         },
       ];
 
@@ -319,7 +367,7 @@ describe('McpStorage', () => {
       });
     });
 
-    it('saves description to _claudian metadata', async () => {
+    it('saves description to meta file', async () => {
       const adapter = createMockAdapter();
       const storage = new McpStorage(adapter);
 
@@ -330,14 +378,15 @@ describe('McpStorage', () => {
           enabled: true,
           contextSaving: true,
           description: 'A test server',
+          source: 'project',
         },
       ]);
 
-      const saved = JSON.parse(adapter._store['.claude/mcp.json']);
-      expect(saved._claudian.servers.alpha.description).toBe('A test server');
+      const meta = JSON.parse(adapter._store[MCP_META_PATH]);
+      expect(meta.servers.alpha.description).toBe('A test server');
     });
 
-    it('stores enabled=false in _claudian when different from default', async () => {
+    it('stores enabled=false in meta when different from default', async () => {
       const adapter = createMockAdapter();
       const storage = new McpStorage(adapter);
 
@@ -347,14 +396,15 @@ describe('McpStorage', () => {
           config: { command: 'cmd' },
           enabled: false,
           contextSaving: true,
+          source: 'project',
         },
       ]);
 
-      const saved = JSON.parse(adapter._store['.claude/mcp.json']);
-      expect(saved._claudian.servers.alpha.enabled).toBe(false);
+      const meta = JSON.parse(adapter._store[MCP_META_PATH]);
+      expect(meta.servers.alpha.enabled).toBe(false);
     });
 
-    it('stores contextSaving=false in _claudian when different from default', async () => {
+    it('stores contextSaving=false in meta when different from default', async () => {
       const adapter = createMockAdapter();
       const storage = new McpStorage(adapter);
 
@@ -364,116 +414,100 @@ describe('McpStorage', () => {
           config: { command: 'cmd' },
           enabled: true,
           contextSaving: false,
+          source: 'project',
         },
       ]);
 
-      const saved = JSON.parse(adapter._store['.claude/mcp.json']);
-      expect(saved._claudian.servers.alpha.contextSaving).toBe(false);
+      const meta = JSON.parse(adapter._store[MCP_META_PATH]);
+      expect(meta.servers.alpha.contextSaving).toBe(false);
     });
 
-    it('removes _claudian.servers when all metadata is default', async () => {
-      const existing = {
-        mcpServers: { alpha: { command: 'cmd' } },
-        _claudian: { servers: { alpha: { enabled: false } } },
-      };
+    it('skips non-project servers (source = local/user)', async () => {
+      const adapter = createMockAdapter();
+      const storage = new McpStorage(adapter);
+
+      await storage.save([
+        {
+          name: 'project-server',
+          config: { command: 'project-cmd' },
+          enabled: true,
+          contextSaving: true,
+          source: 'project',
+        },
+        {
+          name: 'global-server',
+          config: { command: 'global-cmd' },
+          enabled: true,
+          contextSaving: true,
+          source: 'user',
+        },
+        {
+          name: 'local-server',
+          config: { command: 'local-cmd' },
+          enabled: true,
+          contextSaving: true,
+          source: 'local',
+        },
+      ]);
+
+      const config = JSON.parse(adapter._store[MCP_CONFIG_PATH]);
+      // 只有项目级服务器写入 .mcp.json
+      expect(Object.keys(config.mcpServers)).toEqual(['project-server']);
+    });
+
+    it('handles corrupted existing files gracefully', async () => {
       const adapter = createMockAdapter({
-        '.claude/mcp.json': JSON.stringify(existing),
+        [MCP_CONFIG_PATH]: 'not json',
+        [MCP_META_PATH]: 'not json',
       });
       const storage = new McpStorage(adapter);
 
+      // save 应该成功覆盖损坏的文件
       await storage.save([
         {
           name: 'alpha',
           config: { command: 'cmd' },
           enabled: true,
           contextSaving: true,
+          source: 'project',
         },
       ]);
 
-      const saved = JSON.parse(adapter._store['.claude/mcp.json']);
-      expect(saved._claudian).toBeUndefined();
-    });
-
-    it('preserves non-servers _claudian fields when removing servers', async () => {
-      const existing = {
-        mcpServers: { alpha: { command: 'cmd' } },
-        _claudian: {
-          customField: 'keep',
-          servers: { alpha: { enabled: false } },
-        },
-      };
-      const adapter = createMockAdapter({
-        '.claude/mcp.json': JSON.stringify(existing),
-      });
-      const storage = new McpStorage(adapter);
-
-      await storage.save([
-        {
-          name: 'alpha',
-          config: { command: 'cmd' },
-          enabled: true,
-          contextSaving: true,
-        },
-      ]);
-
-      const saved = JSON.parse(adapter._store['.claude/mcp.json']);
-      expect(saved._claudian).toEqual({ customField: 'keep' });
-    });
-
-    it('handles corrupted existing file gracefully', async () => {
-      const adapter = createMockAdapter({
-        '.claude/mcp.json': 'not json',
-      });
-      const storage = new McpStorage(adapter);
-
-      await storage.save([
-        {
-          name: 'alpha',
-          config: { command: 'cmd' },
-          enabled: true,
-          contextSaving: true,
-        },
-      ]);
-
-      const saved = JSON.parse(adapter._store['.claude/mcp.json']);
+      const saved = JSON.parse(adapter._store[MCP_CONFIG_PATH]);
       expect(saved.mcpServers.alpha).toEqual({ command: 'cmd' });
     });
 
-    it('preserves extra top-level fields in existing file', async () => {
-      const existing = {
-        mcpServers: { old: { command: 'old-cmd' } },
-        someExtraField: 'preserved',
-      };
-      const adapter = createMockAdapter({
-        '.claude/mcp.json': JSON.stringify(existing),
-      });
+    it('omits empty args and env from stdout config', async () => {
+      const adapter = createMockAdapter();
       const storage = new McpStorage(adapter);
 
       await storage.save([
         {
-          name: 'new',
-          config: { command: 'new-cmd' },
+          name: 'alpha',
+          config: { command: 'cmd', args: [], env: {} },
           enabled: true,
           contextSaving: true,
+          source: 'project',
         },
       ]);
 
-      const saved = JSON.parse(adapter._store['.claude/mcp.json']);
-      expect(saved.someExtraField).toBe('preserved');
-      expect(saved.mcpServers).toEqual({ new: { command: 'new-cmd' } });
+      const saved = JSON.parse(adapter._store[MCP_CONFIG_PATH]);
+      // 空 args 和 env 应省略（保持 CC 输出最简洁）
+      expect(saved.mcpServers.alpha.args).toBeUndefined();
+      expect(saved.mcpServers.alpha.env).toBeUndefined();
     });
   });
 
   describe('exists', () => {
-    it('returns false when mcp.json does not exist', async () => {
+    it('returns false when .mcp.json does not exist', async () => {
       const adapter = createMockAdapter();
       const storage = new McpStorage(adapter);
       expect(await storage.exists()).toBe(false);
     });
 
-    it('returns true when mcp.json exists', async () => {
+    it('returns true when .mcp.json exists', async () => {
       const adapter = createMockAdapter({
-        '.claude/mcp.json': '{}',
+        [MCP_CONFIG_PATH]: '{}',
       });
       const storage = new McpStorage(adapter);
       expect(await storage.exists()).toBe(true);

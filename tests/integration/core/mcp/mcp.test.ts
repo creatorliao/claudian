@@ -18,7 +18,7 @@ import {
   getMcpServerType,
   isValidMcpServerConfig,
 } from '@/core/types/mcp';
-import { MCP_CONFIG_PATH, McpStorage } from '@/providers/claude/storage/McpStorage';
+import { MCP_CONFIG_PATH, MCP_META_PATH, McpStorage } from '@/providers/claude/storage/McpStorage';
 import {
   extractMcpMentions,
   parseCommand,
@@ -41,13 +41,19 @@ jest.mock('@modelcontextprotocol/sdk/client/streamableHttp', () => ({
   StreamableHTTPClientTransport: jest.fn(),
 }));
 
-function createMemoryStorage(initialFile?: Record<string, unknown>): {
+function createMemoryStorage(
+  initialConfig?: Record<string, unknown>,
+  initialMeta?: Record<string, unknown>
+): {
   storage: McpStorage;
   files: Map<string, string>;
 } {
   const files = new Map<string, string>();
-  if (initialFile) {
-    files.set(MCP_CONFIG_PATH, JSON.stringify(initialFile));
+  if (initialConfig) {
+    files.set(MCP_CONFIG_PATH, JSON.stringify(initialConfig));
+  }
+  if (initialMeta) {
+    files.set(MCP_META_PATH, JSON.stringify(initialMeta));
   }
 
   const adapter = {
@@ -274,20 +280,8 @@ describe('McpStorage', () => {
   });
 
   describe('load/save', () => {
-    it('should preserve unknown top-level keys and merge _claudian', async () => {
-      const initial = {
-        mcpServers: {
-          legacy: { command: 'node' },
-        },
-        _claudian: {
-          servers: {
-            legacy: { enabled: false },
-          },
-          extra: { keep: true },
-        },
-        other: { keep: true },
-      };
-      const { storage, files } = createMemoryStorage(initial);
+    it('should write pure CC format to .mcp.json and meta to mcp-meta.json', async () => {
+      const { storage, files } = createMemoryStorage();
 
       const servers: ManagedMcpServer[] = [
         {
@@ -300,13 +294,15 @@ describe('McpStorage', () => {
           enabled: false,
           contextSaving: false,
           description: 'New server',
+          source: 'project',
         },
       ];
 
       await storage.save(servers);
 
+      // .mcp.json 应为纯 CC 格式，无 _claudian 字段
       const saved = JSON.parse(files.get(MCP_CONFIG_PATH) || '{}') as Record<string, unknown>;
-      expect(saved.other).toEqual({ keep: true });
+      expect(saved._claudian).toBeUndefined();
       expect(saved.mcpServers).toEqual({
         'new-server': {
           type: 'http',
@@ -314,28 +310,19 @@ describe('McpStorage', () => {
           headers: { Authorization: 'Bearer token' },
         },
       });
-      expect(saved._claudian).toEqual({
-        extra: { keep: true },
-        servers: {
-          'new-server': {
-            enabled: false,
-            contextSaving: false,
-            description: 'New server',
-          },
-        },
+
+      // 元数据写入 .claude/mcp-meta.json
+      const meta = JSON.parse(files.get(MCP_META_PATH) || '{}') as Record<string, unknown>;
+      const metaServers = meta.servers as Record<string, unknown>;
+      expect(metaServers['new-server']).toMatchObject({
+        enabled: false,
+        contextSaving: false,
+        description: 'New server',
       });
     });
 
-    it('should keep existing _claudian fields when metadata is defaulted', async () => {
-      const initial = {
-        mcpServers: {
-          legacy: { command: 'node' },
-        },
-        _claudian: {
-          extra: { keep: true },
-        },
-      };
-      const { storage, files } = createMemoryStorage(initial);
+    it('should omit server from meta when all fields are default values', async () => {
+      const { storage, files } = createMemoryStorage();
 
       const servers: ManagedMcpServer[] = [
         {
@@ -343,29 +330,36 @@ describe('McpStorage', () => {
           config: { command: 'npx' },
           enabled: DEFAULT_MCP_SERVER.enabled,
           contextSaving: DEFAULT_MCP_SERVER.contextSaving,
+          source: 'project',
         },
       ];
 
       await storage.save(servers);
 
+      // .mcp.json 应无 _claudian 字段
       const saved = JSON.parse(files.get(MCP_CONFIG_PATH) || '{}') as Record<string, unknown>;
-      expect(saved._claudian).toEqual({ extra: { keep: true } });
+      expect(saved._claudian).toBeUndefined();
       expect(saved.mcpServers).toEqual({ 'default-meta': { command: 'npx' } });
+
+      // .claude/mcp-meta.json 中该服务器条目应为空（所有字段均为默认值）
+      const meta = JSON.parse(files.get(MCP_META_PATH) || '{}') as { servers: Record<string, unknown> };
+      expect(meta.servers['default-meta']).toBeUndefined();
     });
 
-    it('should load servers with metadata and defaults', async () => {
-      const initial = {
+    it('should load servers with metadata and defaults (new split-file format)', async () => {
+      // 新格式：.mcp.json 存配置，.claude/mcp-meta.json 存元数据
+      const initialConfig = {
         mcpServers: {
           stdio: { command: 'npx' },
           remote: { type: 'sse', url: 'http://localhost:3000/sse' },
         },
-        _claudian: {
-          servers: {
-            stdio: { enabled: false, contextSaving: false, description: 'Local tools' },
-          },
+      };
+      const initialMeta = {
+        servers: {
+          stdio: { enabled: false, contextSaving: false, description: 'Local tools' },
         },
       };
-      const { storage } = createMemoryStorage(initial);
+      const { storage } = createMemoryStorage(initialConfig, initialMeta);
 
       const servers = await storage.load();
 
@@ -764,6 +758,7 @@ describe('McpServerManager', () => {
   function createManager(servers: ManagedMcpServer[]): McpServerManager {
     const manager = new McpServerManager({
       load: jest.fn().mockResolvedValue(servers),
+      save: jest.fn().mockResolvedValue(undefined),
     });
     // Directly set the manager's servers for testing
     (manager as any).servers = servers;

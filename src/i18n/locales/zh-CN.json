@@ -565,7 +565,7 @@
     },
     "mcpServers": {
       "name": "MCP 服务",
-      "desc": "管理存储在 .claude/mcp.json 中的 Vault 级 MCP 配置。启用上下文节省模式的服务需通过 @ 提及激活。"
+      "desc": "管理 MCP 配置。项目级服务器存储在 .mcp.json（CC 兼容格式）。来自 ~/.claude.json 的全局和本地服务器以只读方式展示。启用上下文节省模式的服务需通过 @ 提及激活。"
     },
     "plugins": {
       "name": "插件",
@@ -793,7 +793,7 @@
       "toggleErrorGeneric": "更新工具设置失败",
       "toggleErrorPermission": "权限被拒绝，请检查 .claude/ 目录权限。",
       "toggleErrorDiskFull": "磁盘已满，请释放空间后重试。",
-      "toggleErrorJson": "配置文件损坏，请检查 .claude/mcp.json"
+      "toggleErrorJson": "配置文件损坏，请检查 .mcp.json"
     },
     "mcpList": {
       "headerLabel": "MCP 服务",
@@ -808,6 +808,8 @@
       "editAria": "编辑",
       "deleteAria": "删除",
       "addAria": "添加",
+      "addToProject": "加入项目",
+      "addToProjectAria": "将此服务器复制到项目配置（.mcp.json）",
       "noticeListRefreshed": "MCP 服务列表已刷新",
       "noticeRefreshFailed": "刷新 MCP 服务失败：{message}",
       "noticeReloadFailed": "已保存设置但重载失败，更改将在下次会话生效。",
@@ -818,6 +820,7 @@
       "serverExists": "服务「{name}」已存在",
       "serverUpdated": "已更新 MCP 服务「{name}」",
       "serverAdded": "已添加 MCP 服务「{name}」",
+      "serverAddedToProject": "已将「{name}」加入项目配置",
       "importNone": "没有导入新的 MCP 服务",
       "imported": "已导入 {count} 个 MCP 服务",
       "importedWithSkipped": "已导入 {count} 个 MCP 服务（跳过 {skipped} 个）",
@@ -825,7 +828,12 @@
       "serverEnabled": "启用",
       "serverDisabled": "禁用",
       "serverDeleted": "已删除 MCP 服务「{name}」",
-      "deleteConfirm": "删除 MCP 服务「{name}」？"
+      "deleteConfirm": "删除 MCP 服务「{name}」？",
+      "source": {
+        "project": "项目",
+        "local": "本地",
+        "user": "全局"
+      }
     },
     "slashCommandModal": {
       "typeName": "类型",
