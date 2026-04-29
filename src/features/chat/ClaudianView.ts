@@ -322,7 +322,8 @@ export class ClaudianView extends ItemView {
     });
 
     const resetWsBtn = this.headerActionsContent.createDiv({ cls: 'claudian-header-btn' });
-    setIcon(resetWsBtn, 'folder-x');
+    // 使用 home 表达「回到库根工作区」，避免 folder-x 被误读为删目录/清空
+    setIcon(resetWsBtn, 'home');
     const resetWsTip = t('workspace.resetTooltip');
     resetWsBtn.setAttribute('aria-label', resetWsTip);
     resetWsBtn.addEventListener('click', () => {

@@ -93,13 +93,54 @@ export class SlashCommandDropdown {
   handleInputChange(): void {
     if (!this.enabled) return;
 
-    const text = this.getInputValue();
     const cursorPos = this.getCursorPosition();
+    const parsed = this.parseSlashTriggerAtCursor(cursorPos);
+    if (!parsed) {
+      this.hide();
+      return;
+    }
+
+    this.triggerStartIndex = parsed.triggerIndex;
+    this.activeTriggerChar = parsed.triggerChar;
+    const isAtPosition0 = parsed.triggerIndex === 0;
+    void this.showDropdown(parsed.searchText, isAtPosition0);
+  }
+
+  /**
+   * 从工具条打开斜杠命令/技能列表：与手动输入 `/` 共用同一套解析与数据。
+   * 若光标已在合法 `/` 片段内则仅刷新列表；否则在光标处插入 `/`（必要时前置空格）。
+   */
+  openSlashPickerFromToolbar(): void {
+    if (!this.enabled) return;
+
+    this.inputEl.focus();
+    const pos = this.inputEl.selectionStart ?? 0;
+    const selEnd = this.inputEl.selectionEnd ?? pos;
+
+    if (this.parseSlashTriggerAtCursor(pos)) {
+      this.handleInputChange();
+      return;
+    }
+
+    const value = this.getInputValue();
+    const prevChar = pos > 0 ? value.charAt(pos - 1) : ' ';
+    const needSpace = pos > 0 && !/\s/.test(prevChar);
+    const insertion = needSpace ? ' /' : '/';
+    this.setInputValue(value.substring(0, pos) + insertion + value.substring(selEnd));
+    this.setCursorPosition(pos + insertion.length);
+    this.handleInputChange();
+  }
+
+  /** 从光标向左解析：是否在合法触发符之后且片段内无空白（与 handleInputChange 规则一致）。 */
+  private parseSlashTriggerAtCursor(cursorPos: number): {
+    triggerIndex: number;
+    triggerChar: string;
+    searchText: string;
+  } | null {
+    const text = this.getInputValue();
     const textBeforeCursor = text.substring(0, cursorPos);
     const triggerChars = this.providerConfig?.triggerChars ?? ['/'];
 
-    // Scan backward from cursor for the nearest valid trigger char.
-    // Valid trigger: at position 0, or preceded by whitespace.
     let triggerIndex = -1;
     let triggerChar = '';
 
@@ -115,22 +156,12 @@ export class SlashCommandDropdown {
       }
     }
 
-    if (triggerIndex === -1) {
-      this.hide();
-      return;
-    }
+    if (triggerIndex === -1) return null;
 
     const searchText = textBeforeCursor.substring(triggerIndex + 1);
+    if (/\s/.test(searchText)) return null;
 
-    if (/\s/.test(searchText)) {
-      this.hide();
-      return;
-    }
-
-    this.triggerStartIndex = triggerIndex;
-    this.activeTriggerChar = triggerChar;
-    const isAtPosition0 = triggerIndex === 0;
-    this.showDropdown(searchText, isAtPosition0);
+    return { triggerIndex, triggerChar, searchText };
   }
 
   handleKeydown(e: KeyboardEvent): boolean {

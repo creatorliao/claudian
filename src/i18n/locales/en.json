@@ -294,6 +294,7 @@
       },
       "send": "Send message",
       "stop": "Stop generation",
+      "openSlashCommands": "Open slash commands and skills list",
       "effort": {
         "low": "Low",
         "medium": "Med",

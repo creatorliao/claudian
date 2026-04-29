@@ -238,19 +238,19 @@ export class AgentSettings {
 
     const actionsEl = headerEl.createDiv({ cls: 'claudian-sp-header-actions' });
 
-    const refreshBtn = actionsEl.createEl('button', {
-      cls: 'claudian-settings-action-btn',
-      attr: { 'aria-label': t('common.refresh') },
-    });
-    setIcon(refreshBtn, 'refresh-cw');
-    refreshBtn.addEventListener('click', () => { void this.refreshAgents(); });
-
     const addBtn = actionsEl.createEl('button', {
       cls: 'claudian-settings-action-btn',
       attr: { 'aria-label': t('common.add') },
     });
     setIcon(addBtn, 'plus');
     addBtn.addEventListener('click', () => { void this.openAgentModal(null); });
+
+    const refreshBtn = actionsEl.createEl('button', {
+      cls: 'claudian-settings-action-btn claudian-sp-header-action-trailing',
+      attr: { 'aria-label': t('common.refresh') },
+    });
+    setIcon(refreshBtn, 'refresh-cw');
+    refreshBtn.addEventListener('click', () => { void this.refreshAgents(); });
 
     const allAgents = this.agentManager.getAvailableAgents();
     const vaultAgents = allAgents.filter(a => a.source === 'vault');

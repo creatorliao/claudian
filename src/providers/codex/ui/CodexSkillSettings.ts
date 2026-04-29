@@ -191,12 +191,6 @@ export class CodexSkillSettings {
     headerEl.createSpan({ text: t('settings.codexSkills.listLabel'), cls: 'claudian-sp-label' });
 
     const actionsEl = headerEl.createDiv({ cls: 'claudian-sp-header-actions' });
-    const refreshBtn = actionsEl.createEl('button', {
-      cls: 'claudian-settings-action-btn',
-      attr: { 'aria-label': t('common.refresh') },
-    });
-    setIcon(refreshBtn, 'refresh-cw');
-    refreshBtn.addEventListener('click', () => { void this.refresh(); });
 
     const addBtn = actionsEl.createEl('button', {
       cls: 'claudian-settings-action-btn',
@@ -204,6 +198,13 @@ export class CodexSkillSettings {
     });
     setIcon(addBtn, 'plus');
     addBtn.addEventListener('click', () => this.openModal(null));
+
+    const refreshBtn = actionsEl.createEl('button', {
+      cls: 'claudian-settings-action-btn claudian-sp-header-action-trailing',
+      attr: { 'aria-label': t('common.refresh') },
+    });
+    setIcon(refreshBtn, 'refresh-cw');
+    refreshBtn.addEventListener('click', () => { void this.refresh(); });
 
     if (this.entries.length === 0) {
       const emptyEl = this.containerEl.createDiv({ cls: 'claudian-sp-empty-state' });

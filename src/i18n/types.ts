@@ -228,6 +228,7 @@ export type TranslationKey =
   | "chat.ribbon.serviceTier.fastModeTitle"
   | "chat.ribbon.send"
   | "chat.ribbon.stop"
+  | "chat.ribbon.openSlashCommands"
   | "chat.ribbon.effort.low"
   | "chat.ribbon.effort.medium"
   | "chat.ribbon.effort.high"

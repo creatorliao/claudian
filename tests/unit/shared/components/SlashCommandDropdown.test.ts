@@ -505,4 +505,57 @@ describe('SlashCommandDropdown', () => {
       d.destroy();
     });
   });
+
+  describe('openSlashPickerFromToolbar', () => {
+    it('应在空输入插入斜杠并走与 handleInputChange 相同的展示路径', async () => {
+      const getProviderEntries = jest.fn().mockResolvedValue([]);
+      const input = createMockInput();
+      input.setSelectionRange = jest.fn((start: number, end: number) => {
+        input.selectionStart = start;
+        input.selectionEnd = end;
+      });
+
+      const d = new SlashCommandDropdown(
+        containerEl,
+        input,
+        callbacks,
+        { providerConfig: CLAUDE_CONFIG, getProviderEntries },
+      );
+
+      d.openSlashPickerFromToolbar();
+      await new Promise(resolve => setTimeout(resolve, 15));
+
+      expect(input.value).toBe('/');
+      expect(input.focus).toHaveBeenCalled();
+      expect(getRenderedCommandNames(containerEl).length).toBeGreaterThan(0);
+
+      d.destroy();
+    });
+
+    it('光标已在 / 片段内时应仅刷新列表而不重复插入', async () => {
+      const getProviderEntries = jest.fn().mockResolvedValue([]);
+      const input = createMockInput();
+      input.setSelectionRange = jest.fn((start: number, end: number) => {
+        input.selectionStart = start;
+        input.selectionEnd = end;
+      });
+      input.value = '/';
+      input.selectionStart = 1;
+      input.selectionEnd = 1;
+
+      const d = new SlashCommandDropdown(
+        containerEl,
+        input,
+        callbacks,
+        { providerConfig: CLAUDE_CONFIG, getProviderEntries },
+      );
+
+      d.openSlashPickerFromToolbar();
+      await new Promise(resolve => setTimeout(resolve, 15));
+
+      expect(input.value).toBe('/');
+
+      d.destroy();
+    });
+  });
 });

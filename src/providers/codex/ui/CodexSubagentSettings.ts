@@ -307,19 +307,19 @@ export class CodexSubagentSettings {
 
     const actionsEl = headerEl.createDiv({ cls: 'claudian-sp-header-actions' });
 
-    const refreshBtn = actionsEl.createEl('button', {
-      cls: 'claudian-settings-action-btn',
-      attr: { 'aria-label': t('common.refresh') },
-    });
-    setIcon(refreshBtn, 'refresh-cw');
-    refreshBtn.addEventListener('click', () => { void this.render(); });
-
     const addBtn = actionsEl.createEl('button', {
       cls: 'claudian-settings-action-btn',
       attr: { 'aria-label': t('common.add') },
     });
     setIcon(addBtn, 'plus');
     addBtn.addEventListener('click', () => this.openModal(null));
+
+    const refreshBtn = actionsEl.createEl('button', {
+      cls: 'claudian-settings-action-btn claudian-sp-header-action-trailing',
+      attr: { 'aria-label': t('common.refresh') },
+    });
+    setIcon(refreshBtn, 'refresh-cw');
+    refreshBtn.addEventListener('click', () => { void this.render(); });
 
     if (this.agents.length === 0) {
       const emptyEl = this.containerEl.createDiv({ cls: 'claudian-sp-empty-state' });

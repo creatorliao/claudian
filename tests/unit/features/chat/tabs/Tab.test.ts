@@ -83,6 +83,7 @@ const createMockSlashCommandDropdown = () => ({
   resetSdkSkillsCache: jest.fn(),
   setHiddenCommands: jest.fn(),
   setEnabled: jest.fn(),
+  openSlashPickerFromToolbar: jest.fn(),
   destroy: jest.fn(),
 });
 

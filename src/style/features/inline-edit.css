@@ -37,6 +37,30 @@
   overflow: visible;
 }
 
+/* 内联编辑：与侧栏同源打开斜杠列表 */
+.claudian-inline-slash-picker-icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: var(--text-faint);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.claudian-inline-slash-picker-icon:hover {
+  color: var(--text-normal);
+  background: var(--background-modifier-hover);
+}
+
+.claudian-inline-slash-picker-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
 /* Input - fully transparent */
 .claudian-inline-input {
   width: 100%;

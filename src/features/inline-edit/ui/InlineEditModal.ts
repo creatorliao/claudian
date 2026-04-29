@@ -2,7 +2,7 @@ import { RangeSetBuilder, StateEffect, StateField } from '@codemirror/state';
 import type { DecorationSet } from '@codemirror/view';
 import { Decoration, EditorView, WidgetType } from '@codemirror/view';
 import type { App, Editor, MarkdownView } from 'obsidian';
-import { Notice } from 'obsidian';
+import { Notice, setIcon } from 'obsidian';
 
 import { getHiddenProviderCommandSet } from '../../../core/providers/commands/hiddenCommands';
 import { ProviderRegistry } from '../../../core/providers/ProviderRegistry';
@@ -418,11 +418,22 @@ class InlineEditController {
 
     const inputWrap = document.createElement('div');
     inputWrap.className = 'claudian-inline-input-wrap';
+    inputWrap.style.display = 'flex';
+    inputWrap.style.alignItems = 'center';
+    inputWrap.style.gap = '4px';
     container.appendChild(inputWrap);
+
+    const slashOpenEl = document.createElement('div');
+    slashOpenEl.className = 'claudian-inline-slash-picker-icon';
+    setIcon(slashOpenEl, 'slash');
+    slashOpenEl.setAttribute('aria-label', t('chat.ribbon.openSlashCommands'));
+    inputWrap.appendChild(slashOpenEl);
 
     this.inputEl = document.createElement('input');
     this.inputEl.type = 'text';
     this.inputEl.className = 'claudian-inline-input';
+    this.inputEl.style.flex = '1';
+    this.inputEl.style.minWidth = '0';
     this.inputEl.placeholder = this.mode === 'cursor' ? 'Insert instructions...' : 'Edit instructions...';
     this.inputEl.spellcheck = false;
     inputWrap.appendChild(this.inputEl);
@@ -449,6 +460,11 @@ class InlineEditController {
         } : {}),
       }
     );
+
+    slashOpenEl.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.slashCommandDropdown?.openSlashPickerFromToolbar();
+    });
 
     this.mentionDropdown = new MentionDropdownController(
       document.body,
