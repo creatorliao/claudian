@@ -170,6 +170,9 @@ export class ClaudianSettingTab extends PluginSettingTab {
           }
         },
         renderCustomContextLimits: (target, providerId) => this.renderCustomContextLimits(target, providerId),
+        redisplay: () => {
+          this.display();
+        },
       });
     }
   }

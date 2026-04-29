@@ -251,6 +251,7 @@ function createContext(plugin: any) {
     renderHiddenProviderCommandSetting: jest.fn(),
     refreshModelSelectors: jest.fn(),
     renderCustomContextLimits: jest.fn(),
+    redisplay: jest.fn(),
   };
 }
 

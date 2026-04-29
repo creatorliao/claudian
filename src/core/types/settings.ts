@@ -132,6 +132,12 @@ export interface ClaudianSettings {
   /** 通用设置页是否展开「更多选项」（显示系统提示词、环境变量等）；默认关闭以降低初次上手门槛 */
   showMoreGeneralOptions: boolean;
 
+  /**
+   * 各提供商设置页「显示更多选项」开关；缺失的键视为 `false`（简易模式）。
+   * 当前仅 Claude 页使用；Codex/Cursor 可后续对齐。
+   */
+  providerShowMoreOptions?: Partial<Record<'claude' | 'codex' | 'cursor', boolean>>;
+
   // UI preferences
   maxTabs: number;
   tabBarPosition: TabBarPosition;

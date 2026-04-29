@@ -37,6 +37,13 @@
   display: block;
 }
 
+/* Claude 设置页：「显示更多选项」之下的高级区块，与上方固定区分隔 */
+.claudian-settings-claude-advanced-block {
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
 /* Codex placeholder */
 .claudian-settings-codex-placeholder {
   padding: 40px 20px;

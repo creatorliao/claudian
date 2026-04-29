@@ -428,7 +428,8 @@
     "moreOptions": {
       "name": "Show more options",
       "desc": "When off, only common settings are shown—enough for everyday use. When on, you can configure system prompts, hotkey shortcuts, environment variables, and more. You do not need this for normal chatting.",
-      "hintWhenExpanded": "Optional settings below—adjust only if you need them."
+      "hintWhenExpanded": "Optional settings below—adjust only if you need them.",
+      "providerDescClaude": "Placed below the common blocks above. When off, only those stay visible; when on, advanced settings expand below as one contiguous section: models, hidden commands, MCP, environment variables, CLI path, etc."
     },
     "display": "Display",
     "conversations": "Conversations",

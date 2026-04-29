@@ -50,6 +50,8 @@ export const DEFAULT_CLAUDIAN_SETTINGS: ClaudianSettings = {
 
   showMoreGeneralOptions: false,
 
+  providerShowMoreOptions: {},
+
   maxTabs: 5,
   tabBarPosition: 'input',
   enableAutoScroll: true,

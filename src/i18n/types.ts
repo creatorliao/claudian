@@ -354,6 +354,7 @@ export type TranslationKey =
   | "settings.moreOptions.name"
   | "settings.moreOptions.desc"
   | "settings.moreOptions.hintWhenExpanded"
+  | "settings.moreOptions.providerDescClaude"
   | "settings.display"
   | "settings.conversations"
   | "settings.content"

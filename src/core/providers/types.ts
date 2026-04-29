@@ -282,6 +282,8 @@ export interface ProviderSettingsTabRendererContext {
   ): void;
   refreshModelSelectors(): void;
   renderCustomContextLimits(container: HTMLElement, providerId?: ProviderId): void;
+  /** 重新绘制整个插件设置面板（例如在切换「显示更多选项」后） */
+  redisplay(): void;
 }
 
 export interface ProviderSettingsTabRenderer {

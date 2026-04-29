@@ -428,7 +428,8 @@
     "moreOptions": {
       "name": "显示更多选项",
       "desc": "关闭时只显示常用项，足以日常使用。开启后可配置系统提示词、快捷键入口、环境变量等；不需要也能正常对话。",
-      "hintWhenExpanded": "以下为补充设置，按需要调整即可。"
+      "hintWhenExpanded": "以下为补充设置，按需要调整即可。",
+      "providerDescClaude": "此项位于上方常用区块之后。关闭时只占首屏常用项；开启后在其下方整块展开模型、隐藏命令、MCP、环境变量与 CLI 路径等。"
     },
     "display": "显示",
     "conversations": "对话",

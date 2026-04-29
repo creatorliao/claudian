@@ -332,11 +332,16 @@ function createContext(plugin: any) {
     refreshModelSelectors: jest.fn(),
     renderHiddenProviderCommandSetting: jest.fn(),
     renderCustomContextLimits: jest.fn(),
+    redisplay: jest.fn(),
   };
 }
 
+function findOptionalSetting(name: string) {
+  return createdSettings.find(candidate => candidate.name === name);
+}
+
 function findSetting(name: string) {
-  const setting = createdSettings.find(candidate => candidate.name === name);
+  const setting = findOptionalSetting(name);
   if (!setting) {
     throw new Error(`Setting not found: ${name}`);
   }
@@ -355,7 +360,7 @@ describe('ClaudeSettingsTab', () => {
   });
 
   it('does not switch the active model while the custom models textarea is mid-edit', async () => {
-    const plugin = createPlugin();
+    const plugin = createPlugin({ providerShowMoreOptions: { claude: true } });
     const context = createContext(plugin);
 
     claudeSettingsTabRenderer.render(createContainer(), context);
@@ -374,6 +379,7 @@ describe('ClaudeSettingsTab', () => {
   it('reconciles removed custom models on blur and clears stale title model selections', async () => {
     const plugin = createPlugin({
       titleGenerationModel: 'claude-opus-4-6',
+      providerShowMoreOptions: { claude: true },
     });
     const context = createContext(plugin);
 
@@ -390,5 +396,20 @@ describe('ClaudeSettingsTab', () => {
     expect(plugin.settings.titleGenerationModel).toBe('');
     expect(mockSaveSettings).toHaveBeenCalledTimes(1);
     expect(context.refreshModelSelectors).toHaveBeenCalledTimes(1);
+  });
+
+  it('简易模式不包含模型区块、CLI 路径与 MCP 分区标题（高级项由「显示更多选项」展开）', () => {
+    const plugin = createPlugin();
+    const context = createContext(plugin);
+
+    claudeSettingsTabRenderer.render(createContainer(), context);
+
+    expect(findOptionalSetting('settings.models')).toBeUndefined();
+    expect(findOptionalSetting('settings.setup')).toBeUndefined();
+    expect(
+      createdSettings.some((s) => typeof s.name === 'string' && s.name.includes('settings.cliPath.name')),
+    ).toBe(false);
+    expect(findOptionalSetting('settings.mcpServers.name')).toBeUndefined();
+    expect(context.renderHiddenProviderCommandSetting).not.toHaveBeenCalled();
   });
 });
