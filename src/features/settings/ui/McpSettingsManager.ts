@@ -194,13 +194,16 @@ export class McpSettingsManager {
 
     if (isProject) {
       // 项目级：启用/禁用、编辑、删除
+      // 图标用 check-circle / ban（与仅左右偏移的 toggle-left|right 相比更易区分）；样式见 claudian-mcp-toggle-btn--on|off
       const toggleBtn = actionsEl.createEl('button', {
-        cls: 'claudian-mcp-action-btn',
+        cls: `claudian-mcp-action-btn claudian-mcp-toggle-btn ${
+          server.enabled ? 'claudian-mcp-toggle-btn--on' : 'claudian-mcp-toggle-btn--off'
+        }`,
         attr: {
           'aria-label': server.enabled ? t('settings.mcpList.disableAria') : t('settings.mcpList.enableAria'),
         },
       });
-      setIcon(toggleBtn, server.enabled ? 'toggle-right' : 'toggle-left');
+      setIcon(toggleBtn, server.enabled ? 'check-circle' : 'ban');
       toggleBtn.addEventListener('click', () => this.toggleServer(server));
 
       const editBtn = actionsEl.createEl('button', {
