@@ -186,7 +186,9 @@ export const codexSettingsTabRenderer: ProviderSettingsTabRenderer = {
       });
 
       const skillsContainer = container.createDiv({ cls: 'claudian-slash-commands-container' });
-      new CodexSkillSettings(skillsContainer, codexCatalog, context.plugin.app);
+      new CodexSkillSettings(skillsContainer, codexCatalog, context.plugin.app, () => {
+        context.plugin.resetSlashDropdownProviderCachesOnAllTabs();
+      });
     }
 
     context.renderHiddenProviderCommandSetting(container, 'codex', {

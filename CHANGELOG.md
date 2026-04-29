@@ -2,6 +2,22 @@
 
 本文档记录 Claudian（Obsidian 插件）的版本变更；格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，版本号遵循语义化版本意图（主版本.次版本.修订号）。
 
+## [2.2.0] - 2026-04-29
+
+### 功能
+
+- **内联编辑**：须已打开 Claudian 视图且当前为 Markdown 编辑上下文；`claudian:inline-edit` 使用 **`editorCheckCallback`**（条件不满足时命令面板不显示），逻辑在 **`runInlineEditCommand`**。新增 **`chat.notices.inlineEditRequiresClaudianView`**（`zh-CN` / `en`）。
+- **侧栏对话 · 组合器高度**：底部输入区顶缘 **纵向拖拽** 可调高整块组合器；偏好 **`composerPreferredMinHeightPx`** 全局持久化，视口变化时 runtime 钳制；**双击把手或队列/导航行间空白**（避让可交互控件）恢复默认高度；审批 / AskUserQuestion 隐藏输入区时结束拖拽并清理监听。
+- **组合器布局（C6～C9）**：容器纵向 `flex` 使增高落实到内层 `textarea`；**外 + 内** 双隐形命中条（队列行上沿与内层卡片之间），默认无横线；`autoResizeTextarea` 按槽位与 `max(globalCap, slotCap)` 放宽 `max-height`；**`.claudian-input-toolbar`** 使用 **`margin-top: auto`**，拉高后底栏始终贴内层卡片底边。详 **`docs/01-Projects/R20260429-10-通过拖拽调整输入框的高度/C08_问题与方案_多行撑开与双缘拖拽.md`**。
+- **侧栏对话 · 默认输入高度**：空闲态 **`.claudian-input` `min-height`** `60px` → `80px`（约多一行）；**`.claudian-input-wrapper` `min-height`** `140px` → `160px`。
+
+### 文档
+
+- **`docs/01-Projects/R20260429-11-内联编辑工作原理/`**：内联门禁与 i18n 写入 **`C01`**、**`C03-解决方案(完善稿)_...`**；Claude 内联与侧栏 **SDK/权限路径对齐**仍待实施。
+- **`docs/01-Projects/R20260429-10-通过拖拽调整输入框的高度/`**：问题报告、方案完善稿、**`C06` `C08`** 等迭代记录。
+
+---
+
 ## [2.1.2] - 2026-04-21
 
 ### 功能

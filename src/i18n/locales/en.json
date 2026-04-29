@@ -70,6 +70,9 @@
       "running": "Running...",
       "copyFailed": "Failed to copy to clipboard"
     },
+    "composer": {
+      "resizeHandleAriaLabel": "Drag just above the inner input card (outside its top border) to resize height. Double-click a resize strip or empty queue/nav area to reset."
+    },
     "fileDrop": {
       "notice": "Added {count} file(s) to context",
       "overlay": "Drop file here to add to context"
@@ -381,6 +384,7 @@
       "failedProcessResponse": "Failed to process response",
       "failedRefineInstruction": "Failed to refine instruction",
       "chatServiceInitFailed": "Failed to initialize chat service",
+      "inlineEditRequiresClaudianView": "Open the Claudian chat view first (ribbon icon or the “Open chat view” command) to use inline edit.",
       "inlineEditNoMarkdownView": "Inline edit unavailable: could not access the active markdown view.",
       "inlineEditInserted": "Inserted",
       "inlineEditApplied": "Edit applied",

@@ -33,6 +33,12 @@ jest.mock('@/features/chat/tabs/Tab', () => ({
   setupApprovalCallback: (...args: any[]) => mockSetupApprovalCallback(...args),
 }));
 
+jest.mock('@/features/chat/ui/ComposerResizeHandle', () => ({
+  wireComposerResize: jest.fn(),
+  applyComposerMinHeightFromSettings: jest.fn(),
+  interruptComposerDragIfActive: jest.fn(),
+}));
+
 const mockChooseForkTarget = jest.fn();
 jest.mock('@/shared/modals/ForkTargetModal', () => ({
   chooseForkTarget: (...args: any[]) => mockChooseForkTarget(...args),

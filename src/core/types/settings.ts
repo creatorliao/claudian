@@ -140,6 +140,11 @@ export interface ClaudianSettings {
 
   // UI preferences
   maxTabs: number;
+  /**
+   * 全局偏好：侧栏对话底部组合器（.claudian-input-container）的 min-height（px），已由运行时钳制。
+   * 缺省表示不覆盖默认布局。
+   */
+  composerPreferredMinHeightPx?: number;
   tabBarPosition: TabBarPosition;
   enableAutoScroll: boolean;
   openInMainTab: boolean;

@@ -568,7 +568,7 @@ export class ClaudianSettingTab extends PluginSettingTab {
               [providerId]: normalizeHiddenCommandList(value.split(/\r?\n/)),
             };
             await this.plugin.saveSettings();
-            this.plugin.getView()?.updateHiddenProviderCommands();
+            this.plugin.syncSlashDropdownHiddenCommandsFromSettings();
           });
         text.inputEl.rows = 4;
         text.inputEl.cols = 30;

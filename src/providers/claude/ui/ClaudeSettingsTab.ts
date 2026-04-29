@@ -189,6 +189,8 @@ function renderSlashSkillsSection(
           await context.plugin.saveSettings();
           // 清除 catalog 内 SDK/探测缓存，并重绘设置页，使预览列表与下拉与新的来源范围一致
           await claudeWorkspace.commandCatalog.refresh();
+          // 同步清空侧栏/聊天 Tab 斜杠下拉的内存条目缓存，否则会沿用切换前的清单（与用户主页合并与否不一致）
+          context.plugin.resetSlashDropdownProviderCachesOnAllTabs();
           context.redisplay();
         });
     });
@@ -198,6 +200,9 @@ function renderSlashSkillsSection(
     slashCommandsContainer,
     context.plugin.app,
     claudeWorkspace.commandCatalog,
+    () => {
+      context.plugin.resetSlashDropdownProviderCachesOnAllTabs();
+    },
     claudeSettings.slashAssetScope,
   );
 }

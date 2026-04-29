@@ -160,22 +160,36 @@ export class CodexSkillSettings {
   private catalog: ProviderCommandCatalog;
   private entries: ProviderCommandEntry[] = [];
   private app?: any;
+  /** 技能列表在设置页变更后通知聊天视图清空斜杠下拉缓存 */
+  private readonly onSkillsCatalogMutated?: () => void;
 
-  constructor(containerEl: HTMLElement, catalog: ProviderCommandCatalog, app?: any) {
+  constructor(
+    containerEl: HTMLElement,
+    catalog: ProviderCommandCatalog,
+    app?: any,
+    onSkillsCatalogMutated?: () => void,
+  ) {
     this.containerEl = containerEl;
     this.catalog = catalog;
     this.app = app;
+    this.onSkillsCatalogMutated = onSkillsCatalogMutated;
     this.render();
+  }
+
+  private notifySkillsCatalogMutated(): void {
+    this.onSkillsCatalogMutated?.();
   }
 
   async deleteEntry(entry: ProviderCommandEntry): Promise<void> {
     await this.catalog.deleteVaultEntry(entry);
     await this.render();
+    this.notifySkillsCatalogMutated();
   }
 
   async refresh(): Promise<void> {
     await this.catalog.refresh();
     await this.render();
+    this.notifySkillsCatalogMutated();
   }
 
   async render(): Promise<void> {
@@ -269,6 +283,7 @@ export class CodexSkillSettings {
       async (entry) => {
         await this.catalog.saveVaultEntry(entry);
         await this.render();
+        this.notifySkillsCatalogMutated();
         new Notice(
           t('settings.codexSkills.saved', {
             name: entry.name,

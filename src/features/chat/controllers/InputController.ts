@@ -89,6 +89,10 @@ export interface InputControllerDeps {
   getInputContainerEl: () => HTMLElement;
   generateId: () => string;
   resetInputHeight: () => void;
+  /** 输入容器即将被 display:none（审批/追问等）时调用，用于结束组合器拖拽 */
+  notifyComposerResizeInterrupted?: () => void;
+  /** 输入容器从隐藏恢复显示后调用，用于重新施加组合器高度钳制 */
+  notifyComposerResizeContainerRestored?: () => void;
   getAgentService?: () => ChatRuntime | null;
   getSubagentManager: () => SubagentManager;
   /** Tab-level provider fallback for blank tabs (derived from draft model). */
@@ -1460,6 +1464,7 @@ export class InputController {
   }
 
   private hideInputContainer(inputContainerEl: HTMLElement): void {
+    this.deps.notifyComposerResizeInterrupted?.();
     this.inputContainerHideDepth++;
     inputContainerEl.style.display = 'none';
   }
@@ -1469,6 +1474,7 @@ export class InputController {
     this.inputContainerHideDepth--;
     if (this.inputContainerHideDepth === 0) {
       inputContainerEl.style.display = '';
+      this.deps.notifyComposerResizeContainerRestored?.();
     }
   }
 
@@ -1476,6 +1482,7 @@ export class InputController {
     if (this.inputContainerHideDepth > 0) {
       this.inputContainerHideDepth = 0;
       this.deps.getInputContainerEl().style.display = '';
+      this.deps.notifyComposerResizeContainerRestored?.();
     }
   }
 

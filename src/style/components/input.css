@@ -1,16 +1,39 @@
-/* Input area */
+/* Input area — 纵向 flex：组合器 min-height 增量由 input-wrapper 与 textarea 分摊（C06） */
 .claudian-input-container {
   position: relative;
   padding: 12px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  min-height: 0;
+}
+
+/* 命中区：紧贴内层 .claudian-input-wrapper 之上、卡片边框之外；默认无线条，仅悬停/聚焦时极轻提示 */
+.claudian-composer-resize-handle {
+  flex-shrink: 0;
+  height: 8px;
+  margin: 0;
+  cursor: ns-resize;
+  touch-action: none;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 2;
+  background: transparent;
+}
+
+.claudian-composer-resize-handle:hover,
+.claudian-composer-resize-handle:focus-visible {
+  background: color-mix(in srgb, var(--background-modifier-hover) 18%, transparent);
 }
 
 /* Input wrapper (border container) - flex column so textarea expands when no chips */
-/* Height calculation: context row (36px) + textarea min (60px) + toolbar (38px) + border (2px) = 136px */
+/* 作为组合器内唯一 flex:1 子项，接收容器 min-height 抬高后的剩余垂直空间 */
 .claudian-input-wrapper {
   position: relative;
   display: flex;
   flex-direction: column;
-  min-height: 140px;
+  flex: 1 1 0;
+  min-height: 160px;
   border: 1px solid var(--background-modifier-border);
   border-radius: 6px;
   background: var(--background-primary);
@@ -39,6 +62,7 @@
   justify-content: space-between;
   padding: 0 0 8px 0;
   min-height: 0;
+  flex-shrink: 0;
 }
 
 /* 内层：左侧闪电与输入框卡片左缘对齐；右侧为标签 + 头部操作（可迁至顶栏） */
@@ -102,7 +126,8 @@
 .claudian-input {
   width: 100%;
   flex: 1 1 0;
-  min-height: 60px;
+  /* 默认约多一行可视高度：14px * 1.4 ≈ 20px，原 60px → 80px */
+  min-height: 80px;
   /* max-height dynamically set by JS: max(150px, 55% of view height) */
   resize: none;
   padding: 8px 10px 10px 10px;
@@ -130,12 +155,13 @@
   color: var(--text-muted);
 }
 
-/* Input toolbar */
+/* Input toolbar — 贴内层卡片底边：textarea 受 max-height 限制未吃满纵向余量时，不靠 flex-start 悬在中间（需求 4） */
 .claudian-input-toolbar {
   display: flex;
   align-items: center; /* 纵轴中线对齐（含发送按钮与 24px 文件夹图标行） */
   justify-content: flex-start;
   flex-shrink: 0;
+  margin-top: auto;
   width: 100%;
   box-sizing: border-box;
   padding: 4px 6px 6px 6px;
@@ -213,6 +239,7 @@
   align-items: center;
   gap: 8px;
   padding: 0 2px 8px 2px;
+  flex-shrink: 0;
 }
 
 .claudian-queue-indicator-text {

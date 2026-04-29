@@ -44,6 +44,10 @@ import { BangBashService } from '../services/BangBashService';
 import { SubagentManager } from '../services/SubagentManager';
 import { ChatState } from '../state/ChatState';
 import { BangBashModeManager as BangBashModeManagerClass } from '../ui/BangBashModeManager';
+import {
+  applyComposerMinHeightFromSettings,
+  interruptComposerDragIfActive,
+} from '../ui/ComposerResizeHandle';
 import { FileContextManager } from '../ui/FileContext';
 import { FileDragDropManager } from '../ui/FileDragDropManager';
 import { ImageContextManager } from '../ui/ImageContext';
@@ -429,15 +433,33 @@ export function createTab(options: TabCreateOptions): TabData {
  * - At minimum wrapper height: let flexbox allocate space (textarea fills available)
  * - When content exceeds flex allocation: set min-height to force wrapper growth
  * - When content shrinks: remove min-height override to let wrapper shrink
- * - Max height is capped at 55% of view height (minimum 150px)
+ * - Max height uses global view cap and inner-wrapper slot; when user has expanded the composer,
+ *   the effective cap is max(global, slot) capped by a soft viewport ceiling (C08).
  */
-function autoResizeTextarea(textarea: HTMLTextAreaElement): void {
+export function autoResizeTextarea(textarea: HTMLTextAreaElement): void {
   // Clear inline min-height to let flexbox compute natural allocation
   textarea.style.minHeight = '';
 
-  // Calculate max height: 55% of view height, minimum 150px
   const viewHeight = textarea.closest('.claudian-container')?.clientHeight ?? window.innerHeight;
-  const maxHeight = Math.max(TEXTAREA_MIN_MAX_HEIGHT, viewHeight * TEXTAREA_MAX_HEIGHT_PERCENT);
+  const globalCap = Math.max(TEXTAREA_MIN_MAX_HEIGHT, viewHeight * TEXTAREA_MAX_HEIGHT_PERCENT);
+
+  const wrapper = textarea.closest('.claudian-input-wrapper') as HTMLElement | null;
+  let siblingChrome = 0;
+  if (wrapper && wrapper.children) {
+    for (let i = 0; i < wrapper.children.length; i++) {
+      const el = wrapper.children[i] as HTMLElement;
+      if (el !== textarea) {
+        siblingChrome += el.offsetHeight;
+      }
+    }
+  }
+  const slotCap =
+    wrapper && wrapper.clientHeight > 0
+      ? Math.max(TEXTAREA_MIN_MAX_HEIGHT, wrapper.clientHeight - siblingChrome)
+      : globalCap;
+  // 用户拉高组合器后内层槽位可能大于 globalCap；取 max 避免「外高、内层仍按 55% 封顶」导致过早内部滚动（C08）
+  const softViewportCeiling = viewHeight * 0.92;
+  const maxHeight = Math.min(Math.max(globalCap, slotCap), softViewportCeiling);
 
   // Get flex-allocated height (what flexbox gives the textarea)
   const flexAllocatedHeight = textarea.offsetHeight;
@@ -464,8 +486,11 @@ function buildTabDOM(contentEl: HTMLElement): TabDOMElements {
   const welcomeEl = messagesEl.createDiv({ cls: 'claudian-welcome' });
   const statusPanelContainerEl = contentEl.createDiv({ cls: 'claudian-status-panel-container' });
   const inputContainerEl = contentEl.createDiv({ cls: 'claudian-input-container' });
+  /* C08：外卡片顶缘 + 内层卡片顶缘外，双条命中区（类名相同、样式相同） */
+  const composerResizeHandleOuterEl = inputContainerEl.createDiv({ cls: 'claudian-composer-resize-handle' });
   const queueIndicatorEl = inputContainerEl.createDiv({ cls: 'claudian-input-queue-row' });
   const navRowEl = inputContainerEl.createDiv({ cls: 'claudian-input-nav-row' });
+  const composerResizeHandleInnerEl = inputContainerEl.createDiv({ cls: 'claudian-composer-resize-handle' });
   const inputWrapper = inputContainerEl.createDiv({ cls: 'claudian-input-wrapper' });
   const contextRowEl = inputWrapper.createDiv({ cls: 'claudian-context-row' });
   // 主输入框不设 placeholder：避免「How can I help you today?」等寒暄式提示（产品决策，见方案文档）。
@@ -483,6 +508,8 @@ function buildTabDOM(contentEl: HTMLElement): TabDOMElements {
     welcomeEl,
     statusPanelContainerEl,
     inputContainerEl,
+    composerResizeHandleOuterEl,
+    composerResizeHandleInnerEl,
     queueIndicatorEl,
     inputWrapper,
     inputEl,
@@ -1344,7 +1371,17 @@ export function initializeTabControllers(
     getStatusPanel: () => ui.statusPanel,
     generateId: generateMessageId,
     resetInputHeight: () => {
-      // Per-tab input height is managed by CSS, no dynamic adjustment needed
+      autoResizeTextarea(dom.inputEl);
+    },
+    notifyComposerResizeInterrupted: () => {
+      interruptComposerDragIfActive(tab);
+    },
+    notifyComposerResizeContainerRestored: () => {
+      requestAnimationFrame(() => {
+        applyComposerMinHeightFromSettings(tab, plugin, () => {
+          autoResizeTextarea(dom.inputEl);
+        });
+      });
     },
     getAgentService: () => tab.service,
     getSubagentManager: () => services.subagentManager,

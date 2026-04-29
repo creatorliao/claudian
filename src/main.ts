@@ -17,6 +17,7 @@ import * as path from "path";
 import { DEFAULT_CLAUDIAN_SETTINGS } from "./app/settings/defaultSettings";
 import { SharedStorageService } from "./app/storage/SharedStorageService";
 import type { SharedAppStorage } from "./core/bootstrap/storage";
+import { getHiddenProviderCommandSet } from "./core/providers/commands/hiddenCommands";
 import {
   getEnvironmentVariablesForScope as getScopedEnvironmentVariables,
   getRuntimeEnvironmentText,
@@ -36,6 +37,8 @@ import type {
 import { VIEW_TYPE_CLAUDIAN } from "./core/types";
 import type { EnvironmentScope } from "./core/types/settings";
 import { ClaudianView } from "./features/chat/ClaudianView";
+import { normalizeComposerPreferredMinHeightPx } from "./features/chat/tabs/composerHeight";
+import { getTabProviderId } from "./features/chat/tabs/Tab";
 import {
   type InlineEditContext,
   InlineEditModal,
@@ -123,54 +126,31 @@ export default class ClaudianPlugin extends Plugin {
     this.addCommand({
       id: "inline-edit",
       name: t("commands.inlineEdit"),
-      editorCallback: async (editor: Editor, ctx) => {
+      editorCheckCallback: (checking, editor, ctx) => {
+        if (!this.getView()) {
+          if (!checking) {
+            new Notice(t("chat.notices.inlineEditRequiresClaudianView"));
+          }
+          return false;
+        }
+
         const view =
           ctx instanceof MarkdownView
             ? ctx
             : this.app.workspace.getActiveViewOfType(MarkdownView);
         if (!view) {
-          new Notice(t("chat.notices.inlineEditNoMarkdownView"));
-          return;
+          if (!checking) {
+            new Notice(t("chat.notices.inlineEditNoMarkdownView"));
+          }
+          return false;
         }
 
-        const selectedText = editor.getSelection();
-        const notePath = view.file?.path || "unknown";
-
-        let editContext: InlineEditContext;
-        if (selectedText.trim()) {
-          editContext = { mode: "selection", selectedText };
-        } else {
-          const cursor = editor.getCursor();
-          const cursorContext = buildCursorContext(
-            (line) => editor.getLine(line),
-            editor.lineCount(),
-            cursor.line,
-            cursor.ch
-          );
-          editContext = { mode: "cursor", cursorContext };
+        if (checking) {
+          return true;
         }
 
-        const modal = new InlineEditModal(
-          this.app,
-          this,
-          editor,
-          view,
-          editContext,
-          notePath,
-          () =>
-            this.getView()
-              ?.getActiveTab()
-              ?.ui.externalContextSelector?.getExternalContexts() ?? []
-        );
-        const result = await modal.openAndWait();
-
-        if (result.decision === "accept" && result.editedText !== undefined) {
-          new Notice(
-            editContext.mode === "cursor"
-              ? t("chat.notices.inlineEditInserted")
-              : t("chat.notices.inlineEditApplied"),
-          );
-        }
+        void this.runInlineEditCommand(editor, view);
+        return true;
       },
     });
 
@@ -437,6 +417,13 @@ export default class ClaudianPlugin extends Plugin {
       );
     const didNormalizeModelVariants = this.normalizeModelVariantSettings();
 
+    const prevComposerPref = this.settings.composerPreferredMinHeightPx;
+    this.settings.composerPreferredMinHeightPx = normalizeComposerPreferredMinHeightPx(
+      this.settings.composerPreferredMinHeightPx as unknown
+    );
+    const didNormalizeComposer =
+      prevComposerPref !== this.settings.composerPreferredMinHeightPx;
+
     const allMetadata = await this.storage.sessions.listMetadata();
     this.conversations = allMetadata
       .map((meta) => {
@@ -477,7 +464,7 @@ export default class ClaudianPlugin extends Plugin {
       this.settings as unknown as Record<string, unknown>
     );
 
-    if (changed || didNormalizeModelVariants || didNormalizeProviderSelection || didNormalizeLocale) {
+    if (changed || didNormalizeModelVariants || didNormalizeProviderSelection || didNormalizeLocale || didNormalizeComposer) {
       await this.saveSettings();
     }
 
@@ -882,6 +869,51 @@ export default class ClaudianPlugin extends Plugin {
     await this.storage.setTabManagerState(state);
   }
 
+  /**
+   * 内联编辑：须已有 Claudian 视图（由命令的 editorCheckCallback 门禁），在 Markdown 中拉起 InlineEditModal。
+   * 与权限/审批相关的 Tab 回调依赖侧栏已打开并完成 setupServiceCallbacks（见权限对齐方案）。
+   */
+  private async runInlineEditCommand(editor: Editor, view: MarkdownView): Promise<void> {
+    const selectedText = editor.getSelection();
+    const notePath = view.file?.path || "unknown";
+
+    let editContext: InlineEditContext;
+    if (selectedText.trim()) {
+      editContext = { mode: "selection", selectedText };
+    } else {
+      const cursor = editor.getCursor();
+      const cursorContext = buildCursorContext(
+        (line) => editor.getLine(line),
+        editor.lineCount(),
+        cursor.line,
+        cursor.ch
+      );
+      editContext = { mode: "cursor", cursorContext };
+    }
+
+    const modal = new InlineEditModal(
+      this.app,
+      this,
+      editor,
+      view,
+      editContext,
+      notePath,
+      () =>
+        this.getView()
+          ?.getActiveTab()
+          ?.ui.externalContextSelector?.getExternalContexts() ?? []
+    );
+    const result = await modal.openAndWait();
+
+    if (result.decision === "accept" && result.editedText !== undefined) {
+      new Notice(
+        editContext.mode === "cursor"
+          ? t("chat.notices.inlineEditInserted")
+          : t("chat.notices.inlineEditApplied"),
+      );
+    }
+  }
+
   getView(): ClaudianView | null {
     const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_CLAUDIAN);
     if (leaves.length > 0) {
@@ -893,6 +925,36 @@ export default class ClaudianPlugin extends Plugin {
   getAllViews(): ClaudianView[] {
     const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_CLAUDIAN);
     return leaves.map((leaf) => leaf.view as ClaudianView);
+  }
+
+  /**
+   * 清空所有已打开聊天 Tab 内斜杠下拉的内存缓存（条目列表），下次打开时重新走 getEntries。
+   * 在 commandCatalog.refresh（SDK/探测/文件语义变更）之后调用，避免下拉仍显示旧清单。
+   */
+  resetSlashDropdownProviderCachesOnAllTabs(): void {
+    for (const view of this.getAllViews()) {
+      const tabManager = view.getTabManager();
+      if (!tabManager) continue;
+      for (const tab of tabManager.getAllTabs()) {
+        tab.ui.slashCommandDropdown?.resetSdkSkillsCache();
+      }
+    }
+  }
+
+  /**
+   * 按当前全局设置中的「按提供商隐藏的命令」集合，同步所有聊天视图下全部 Tab 的下拉过滤。
+   * 覆盖多个并排打开的 Claudian 叶子，避免仅首个视图被更新。
+   */
+  syncSlashDropdownHiddenCommandsFromSettings(): void {
+    for (const view of this.getAllViews()) {
+      const tabManager = view.getTabManager();
+      if (!tabManager) continue;
+      for (const tab of tabManager.getAllTabs()) {
+        tab.ui.slashCommandDropdown?.setHiddenCommands(
+          getHiddenProviderCommandSet(this.settings, getTabProviderId(tab, this)),
+        );
+      }
+    }
   }
 
   findConversationAcrossViews(
@@ -997,13 +1059,7 @@ export default class ClaudianPlugin extends Plugin {
       "claude",
     ).catch(() => {});
 
-    for (const view of this.getAllViews()) {
-      const tabManager = view.getTabManager();
-      if (!tabManager) continue;
-      for (const tab of tabManager.getAllTabs()) {
-        tab.ui.slashCommandDropdown?.resetSdkSkillsCache();
-      }
-    }
+    this.resetSlashDropdownProviderCachesOnAllTabs();
 
     const vp = getVaultPath(this.app);
     if (!vp) return;

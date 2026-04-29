@@ -70,6 +70,9 @@
       "running": "运行中...",
       "copyFailed": "复制到剪贴板失败"
     },
+    "composer": {
+      "resizeHandleAriaLabel": "在内层输入卡片顶沿上方拖动以调整高度。双击任一条调整条或队列/导航区空白处恢复默认。"
+    },
     "fileDrop": {
       "notice": "已添加 {count} 个文件到上下文",
       "overlay": "拖放文件到此处添加到上下文"
@@ -381,6 +384,7 @@
       "failedProcessResponse": "处理回复失败",
       "failedRefineInstruction": "精炼指令失败",
       "chatServiceInitFailed": "初始化聊天服务失败",
+      "inlineEditRequiresClaudianView": "内联编辑需要先打开 Claudian 聊天视图（点击功能区图标或运行「打开聊天视图」命令）。",
       "inlineEditNoMarkdownView": "内联编辑不可用：无法访问当前 Markdown 视图。",
       "inlineEditInserted": "已插入",
       "inlineEditApplied": "已应用编辑",

@@ -417,18 +417,28 @@ export class SlashCommandSettings {
   private catalog: ProviderCommandCatalog | null;
   private commands: ProviderCommandEntry[] = [];
   private slashAssetScope: SlashAssetScope;
+  /** 设置页变更库内条目后通知聊天视图清空斜杠下拉缓存 */
+  private readonly onVaultSlashCommandsMutated?: () => void;
 
   constructor(
     containerEl: HTMLElement,
     app: App,
     catalog: ProviderCommandCatalog | null,
+    /** 库内命令/技能在设置页增删改或预览刷新成功后，通知侧栏下拉清空条目缓存 */
+    onVaultSlashCommandsMutated?: () => void,
     slashAssetScope: SlashAssetScope = 'vault-and-user-home',
   ) {
     this.app = app;
     this.containerEl = containerEl;
     this.catalog = catalog;
     this.slashAssetScope = slashAssetScope;
+    this.onVaultSlashCommandsMutated = onVaultSlashCommandsMutated;
     void this.loadAndRender();
+  }
+
+  /** 通知所有聊天 Tab：斜杠下拉须丢弃已缓存的条目列表，与设置页/磁盘一致 */
+  private notifyVaultSlashCommandsMutated(): void {
+    this.onVaultSlashCommandsMutated?.();
   }
 
   private handleOpenFolderResult(result: OpenInFileManagerResult): void {
@@ -467,6 +477,7 @@ export class SlashCommandSettings {
   private async onRefreshClicked(): Promise<void> {
     try {
       await this.loadAndRender();
+      this.notifyVaultSlashCommandsMutated();
       new Notice(t('settings.slashCommands.noticeRefreshed'));
     } catch {
       new Notice(t('settings.slashCommands.refreshFailed'));
@@ -666,6 +677,7 @@ export class SlashCommandSettings {
     await this.reloadCommands();
 
     this.render();
+    this.notifyVaultSlashCommandsMutated();
     const action = existing ? t('settings.slashCommandModal.updated') : t('settings.slashCommandModal.created');
     new Notice(
       isSkillEntry(cmd)
@@ -684,6 +696,7 @@ export class SlashCommandSettings {
     await this.reloadCommands();
 
     this.render();
+    this.notifyVaultSlashCommandsMutated();
     new Notice(
       isSkillEntry(cmd)
         ? t('settings.slashCommandModal.deletedSkill', { name: cmd.name })
@@ -726,6 +739,7 @@ export class SlashCommandSettings {
 
     await this.reloadCommands();
     this.render();
+    this.notifyVaultSlashCommandsMutated();
     new Notice(t('settings.slashCommandModal.convertedToSkill', { name: cmd.name }));
   }
 

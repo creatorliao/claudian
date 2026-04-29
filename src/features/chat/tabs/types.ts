@@ -154,6 +154,14 @@ export interface TabDOMElements {
   statusPanelContainerEl: HTMLElement;
 
   inputContainerEl: HTMLElement;
+  /**
+   * 外层组合器顶缘拖拽条（队列行上方，侧栏主题即外卡片最上沿外侧一带）。
+   */
+  composerResizeHandleOuterEl: HTMLElement;
+  /**
+   * 内层输入卡片顶缘外拖拽条（导航行与 `.claudian-input-wrapper` 之间）。
+   */
+  composerResizeHandleInnerEl: HTMLElement;
   queueIndicatorEl: HTMLElement;
   inputWrapper: HTMLElement;
   inputEl: HTMLTextAreaElement;

@@ -8,9 +8,11 @@ import { t } from '../../../i18n/i18n';
 import type ClaudianPlugin from '../../../main';
 import { chooseForkTarget } from '../../../shared/modals/ForkTargetModal';
 import { getVaultPath, resolveWorkspacePath } from '../../../utils/path';
+import { wireComposerResize } from '../ui/ComposerResizeHandle';
 import { getTabProviderId } from './providerResolution';
 import {
   activateTab,
+  autoResizeTextarea,
   createTab,
   deactivateTab,
   destroyTab,
@@ -200,6 +202,9 @@ export class TabManager implements TabManagerInterface {
 
     // Wire input event handlers
     wireTabInputEvents(tab, this.plugin);
+    wireComposerResize(tab, this.plugin, () => {
+      autoResizeTextarea(tab.dom.inputEl);
+    });
 
     this.tabs.set(tab.id, tab);
     this.callbacks.onTabCreated?.(tab);
