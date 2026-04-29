@@ -255,7 +255,7 @@
       "happySaturdayNamed": "{name}，周六愉快",
       "goodMorning": "早上好",
       "goodMorningNamed": "{name}，早上好",
-      "coffeeClaudian": "来杯咖啡，和 Claudian 一起？",
+      "coffeeClaudian": "来杯咖啡，和 {agentName} 一起？",
       "goodAfternoon": "下午好",
       "goodAfternoonNamed": "{name}，下午好",
       "heyThere": "嗨",
@@ -279,8 +279,8 @@
       "youAreAbsolutelyRight": "你说得完全对！"
     },
     "ribbon": {
-      "effortLabel": "推理档位：",
-      "thinkingLabel": "思考预算：",
+      "effortLabel": "推理档位",
+      "thinkingLabel": "思考预算",
       "fallbackHigh": "高",
       "fallbackOff": "关闭",
       "unknownModel": "未知",
@@ -336,13 +336,13 @@
         "addDirNotAbsolute": "路径必须为绝对路径。用法：/add-dir /绝对路径"
       },
       "mcpSelector": {
-        "header": "MCP 服务器",
-        "emptyNone": "尚未配置 MCP 服务器",
-        "emptyAllDisabled": "所有 MCP 服务器已禁用",
+        "header": "MCP 服务",
+        "emptyNone": "尚未配置 MCP 服务",
+        "emptyAllDisabled": "所有 MCP 服务已禁用",
         "contextSavingBadge": "上下文节省：也可通过 @{name} 启用",
-        "iconTitleEnabled": "已启用 {count} 个 MCP 服务器（点击管理）",
-        "iconTitleEnabledOne": "已启用 1 个 MCP 服务器（点击管理）",
-        "iconTitleIdle": "MCP 服务器（点击启用）"
+        "iconTitleEnabled": "已启用 {count} 个 MCP 服务（点击管理）",
+        "iconTitleEnabledOne": "已启用 1 个 MCP 服务（点击管理）",
+        "iconTitleIdle": "MCP 服务（点击启用）"
       }
     },
     "notices": {
@@ -395,7 +395,7 @@
       "dynamicUpdateThinkingFailed": "更新推理预算失败",
       "dynamicUpdateEffortFailed": "更新 Effort 档位失败",
       "dynamicUpdatePermissionFailed": "更新权限模式失败",
-      "dynamicUpdateMcpFailed": "更新 MCP 服务器失败"
+      "dynamicUpdateMcpFailed": "更新 MCP 服务失败"
     }
   },
   "settings": {
@@ -434,7 +434,7 @@
       "name": "显示更多选项",
       "desc": "关闭时只显示常用项，足以日常使用。开启后可配置系统提示词、快捷键入口、环境变量等；不需要也能正常对话。",
       "hintWhenExpanded": "以下为补充设置，按需要调整即可。",
-      "providerDescClaude": "此项位于上方常用区块之后。关闭时只占首屏常用项；开启后在其下方整块展开模型、隐藏命令、MCP、环境变量与 CLI 路径等。"
+      "providerDescClaude": "此项位于上方常用区块之后。关闭时仅占首屏常用项（命令与技能、MCP 服务、子智能体、插件）；开启后在其下方整块展开模型、隐藏命令、环境变量、实验性功能、CLI 路径与安全模式等。"
     },
     "workspaceSwitch": {
       "name": "允许切换工作空间",
@@ -520,37 +520,36 @@
     },
     "slashCommands": {
       "name": "命令与技能",
-      "desc": "管理对话中通过 / 使用的自定义命令与技能。",
-      "sectionCommandsHeading": "自定义命令",
+      "desc": "管理对话中通过 / 使用的命令与技能。",
+      "sectionCommandsHeading": "命令",
       "sectionSkillsHeading": "技能",
       "previewLabel": "预览",
       "viewAll": "查看全部（{count}）",
       "viewAllModalTitle": "全部命令与技能（{count}）",
-      "viewAllCommandsModalTitle": "全部自定义命令（{count}）",
+      "viewAllCommandsModalTitle": "全部命令（{count}）",
       "viewAllSkillsModalTitle": "全部技能（{count}）",
-      "emptyStateCommands": "尚未添加自定义命令。点击 + 在本库创建，或使用刷新载入外部修改。",
+      "emptyStateCommands": "尚未添加命令。点击 + 在本库创建，或使用刷新载入外部修改。",
       "emptyStateSkills": "尚未添加技能。点击 + 在本库创建，或使用刷新载入外部修改。",
-      "deleteConfirmMessageCommand": "将从本库永久删除自定义命令「/{name}」对应的文件。此操作不可恢复。",
+      "deleteConfirmMessageCommand": "将从本库永久删除命令「/{name}」对应的文件。此操作不可恢复。",
       "deleteConfirmMessageSkill": "将从本库永久删除技能「/{name}」及其文件夹。此操作不可恢复。",
+      "deleteConfirmMessageCommandUserHome": "将从本机用户目录下的共用命令文件中永久删除「/{name}」。此操作不可恢复，并可能影响本机其它使用 ~/.claude 的 Claude Code / Claudian 环境。",
+      "deleteConfirmMessageSkillUserHome": "将从本机用户目录下的共用技能文件夹中永久删除「/{name}」。此操作不可恢复，并可能影响本机其它使用 ~/.claude 的 Claude Code / Claudian 环境。",
       "provenanceVault": "本库",
       "provenanceUserHome": "本机共用",
       "readOnlyHomeNotice": "无法在本插件中修改「本机共用」目录下的命令与技能，请在资源管理器中编辑对应文件。",
       "noticeRefreshed": "命令与技能列表已刷新",
       "refreshFailed": "刷新命令与技能列表失败",
       "modalFolderHint": "在下面列表中编辑条目，或使用下列按钮在系统的文件管理器中打开对应目录，便于查看「本库」与「本机共用」下的真实路径。",
-      "modalFolderHintCommands": "在下面列表中编辑自定义命令，或使用下列按钮在文件管理器中打开「命令」所在目录（本库与本机共用目录取决于上方的来源设置）。",
+      "modalFolderHintCommands": "在下面列表中编辑命令，或使用下列按钮在文件管理器中打开「命令」所在目录（本库与本机共用目录取决于上方的来源设置）。",
       "modalFolderHintSkills": "在下面列表中编辑技能，或使用下列按钮在文件管理器中打开「技能」所在目录（本库与本机共用目录取决于上方的来源设置）。",
       "modalOpenVaultCommands": "打开本库命令目录",
       "modalOpenVaultSkills": "打开本库技能目录",
       "modalOpenHomeCommands": "打开本机共用命令目录",
       "modalOpenHomeSkills": "打开本机共用技能目录",
-      "revealInFileManagerAria": "在文件管理器中显示",
       "openFolderVaultPathUnknown": "当前库没有可用的磁盘路径，无法打开文件夹。",
       "openFolderPathUnresolved": "无法解析该命令或技能对应的文件路径。",
       "openFolderUnavailable": "当前环境无法在系统文件管理器中打开路径。",
-      "openFolderFailed": "打开文件夹失败：{message}",
-      "deleteUnavailableUserHomeAria": "删除不可用（本机共用条目）",
-      "deleteUnavailableUserHomeHint": "本机共用条目不能在本插件内删除。请在系统的文件管理器中删除对应文件或文件夹。"
+      "openFolderFailed": "打开文件夹失败：{message}"
     },
     "slashAssetScope": {
       "name": "命令与技能的来源",
@@ -565,12 +564,12 @@
       "placeholder": "commit\nbuild\ntest"
     },
     "mcpServers": {
-      "name": "MCP 服务器",
-      "desc": "管理存储在 .claude/mcp.json 中的 Vault 级 MCP 服务器配置。启用上下文保存模式的服务器需要 @ 提及才能激活。"
+      "name": "MCP 服务",
+      "desc": "管理存储在 .claude/mcp.json 中的 Vault 级 MCP 配置。启用上下文节省模式的服务需通过 @ 提及激活。"
     },
     "plugins": {
-      "name": "Claude Code 插件",
-      "desc": "管理从 ~/.claude/plugins 发现的 Claude Code 插件。启用的插件按 Vault 存储在 .claude/settings.json 中。"
+      "name": "插件",
+      "desc": "管理从 ~/.claude/plugins 发现的插件。启用状态按 Vault 写入 .claude/settings.json。"
     },
     "subagents": {
       "name": "子代理",
@@ -727,11 +726,11 @@
       "warning": "请核对以下环境变量的归属：{keys}"
     },
     "mcpServerModal": {
-      "titleEdit": "编辑 MCP 服务器",
-      "titleAdd": "添加 MCP 服务器",
+      "titleEdit": "编辑 MCP 服务",
+      "titleAdd": "添加 MCP 服务",
       "serverName": {
-        "name": "服务器名称",
-        "desc": "该服务器的唯一标识",
+        "name": "服务名称",
+        "desc": "该服务的唯一标识",
         "placeholder": "my-mcp-server"
       },
       "serverType": {
@@ -743,7 +742,7 @@
       },
       "enabled": {
         "name": "启用",
-        "desc": "是否激活该服务器"
+        "desc": "是否激活该服务"
       },
       "contextSaving": {
         "name": "上下文节省模式",
@@ -773,7 +772,7 @@
       "btnAdd": "添加",
       "btnUpdate": "更新",
       "validation": {
-        "nameRequired": "请输入服务器名称",
+        "nameRequired": "请输入服务名称",
         "nameInvalid": "名称只能包含字母、数字、点、连字符和下划线",
         "commandRequired": "请输入命令",
         "urlRequired": "请输入 URL"
@@ -781,7 +780,7 @@
     },
     "mcpTest": {
       "titleVerify": "验证：{name}",
-      "connecting": "正在连接 MCP 服务器…",
+      "connecting": "正在连接 MCP 服务…",
       "connectedOk": "连接成功",
       "connectedOkTo": "已成功连接至 {server}",
       "connectedOkToVersion": "已成功连接至 {server} v{version}",
@@ -797,11 +796,11 @@
       "toggleErrorJson": "配置文件损坏，请检查 .claude/mcp.json"
     },
     "mcpList": {
-      "headerLabel": "MCP 服务器",
+      "headerLabel": "MCP 服务",
       "addStdio": "stdio（本地命令）",
       "addRemote": "http / sse（远程）",
       "importClipboard": "从剪贴板导入",
-      "empty": "尚未配置 MCP 服务器。点击「添加」进行配置。",
+      "empty": "尚未配置 MCP 服务。点击「添加」进行配置。",
       "contextSavingTitle": "上下文节省：使用 @{name} 提及以启用",
       "verifyAria": "验证（查看工具）",
       "enableAria": "启用",
@@ -809,22 +808,24 @@
       "editAria": "编辑",
       "deleteAria": "删除",
       "addAria": "添加",
+      "noticeListRefreshed": "MCP 服务列表已刷新",
+      "noticeRefreshFailed": "刷新 MCP 服务失败：{message}",
       "noticeReloadFailed": "已保存设置但重载失败，更改将在下次会话生效。",
       "clipboardEmpty": "剪贴板为空",
       "clipboardInvalid": "剪贴板中未找到有效的 MCP 配置",
-      "clipboardNamePrompt": "请输入服务器名称",
+      "clipboardNamePrompt": "请输入服务名称",
       "clipboardReadFailed": "读取剪贴板失败",
-      "serverExists": "服务器「{name}」已存在",
-      "serverUpdated": "已更新 MCP 服务器「{name}」",
-      "serverAdded": "已添加 MCP 服务器「{name}」",
-      "importNone": "没有导入新的 MCP 服务器",
-      "imported": "已导入 {count} 个 MCP 服务器",
-      "importedWithSkipped": "已导入 {count} 个 MCP 服务器（跳过 {skipped} 个）",
-      "serverToggled": "MCP 服务器「{name}」已{state}",
+      "serverExists": "服务「{name}」已存在",
+      "serverUpdated": "已更新 MCP 服务「{name}」",
+      "serverAdded": "已添加 MCP 服务「{name}」",
+      "importNone": "没有导入新的 MCP 服务",
+      "imported": "已导入 {count} 个 MCP 服务",
+      "importedWithSkipped": "已导入 {count} 个 MCP 服务（跳过 {skipped} 个）",
+      "serverToggled": "MCP 服务「{name}」已{state}",
       "serverEnabled": "启用",
       "serverDisabled": "禁用",
-      "serverDeleted": "已删除 MCP 服务器「{name}」",
-      "deleteConfirm": "删除 MCP 服务器「{name}」？"
+      "serverDeleted": "已删除 MCP 服务「{name}」",
+      "deleteConfirm": "删除 MCP 服务「{name}」？"
     },
     "slashCommandModal": {
       "typeName": "类型",
@@ -951,10 +952,10 @@
       }
     },
     "pluginsUi": {
-      "listLabel": "Claude Code 插件",
+      "listLabel": "插件",
       "verbEnable": "启用",
       "verbDisable": "禁用",
-      "empty": "未发现 Claude Code 插件。请通过 Claude CLI 启用插件。",
+      "empty": "未发现插件。请通过 Claude CLI 启用插件。",
       "projectSection": "项目插件",
       "userSection": "用户插件",
       "noticeTogglePartialFail": "插件已切换，但部分标签页重启失败。",

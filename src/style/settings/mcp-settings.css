@@ -21,6 +21,12 @@
   font-weight: var(--font-medium);
 }
 
+.claudian-mcp-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .claudian-mcp-add-container {
   position: relative;
 }

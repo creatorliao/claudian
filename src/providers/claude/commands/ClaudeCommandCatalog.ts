@@ -33,7 +33,8 @@ function slashCommandToEntry(
     scope: cmd.source === 'sdk' ? 'runtime' : 'vault',
     source: cmd.source ?? 'user',
     isEditable: cmd.source !== 'sdk' && !fromUserHome,
-    isDeletable: cmd.source !== 'sdk' && !fromUserHome,
+    /** 库内与本机文件型条目均可删；SDK 内置命令不可删（设置列表本身不包含 SDK） */
+    isDeletable: cmd.source !== 'sdk',
     displayPrefix: '/',
     insertPrefix: '/',
     ...(fileProvenance ? { slashFileProvenance: fileProvenance } : {}),
@@ -195,13 +196,26 @@ export class ClaudeCommandCatalog implements ProviderCommandCatalog {
   }
 
   async deleteVaultEntry(entry: ProviderCommandEntry): Promise<void> {
+    const rawId = entry.id.replace(/^home:/, '');
+
     if (entry.slashFileProvenance === 'user-home') {
-      throw new Error('claudian: cannot delete commands or skills in user home from settings');
+      const homeCmdStore = this.deps.homeCommands;
+      const homeSkillStore = this.deps.homeSkills;
+      if (!homeCmdStore || !homeSkillStore) {
+        throw new Error('claudian: user-home storages not configured');
+      }
+      if (entry.kind === 'skill') {
+        await homeSkillStore.delete(rawId);
+      } else {
+        await homeCmdStore.delete(rawId);
+      }
+      return;
     }
+
     if (entry.kind === 'skill') {
-      await this.skillStorage.delete(entry.id.replace(/^home:/, ''));
+      await this.skillStorage.delete(rawId);
     } else {
-      await this.commandStorage.delete(entry.id.replace(/^home:/, ''));
+      await this.commandStorage.delete(rawId);
     }
   }
 

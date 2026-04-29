@@ -6,14 +6,10 @@ import type { ProviderCommandEntry } from '../../../core/providers/commands/Prov
 import { t } from '../../../i18n/i18n';
 import { confirmDelete } from '../../../shared/modals/ConfirmModal';
 import type { OpenInFileManagerResult } from '../../../utils/openInFileManager';
-import { openAbsolutePathInFileManager, revealFileOrOpenParentDirectory } from '../../../utils/openInFileManager';
+import { openAbsolutePathInFileManager } from '../../../utils/openInFileManager';
 import { extractFirstParagraph, normalizeArgumentHint, parseSlashCommandContent, validateCommandName } from '../../../utils/slashCommand';
 import type { SlashAssetScope } from '../settings';
-import {
-  resolveSlashCommandsRootDir,
-  resolveSlashFileAbsolutePath,
-  resolveSlashSkillsRootDir,
-} from '../storage/slashAssetAbsolutePaths';
+import { resolveSlashCommandsRootDir, resolveSlashSkillsRootDir } from '../storage/slashAssetAbsolutePaths';
 
 function resolveAllowedTools(inputValue: string, parsedTools?: string[]): string[] | undefined {
   const trimmed = inputValue.trim();
@@ -30,34 +26,37 @@ function isSkillEntry(entry: ProviderCommandEntry): boolean {
   return entry.kind === 'skill';
 }
 
-/** 每个分区（自定义命令 / 技能）主列表预览条数上限 */
+/** 每个分区（命令 / 技能）主列表预览条数上限 */
 const SLASH_ASSET_PREVIEW_LIMIT = 3;
 
-/** 设置页内「自定义命令」与「技能」分区标识 */
+/** 设置页内「命令」与「技能」分区标识 */
 type SlashKindSection = 'command' | 'skill';
 
 export type SlashCommandSettingsListKind = SlashKindSection;
 
 /**
  * 在弹窗中展示某一侧的全部条目，避免主设置页过长。
+ * 列表通过 {@link loadEntries} 拉取；设置页删除/刷新后须调用 {@link refreshListBody}，否则会残留已删条目。
  */
 class SlashCommandsFullListModal extends Modal {
+  private scrollEl!: HTMLElement;
+
   constructor(
     app: App,
-    private readonly entries: ProviderCommandEntry[],
     private readonly slashAssetScope: SlashAssetScope,
-    /** 已由调用方按类型选好 i18n 文案（含条数） */
-    private readonly modalTitle: string,
     /** 与列表一致：命令弹窗只展示命令目录按钮，技能弹窗只展示技能目录按钮 */
     private readonly listKind: SlashKindSection,
+    /** 每次重建列表时拉取最新条目（须含 catalog 与内存列表刷新） */
+    private readonly loadEntries: () => Promise<ProviderCommandEntry[]>,
+    private readonly getModalTitle: (count: number) => string,
     private readonly renderRow: (parent: HTMLElement, cmd: ProviderCommandEntry) => void,
     private readonly openFolderInManager: (absolutePath: string) => Promise<OpenInFileManagerResult>,
+    private readonly onClosed?: () => void,
   ) {
     super(app);
   }
 
   onOpen(): void {
-    this.titleEl.setText(this.modalTitle);
     this.modalEl.addClass('claudian-sp-modal');
 
     const toolbar = this.contentEl.createDiv({ cls: 'claudian-sp-modal-folder-toolbar' });
@@ -119,16 +118,35 @@ class SlashCommandsFullListModal extends Modal {
       }
     }
 
-    const scroll = this.contentEl.createDiv({ cls: 'claudian-sp-modal-scroll' });
-    scroll.style.maxHeight = '70vh';
-    scroll.style.overflow = 'auto';
-    for (const cmd of this.entries) {
-      this.renderRow(scroll, cmd);
+    this.scrollEl = this.contentEl.createDiv({ cls: 'claudian-sp-modal-scroll' });
+    this.scrollEl.style.maxHeight = '70vh';
+    this.scrollEl.style.overflow = 'auto';
+
+    void this.refreshListBody();
+  }
+
+  /** 删除、保存、刷新等变更后调用，与设置页及磁盘一致 */
+  async refreshListBody(): Promise<void> {
+    const entries = await this.loadEntries();
+    this.titleEl.setText(this.getModalTitle(entries.length));
+    this.scrollEl.empty();
+    if (entries.length === 0) {
+      const emptyEl = this.scrollEl.createDiv({ cls: 'claudian-sp-empty-state' });
+      emptyEl.setText(
+        this.listKind === 'skill'
+          ? t('settings.slashCommands.emptyStateSkills')
+          : t('settings.slashCommands.emptyStateCommands'),
+      );
+      return;
+    }
+    for (const cmd of entries) {
+      this.renderRow(this.scrollEl, cmd);
     }
   }
 
   onClose(): void {
     this.contentEl.empty();
+    this.onClosed?.();
   }
 }
 
@@ -452,6 +470,8 @@ export class SlashCommandSettings {
   private slashAssetScope: SlashAssetScope;
   /** 设置页变更库内条目后通知聊天视图清空斜杠下拉缓存 */
   private readonly onVaultSlashCommandsMutated?: () => void;
+  /** 当前打开的「查看全部」弹窗（若有）；条目变更后需调用其 {@link SlashCommandsFullListModal.refreshListBody} */
+  private fullListModal: SlashCommandsFullListModal | null = null;
 
   constructor(
     containerEl: HTMLElement,
@@ -469,7 +489,7 @@ export class SlashCommandSettings {
     void this.loadAndRender();
   }
 
-  /** 某一「自定义命令」或「技能」分区内的列表（与预览、「查看全部」一致） */
+  /** 某一「命令」或「技能」分区内的列表（与预览、「查看全部」一致） */
   private filterByKind(kind: SlashKindSection): ProviderCommandEntry[] {
     return this.commands.filter((e) => (kind === 'skill' ? isSkillEntry(e) : !isSkillEntry(e)));
   }
@@ -479,26 +499,9 @@ export class SlashCommandSettings {
     this.onVaultSlashCommandsMutated?.();
   }
 
-  private handleOpenFolderResult(result: OpenInFileManagerResult): void {
-    if (result.ok) {
-      return;
-    }
-    if (result.reason === 'no-shell') {
-      new Notice(t('settings.slashCommands.openFolderUnavailable'));
-    } else {
-      new Notice(t('settings.slashCommands.openFolderFailed', { message: result.detail }));
-    }
-  }
-
-  /** 在系统文件管理器中打开某一命令/技能对应的文件或目录 */
-  private async revealSlashEntryPath(cmd: ProviderCommandEntry): Promise<void> {
-    const absolute = resolveSlashFileAbsolutePath(this.app, cmd);
-    if (!absolute) {
-      new Notice(t('settings.slashCommands.openFolderPathUnresolved'));
-      return;
-    }
-    const result = await revealFileOrOpenParentDirectory(absolute);
-    this.handleOpenFolderResult(result);
+  /** 命令/技能增删改或刷新后，同步「查看全部」弹窗内列表与标题条数 */
+  private async refreshOpenFullListModal(): Promise<void> {
+    await this.fullListModal?.refreshListBody();
   }
 
   private async loadAndRender(): Promise<void> {
@@ -513,7 +516,7 @@ export class SlashCommandSettings {
 
   /**
    * 用户主动重扫库内与本机（若已启用）命令/技能文件。
-   * 一次刷新更新「自定义命令」「技能」两侧列表，避免分区状态不一致。
+   * 一次刷新更新「命令」「技能」两侧列表，避免分区状态不一致。
    */
   private async onRefreshClicked(): Promise<void> {
     try {
@@ -521,6 +524,7 @@ export class SlashCommandSettings {
         await this.catalog.refresh();
       }
       await this.loadAndRender();
+      await this.refreshOpenFullListModal();
       this.notifyVaultSlashCommandsMutated();
       new Notice(t('settings.slashCommands.noticeRefreshed'));
     } catch {
@@ -605,26 +609,44 @@ export class SlashCommandSettings {
   }
 
   private openViewAllModal(kind: SlashKindSection): void {
-    const filtered = this.filterByKind(kind);
-    const modalTitle =
-      kind === 'skill'
-        ? t('settings.slashCommands.viewAllSkillsModalTitle', { count: String(filtered.length) })
-        : t('settings.slashCommands.viewAllCommandsModalTitle', { count: String(filtered.length) });
+    const loadEntries = async (): Promise<ProviderCommandEntry[]> => {
+      await this.reloadCommands();
+      return this.filterByKind(kind);
+    };
     const modal = new SlashCommandsFullListModal(
       this.app,
-      filtered,
       this.slashAssetScope,
-      modalTitle,
       kind,
+      loadEntries,
+      (count) =>
+        kind === 'skill'
+          ? t('settings.slashCommands.viewAllSkillsModalTitle', { count: String(count) })
+          : t('settings.slashCommands.viewAllCommandsModalTitle', { count: String(count) }),
       (parent, cmd) => this.renderCommandRow(parent, cmd, kind),
       (absolutePath) => openAbsolutePathInFileManager(absolutePath),
+      () => {
+        this.fullListModal = null;
+      },
     );
+    this.fullListModal = modal;
     modal.open();
   }
 
   /** 存在「本机共用」条目时，为「本库」行也显示来源标签，便于区分（当前分区列表内）。 */
   private shouldShowVaultProvenanceTag(forEntries: ProviderCommandEntry[]): boolean {
     return forEntries.some((c) => c.slashFileProvenance === 'user-home');
+  }
+
+  /** 删除确认文案：本机共用条目说明将影响用户目录下与其它 Claude Code 环境共用的文件 */
+  private static buildDeleteConfirmMessage(cmd: ProviderCommandEntry): string {
+    if (cmd.slashFileProvenance === 'user-home') {
+      return isSkillEntry(cmd)
+        ? t('settings.slashCommands.deleteConfirmMessageSkillUserHome', { name: cmd.name })
+        : t('settings.slashCommands.deleteConfirmMessageCommandUserHome', { name: cmd.name });
+    }
+    return isSkillEntry(cmd)
+      ? t('settings.slashCommands.deleteConfirmMessageSkill', { name: cmd.name })
+      : t('settings.slashCommands.deleteConfirmMessageCommand', { name: cmd.name });
   }
 
   private renderCommandRow(
@@ -681,18 +703,8 @@ export class SlashCommandSettings {
       editBtn.addEventListener('click', () => this.openCommandModal(cmd, sectionKind));
     }
 
+    /** 列表来自文件扫描，均有 provenance；行尾仅保留删除（浏览目录用「查看全部」弹窗顶部按钮） */
     if (cmd.slashFileProvenance) {
-      const revealBtn = actionsEl.createEl('button', {
-        cls: 'claudian-settings-action-btn',
-        attr: { 'aria-label': t('settings.slashCommands.revealInFileManagerAria') },
-      });
-      setIcon(revealBtn, 'folder-open');
-      revealBtn.addEventListener('click', () => {
-        void this.revealSlashEntryPath(cmd);
-      });
-    }
-
-    if (cmd.isDeletable) {
       const deleteBtn = actionsEl.createEl('button', {
         cls: 'claudian-settings-action-btn claudian-settings-delete-btn',
         attr: { 'aria-label': t('common.delete') },
@@ -700,9 +712,7 @@ export class SlashCommandSettings {
       setIcon(deleteBtn, 'trash-2');
       deleteBtn.addEventListener('click', () => {
         void (async () => {
-          const message = isSkillEntry(cmd)
-            ? t('settings.slashCommands.deleteConfirmMessageSkill', { name: cmd.name })
-            : t('settings.slashCommands.deleteConfirmMessageCommand', { name: cmd.name });
+          const message = SlashCommandSettings.buildDeleteConfirmMessage(cmd);
           const ok = await confirmDelete(this.app, message);
           if (!ok) {
             return;
@@ -718,18 +728,6 @@ export class SlashCommandSettings {
           }
         })();
       });
-    } else if (cmd.slashFileProvenance === 'user-home') {
-      // 本机共用条目不可在插件内删除（catalog 限制）；显示灰色图标避免用户误以为「没有删除按钮」
-      const deleteBlockedBtn = actionsEl.createEl('button', {
-        cls: 'claudian-settings-action-btn claudian-settings-delete-btn',
-        attr: {
-          type: 'button',
-          'aria-label': t('settings.slashCommands.deleteUnavailableUserHomeAria'),
-          title: t('settings.slashCommands.deleteUnavailableUserHomeHint'),
-        },
-      });
-      deleteBlockedBtn.disabled = true;
-      setIcon(deleteBlockedBtn, 'trash-2');
     }
 
     if (!isSkillEntry(cmd) && cmd.isEditable) {
@@ -783,9 +781,12 @@ export class SlashCommandSettings {
       await this.catalog.deleteVaultEntry(existing);
     }
 
+    await this.catalog.refresh();
+
     await this.reloadCommands();
 
     this.render();
+    await this.refreshOpenFullListModal();
     this.notifyVaultSlashCommandsMutated();
     const action = existing ? t('settings.slashCommandModal.updated') : t('settings.slashCommandModal.created');
     new Notice(
@@ -806,6 +807,7 @@ export class SlashCommandSettings {
     await this.reloadCommands();
 
     this.render();
+    await this.refreshOpenFullListModal();
     this.notifyVaultSlashCommandsMutated();
     new Notice(
       isSkillEntry(cmd)
@@ -847,8 +849,11 @@ export class SlashCommandSettings {
     await this.catalog.saveVaultEntry(skill);
     await this.catalog.deleteVaultEntry(cmd);
 
+    await this.catalog.refresh();
+
     await this.reloadCommands();
     this.render();
+    await this.refreshOpenFullListModal();
     this.notifyVaultSlashCommandsMutated();
     new Notice(t('settings.slashCommandModal.convertedToSkill', { name: cmd.name }));
   }
@@ -863,6 +868,10 @@ export class SlashCommandSettings {
   }
 
   public refresh(): void {
-    void this.loadAndRender();
+    void (async () => {
+      await this.loadAndRender();
+      await this.refreshOpenFullListModal();
+      this.notifyVaultSlashCommandsMutated();
+    })();
   }
 }

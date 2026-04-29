@@ -398,7 +398,7 @@ describe('ClaudeSettingsTab', () => {
     expect(context.refreshModelSelectors).toHaveBeenCalledTimes(1);
   });
 
-  it('简易模式不包含模型区块、CLI 路径与 MCP 分区标题（高级项由「显示更多选项」展开）', () => {
+  it('简易模式含命令与技能、MCP、子智能体、插件等常用区块；不含模型、CLI、隐藏命令与安全模式（高级项由「显示更多选项」展开）', () => {
     const plugin = createPlugin();
     const context = createContext(plugin);
 
@@ -409,7 +409,8 @@ describe('ClaudeSettingsTab', () => {
     expect(
       createdSettings.some((s) => typeof s.name === 'string' && s.name.includes('settings.cliPath.name')),
     ).toBe(false);
-    expect(findOptionalSetting('settings.mcpServers.name')).toBeUndefined();
+    expect(findOptionalSetting('settings.mcpServers.name')).toBeDefined();
+    expect(findOptionalSetting('settings.safety')).toBeUndefined();
     expect(context.renderHiddenProviderCommandSetting).not.toHaveBeenCalled();
   });
 });

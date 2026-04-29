@@ -484,13 +484,13 @@ export const claudeSettingsTabRenderer: ProviderSettingsTabRenderer = {
 
     const showMore = getClaudeShowMore(claudian);
 
-    // 固定区：安全、命令与技能、子智能体、插件（与「显示更多」开关互不穿插）
-    renderSafetySection(container, context, settingsBag, claudeSettings);
+    // 固定区：命令与技能 → MCP 服务 → 子智能体 → 插件（安全模式见下方「显示更多」）
     renderSlashSkillsSection(container, context, claudeWorkspace);
+    renderMcpSection(container, context, claudeWorkspace);
     renderSubagentsSection(container, context, claudeWorkspace);
     renderPluginsSection(container, context, claudeWorkspace);
 
-    // 「插件」区块含与 heading 不同的自定义空态卡片，与标准 Setting 行之间无 heading 分割线；单独加顶部分割以免与「显示更多选项」视觉混成一团
+    // 「插件」等区块含与 heading 不同的自定义空态卡片，与标准 Setting 行之间无 heading 分割线；单独加顶部分割以免与「显示更多选项」视觉混成一团
     const moreOptionsSetting = new Setting(container)
       .setName(t('settings.moreOptions.name'))
       .setDesc(t('settings.moreOptions.providerDescClaude'))
@@ -531,9 +531,10 @@ export const claudeSettingsTabRenderer: ProviderSettingsTabRenderer = {
       placeholder: t('settings.hiddenSlashCommands.placeholder'),
     });
 
-    renderMcpSection(advancedRoot, context, claudeWorkspace);
     renderEnvironmentSection(advancedRoot, context);
     renderExperimentalSection(advancedRoot, context, settingsBag, claudeSettings);
     renderCliPathSection(advancedRoot, context, settingsBag, claudeWorkspace, claudeSettings);
+    // 安全模式放在高级区末尾：多数用户无需调整，避免抢占首屏注意力
+    renderSafetySection(advancedRoot, context, settingsBag, claudeSettings);
   },
 };

@@ -36,13 +36,45 @@ export class McpSettingsManager {
     this.render();
   }
 
+  /**
+   * 从磁盘重载 MCP 配置并重绘列表，再通知各聊天 Tab 调用 reloadMcpServers，使工具栏与运行时列表与文件一致。
+   */
+  private async refreshList(): Promise<void> {
+    try {
+      await this.loadAndRender();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      new Notice(t('settings.mcpList.noticeRefreshFailed', { message }));
+      return;
+    }
+
+    try {
+      await this.broadcastMcpReload();
+      new Notice(t('settings.mcpList.noticeListRefreshed'));
+    } catch {
+      new Notice(t('settings.mcpList.noticeReloadFailed'));
+    }
+  }
+
   private render() {
     this.containerEl.empty();
 
     const headerEl = this.containerEl.createDiv({ cls: 'claudian-mcp-header' });
     headerEl.createSpan({ text: t('settings.mcpList.headerLabel'), cls: 'claudian-mcp-label' });
 
-    const addContainer = headerEl.createDiv({ cls: 'claudian-mcp-add-container' });
+    const headerActions = headerEl.createDiv({ cls: 'claudian-mcp-header-actions' });
+
+    const refreshBtn = headerActions.createEl('button', {
+      cls: 'claudian-settings-action-btn',
+      attr: { 'aria-label': t('common.refresh') },
+    });
+    setIcon(refreshBtn, 'refresh-cw');
+    refreshBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      void this.refreshList();
+    });
+
+    const addContainer = headerActions.createDiv({ cls: 'claudian-mcp-add-container' });
     const addBtn = addContainer.createEl('button', {
       cls: 'claudian-settings-action-btn',
       attr: { 'aria-label': t('settings.mcpList.addAria') },

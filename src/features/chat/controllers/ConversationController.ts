@@ -784,6 +784,9 @@ export class ConversationController {
     const hour = now.getHours();
     const day = now.getDay(); // 0 = Sunday, 6 = Saturday
     const name = this.deps.plugin.settings.userName?.trim();
+    /** 与 `ClaudianView.getResolvedAgentDisplayName` 一致：设置中的智能体显示名，空则「Claudian」 */
+    const trimmedAgentName = this.deps.plugin.settings.agentName?.trim() ?? '';
+    const agentDisplayName = trimmedAgentName.length > 0 ? trimmedAgentName : 'Claudian';
 
     /** 有用户名时用带 {name} 的键，否则用无参键 */
     const p = (named: TranslationKey, plain: TranslationKey): string =>
@@ -816,7 +819,7 @@ export class ConversationController {
       if (hour >= 5 && hour < 12) {
         return [
           p('chat.welcome.goodMorningNamed', 'chat.welcome.goodMorning'),
-          t('chat.welcome.coffeeClaudian'),
+          t('chat.welcome.coffeeClaudian', { agentName: agentDisplayName }),
         ];
       }
       if (hour >= 12 && hour < 18) {

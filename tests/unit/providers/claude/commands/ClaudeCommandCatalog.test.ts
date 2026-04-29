@@ -484,6 +484,35 @@ Deploy`,
 
       expect(adapter.delete).toHaveBeenCalledWith('.claude/skills/deploy/SKILL.md');
     });
+
+    it('deletes a user-home command via home command storage', async () => {
+      const vaultAdapter = createMockAdapter({});
+      const homeAdapter = createMockAdapter({
+        '.claude/commands/from-home.md': `---
+description: H
+---
+h`,
+      });
+      const vaultCmd = new SlashCommandStorage(vaultAdapter);
+      const vaultSkill = new SkillStorage(vaultAdapter);
+      const homeCmd = new SlashCommandStorage(homeAdapter);
+      const homeSkill = new SkillStorage(homeAdapter);
+      const catalog = new ClaudeCommandCatalog(vaultCmd, vaultSkill, {
+        homeCommands: homeCmd,
+        homeSkills: homeSkill,
+        getSlashAssetScope: () => 'vault-and-user-home',
+      });
+
+      const entries = await catalog.listVaultEntries();
+      const homeEntry = entries.find(e => e.name === 'from-home');
+      expect(homeEntry).toBeDefined();
+      expect(homeEntry!.slashFileProvenance).toBe('user-home');
+
+      await catalog.deleteVaultEntry(homeEntry!);
+
+      expect(homeAdapter.delete).toHaveBeenCalled();
+      expect(vaultAdapter.delete).not.toHaveBeenCalled();
+    });
   });
 
   describe('refresh', () => {

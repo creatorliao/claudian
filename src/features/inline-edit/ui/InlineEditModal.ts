@@ -463,6 +463,8 @@ class InlineEditController {
 
     scheduleSlashDropdownPrefetchIdle(this.slashCommandDropdown);
 
+    this.plugin.registerInlineEditSlashDropdown?.(this.slashCommandDropdown);
+
     slashOpenEl.addEventListener('click', (e) => {
       e.stopPropagation();
       this.slashCommandDropdown?.openSlashPickerFromToolbar();
@@ -671,6 +673,7 @@ class InlineEditController {
     if (this.escHandler) {
       document.removeEventListener('keydown', this.escHandler);
     }
+    this.plugin.registerInlineEditSlashDropdown?.(null);
     this.slashCommandDropdown?.destroy();
     this.slashCommandDropdown = null;
 

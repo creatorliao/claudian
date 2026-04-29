@@ -255,7 +255,7 @@
       "happySaturdayNamed": "Happy Saturday, {name}",
       "goodMorning": "Good morning",
       "goodMorningNamed": "Good morning, {name}",
-      "coffeeClaudian": "Coffee and Claudian time?",
+      "coffeeClaudian": "Coffee and {agentName} time?",
       "goodAfternoon": "Good afternoon",
       "goodAfternoonNamed": "Good afternoon, {name}",
       "heyThere": "Hey there",
@@ -336,13 +336,13 @@
         "addDirNotAbsolute": "Path must be absolute. Usage: /add-dir /absolute/path"
       },
       "mcpSelector": {
-        "header": "MCP Servers",
-        "emptyNone": "No MCP servers configured",
-        "emptyAllDisabled": "All MCP servers disabled",
+        "header": "MCP Services",
+        "emptyNone": "No MCP services configured",
+        "emptyAllDisabled": "All MCP services disabled",
         "contextSavingBadge": "Context-saving: can also enable via @{name}",
-        "iconTitleEnabled": "{count} MCP servers enabled (click to manage)",
-        "iconTitleEnabledOne": "1 MCP server enabled (click to manage)",
-        "iconTitleIdle": "MCP servers (click to enable)"
+        "iconTitleEnabled": "{count} MCP services enabled (click to manage)",
+        "iconTitleEnabledOne": "1 MCP service enabled (click to manage)",
+        "iconTitleIdle": "MCP services (click to enable)"
       }
     },
     "notices": {
@@ -395,7 +395,7 @@
       "dynamicUpdateThinkingFailed": "Failed to update thinking budget",
       "dynamicUpdateEffortFailed": "Failed to update effort level",
       "dynamicUpdatePermissionFailed": "Failed to update permission mode",
-      "dynamicUpdateMcpFailed": "Failed to update MCP servers"
+      "dynamicUpdateMcpFailed": "Failed to update MCP services"
     }
   },
   "settings": {
@@ -434,7 +434,7 @@
       "name": "Show more options",
       "desc": "When off, only common settings are shown—enough for everyday use. When on, you can configure system prompts, hotkey shortcuts, environment variables, and more. You do not need this for normal chatting.",
       "hintWhenExpanded": "Optional settings below—adjust only if you need them.",
-      "providerDescClaude": "Placed below the common blocks above. When off, only those stay visible; when on, advanced settings expand below as one contiguous section: models, hidden commands, MCP, environment variables, CLI path, etc."
+      "providerDescClaude": "Below the common blocks above. When off, only the common section stays visible (slash commands/skills, MCP services, subagents, plugins). When on, advanced settings expand below: models, hidden commands, environment variables, experimental features, CLI path, and Safe mode."
     },
     "workspaceSwitch": {
       "name": "Allow switching workspace",
@@ -520,37 +520,36 @@
     },
     "slashCommands": {
       "name": "Commands and Skills",
-      "desc": "Manage custom commands and skills used in chat with /.",
-      "sectionCommandsHeading": "Custom commands",
+      "desc": "Manage commands and skills used in chat with /.",
+      "sectionCommandsHeading": "Commands",
       "sectionSkillsHeading": "Skills",
       "previewLabel": "Preview",
       "viewAll": "View all ({count})",
       "viewAllModalTitle": "All commands and skills ({count})",
-      "viewAllCommandsModalTitle": "All custom commands ({count})",
+      "viewAllCommandsModalTitle": "All commands ({count})",
       "viewAllSkillsModalTitle": "All skills ({count})",
-      "emptyStateCommands": "No custom commands yet. Click + to create one in this vault, or refresh to pick up external edits.",
+      "emptyStateCommands": "No commands yet. Click + to create one in this vault, or refresh to pick up external edits.",
       "emptyStateSkills": "No skills yet. Click + to create one in this vault, or refresh to pick up external edits.",
-      "deleteConfirmMessageCommand": "Permanently delete the custom command file for \"/{name}\" from this vault? This cannot be undone.",
+      "deleteConfirmMessageCommand": "Permanently delete the file for command \"/{name}\" from this vault? This cannot be undone.",
       "deleteConfirmMessageSkill": "Permanently delete the skill \"/{name}\" and its folder from this vault? This cannot be undone.",
+      "deleteConfirmMessageCommandUserHome": "Permanently delete the shared command \"{name}\" from your user directory (~/.claude)? This cannot be undone and may affect other Claude Code / Claudian setups on this computer that use the same files.",
+      "deleteConfirmMessageSkillUserHome": "Permanently delete the shared skill \"{name}\" from your user directory (~/.claude)? This cannot be undone and may affect other Claude Code / Claudian setups on this computer that use the same files.",
       "provenanceVault": "This vault",
       "provenanceUserHome": "Shared on this computer",
       "readOnlyHomeNotice": "Commands and skills in the shared computer folder cannot be edited inside the plugin. Edit the files in your file manager instead.",
       "noticeRefreshed": "Commands and skills list refreshed",
       "refreshFailed": "Failed to refresh commands and skills list",
       "modalFolderHint": "Edit items in the list below, or use these buttons to open the matching folders in your file manager to see where vault vs. user-home slash assets live on disk.",
-      "modalFolderHintCommands": "Edit slash commands below, or open your vault / shared folders where slash commands are stored (which folders appear depends on your source setting above).",
+      "modalFolderHintCommands": "Edit commands below, or open your vault / shared folders where commands are stored (which folders appear depends on your source setting above).",
       "modalFolderHintSkills": "Edit skills below, or open your vault / shared folders where skills are stored (which folders appear depends on your source setting above).",
       "modalOpenVaultCommands": "Open vault commands folder",
       "modalOpenVaultSkills": "Open vault skills folder",
       "modalOpenHomeCommands": "Open user-home commands folder",
       "modalOpenHomeSkills": "Open user-home skills folder",
-      "revealInFileManagerAria": "Show in file manager",
       "openFolderVaultPathUnknown": "This vault has no file-system path, so folders cannot be opened.",
       "openFolderPathUnresolved": "Could not resolve a file path for this command or skill.",
       "openFolderUnavailable": "This environment cannot open paths in the system file manager.",
-      "openFolderFailed": "Could not open folder: {message}",
-      "deleteUnavailableUserHomeAria": "Delete unavailable (shared-on-this-computer items)",
-      "deleteUnavailableUserHomeHint": "Items shared from your user folder cannot be deleted inside this plugin. Delete the files or folders in your file manager instead."
+      "openFolderFailed": "Could not open folder: {message}"
     },
     "slashAssetScope": {
       "name": "Source of commands and skills",
@@ -565,12 +564,12 @@
       "placeholder": "commit\nbuild\ntest"
     },
     "mcpServers": {
-      "name": "MCP Servers",
-      "desc": "Manage vault-level MCP server configurations stored in .claude/mcp.json. Servers with context-saving mode require @mention to activate."
+      "name": "MCP Services",
+      "desc": "Manage vault-level MCP configuration in .claude/mcp.json. Services with context-saving mode require @mention to activate."
     },
     "plugins": {
-      "name": "Claude Code Plugins",
-      "desc": "Manage Claude Code plugins discovered from ~/.claude/plugins. Enabled plugins are stored per vault in .claude/settings.json."
+      "name": "Plugins",
+      "desc": "Manage plugins discovered from ~/.claude/plugins. Enabled state is stored per vault in .claude/settings.json."
     },
     "subagents": {
       "name": "Subagents",
@@ -727,23 +726,23 @@
       "warning": "Review environment ownership for: {keys}"
     },
     "mcpServerModal": {
-      "titleEdit": "Edit MCP Server",
-      "titleAdd": "Add MCP Server",
+      "titleEdit": "Edit MCP Service",
+      "titleAdd": "Add MCP Service",
       "serverName": {
-        "name": "Server name",
-        "desc": "Unique identifier for this server",
+        "name": "Service name",
+        "desc": "Unique identifier for this service",
         "placeholder": "my-mcp-server"
       },
       "serverType": {
         "name": "Type",
-        "desc": "Server connection type",
+        "desc": "Connection type",
         "stdio": "stdio (local command)",
         "sse": "sse (Server-Sent Events)",
         "http": "http (HTTP endpoint)"
       },
       "enabled": {
         "name": "Enabled",
-        "desc": "Whether this server is active"
+        "desc": "Whether this service is active"
       },
       "contextSaving": {
         "name": "Context-saving mode",
@@ -773,15 +772,15 @@
       "btnAdd": "Add",
       "btnUpdate": "Update",
       "validation": {
-        "nameRequired": "Please enter a server name",
-        "nameInvalid": "Server name can only contain letters, numbers, dots, hyphens, and underscores",
+        "nameRequired": "Please enter a service name",
+        "nameInvalid": "Name can only contain letters, numbers, dots, hyphens, and underscores",
         "commandRequired": "Please enter a command",
         "urlRequired": "Please enter a URL"
       }
     },
     "mcpTest": {
       "titleVerify": "Verify: {name}",
-      "connecting": "Connecting to MCP server...",
+      "connecting": "Connecting to MCP service...",
       "connectedOk": "Connected successfully",
       "connectedOkTo": "Connected successfully to {server}",
       "connectedOkToVersion": "Connected successfully to {server} v{version}",
@@ -797,11 +796,11 @@
       "toggleErrorJson": "Config file corrupted. Check .claude/mcp.json"
     },
     "mcpList": {
-      "headerLabel": "MCP Servers",
+      "headerLabel": "MCP Services",
       "addStdio": "stdio (local command)",
       "addRemote": "http / sse (remote)",
       "importClipboard": "Import from clipboard",
-      "empty": "No MCP servers configured. Click \"Add\" to add one.",
+      "empty": "No MCP services configured. Click \"Add\" to add one.",
       "contextSavingTitle": "Context-saving: mention with @{name} to enable",
       "verifyAria": "Verify (show tools)",
       "enableAria": "Enable",
@@ -809,22 +808,24 @@
       "editAria": "Edit",
       "deleteAria": "Delete",
       "addAria": "Add",
+      "noticeListRefreshed": "MCP services refreshed",
+      "noticeRefreshFailed": "Failed to refresh MCP services: {message}",
       "noticeReloadFailed": "Setting saved but reload failed. Changes will apply on next session.",
       "clipboardEmpty": "Clipboard is empty",
       "clipboardInvalid": "No valid MCP configuration found in clipboard",
-      "clipboardNamePrompt": "Enter a name for the server",
+      "clipboardNamePrompt": "Enter a name for the service",
       "clipboardReadFailed": "Failed to read clipboard",
-      "serverExists": "Server \"{name}\" already exists",
-      "serverUpdated": "MCP server \"{name}\" updated",
-      "serverAdded": "MCP server \"{name}\" added",
-      "importNone": "No new MCP servers imported",
-      "imported": "Imported {count} MCP server(s)",
-      "importedWithSkipped": "Imported {count} MCP server(s) ({skipped} skipped)",
-      "serverToggled": "MCP server \"{name}\" {state}",
+      "serverExists": "Service \"{name}\" already exists",
+      "serverUpdated": "MCP service \"{name}\" updated",
+      "serverAdded": "MCP service \"{name}\" added",
+      "importNone": "No new MCP services imported",
+      "imported": "Imported {count} MCP service(s)",
+      "importedWithSkipped": "Imported {count} MCP service(s) ({skipped} skipped)",
+      "serverToggled": "MCP service \"{name}\" {state}",
       "serverEnabled": "enabled",
       "serverDisabled": "disabled",
-      "serverDeleted": "MCP server \"{name}\" deleted",
-      "deleteConfirm": "Delete MCP server \"{name}\"?"
+      "serverDeleted": "MCP service \"{name}\" deleted",
+      "deleteConfirm": "Delete MCP service \"{name}\"?"
     },
     "slashCommandModal": {
       "typeName": "Type",
@@ -951,10 +952,10 @@
       }
     },
     "pluginsUi": {
-      "listLabel": "Claude Code Plugins",
+      "listLabel": "Plugins",
       "verbEnable": "Enable",
       "verbDisable": "Disable",
-      "empty": "No Claude Code plugins found. Enable plugins via the Claude CLI.",
+      "empty": "No plugins found. Enable plugins via the Claude CLI.",
       "projectSection": "Project plugins",
       "userSection": "User plugins",
       "noticeTogglePartialFail": "Plugin toggled, but some tabs failed to restart.",

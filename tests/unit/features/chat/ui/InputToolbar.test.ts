@@ -711,13 +711,13 @@ describe('McpServerSelector', () => {
   it('should show empty message when all servers are disabled', () => {
     selector.setMcpManager(createMockMcpManager([{ name: 'test', enabled: false }]));
     const empty = parentEl.querySelector('.claudian-mcp-selector-empty');
-    expect(empty?.textContent).toBe('All MCP servers disabled');
+    expect(empty?.textContent).toBe('All MCP services disabled');
   });
 
   it('should show no servers message when no servers configured', () => {
     selector.setMcpManager(createMockMcpManager([]));
     const empty = parentEl.querySelector('.claudian-mcp-selector-empty');
-    expect(empty?.textContent).toBe('No MCP servers configured');
+    expect(empty?.textContent).toBe('No MCP services configured');
   });
 
   it('should add mentioned servers', () => {

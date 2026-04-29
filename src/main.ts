@@ -50,7 +50,10 @@ import {
   CLAUDIAN_APP_ICON_ID,
   getClaudeBrandMarkAddIconInnerHtml,
 } from "./shared/claudeBrandMark";
-import { scheduleSlashDropdownPrefetchIdle } from "./shared/components/SlashCommandDropdown";
+import {
+  scheduleSlashDropdownPrefetchIdle,
+  type SlashCommandDropdown,
+} from "./shared/components/SlashCommandDropdown";
 import { buildCursorContext } from "./utils/editor";
 import {
   formatWorkspaceDisplayShort,
@@ -66,6 +69,16 @@ export default class ClaudianPlugin extends Plugin {
   private lastKnownTabManagerState: AppTabManagerState | null = null;
   /** Ribbon 图标元素，用于更新工作空间 tooltip */
   private ribbonIconEl: HTMLElement | null = null;
+  /**
+   * 内联编辑输入条上的斜杠下拉（若当前存在）。与聊天 Tab 下拉一并纳入
+   * {@link resetSlashDropdownProviderCachesOnAllTabs}，避免设置改盘后仍显示旧条目。
+   */
+  private inlineEditSlashDropdown: SlashCommandDropdown | null = null;
+
+  /** 由内联编辑在创建/销毁 SlashCommandDropdown 时调用 */
+  registerInlineEditSlashDropdown(dropdown: SlashCommandDropdown | null): void {
+    this.inlineEditSlashDropdown = dropdown;
+  }
 
   async onload() {
     await this.loadSettings();
@@ -929,8 +942,8 @@ export default class ClaudianPlugin extends Plugin {
   }
 
   /**
-   * 清空所有已打开聊天 Tab 内斜杠下拉的内存缓存（条目列表），下次打开时重新走 getEntries。
-   * 在 commandCatalog.refresh（SDK/探测/文件语义变更）之后调用，避免下拉仍显示旧清单。
+   * 清空所有聊天 Tab、当前内联编辑浮层上斜杠下拉的内存缓存（条目列表），下次打开时重新走 getEntries。
+   * 在 commandCatalog.refresh（SDK/探测/文件语义变更）或库内命令/技能变更之后调用，避免下拉仍显示旧清单。
    */
   resetSlashDropdownProviderCachesOnAllTabs(): void {
     for (const view of this.getAllViews()) {
@@ -940,11 +953,13 @@ export default class ClaudianPlugin extends Plugin {
         tab.ui.slashCommandDropdown?.resetSdkSkillsCache();
       }
     }
+    this.inlineEditSlashDropdown?.resetSdkSkillsCache();
     for (const view of this.getAllViews()) {
       const tabManager = view.getTabManager();
       const active = tabManager?.getActiveTab();
       scheduleSlashDropdownPrefetchIdle(active?.ui?.slashCommandDropdown);
     }
+    scheduleSlashDropdownPrefetchIdle(this.inlineEditSlashDropdown);
   }
 
   /**

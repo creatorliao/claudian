@@ -90,7 +90,7 @@ describe('slashAssetAbsolutePaths', () => {
       scope: 'vault',
       source: 'user',
       isEditable: false,
-      isDeletable: false,
+      isDeletable: true,
       displayPrefix: '/',
       insertPrefix: '/',
       slashFileProvenance: 'user-home',

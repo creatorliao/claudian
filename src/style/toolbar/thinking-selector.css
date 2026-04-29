@@ -3,6 +3,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-shrink: 0;
 }
 
 /* Effort / budget container (shared layout) */
@@ -10,12 +11,16 @@
 .claudian-thinking-budget {
   display: flex;
   align-items: center;
-  gap: 6px;
+  /* 标签与当前档位值视为一组，间隙略大于字距即可，避免被误读成两个控件 */
+  gap: 2px;
+  flex: 0 0 auto;
+  width: max-content;
 }
 
 .claudian-thinking-label-text {
   font-size: 11px;
   color: var(--text-muted);
+  flex-shrink: 0;
 }
 
 .claudian-thinking-gears {
@@ -23,11 +28,14 @@
   display: flex;
   align-items: center;
   border-radius: 4px;
+  flex: 0 0 auto;
+  width: max-content;
 }
 
 /* Current selection (visible when collapsed) */
 .claudian-thinking-current {
-  padding: 3px 8px;
+  /* 左侧略紧、右侧略松：与标签成组，展开项仍保持可点 hit 区 */
+  padding: 3px 8px 3px 2px;
   font-size: 11px;
   color: var(--claudian-brand);
   font-weight: 500;
