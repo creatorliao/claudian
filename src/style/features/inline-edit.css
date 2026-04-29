@@ -37,7 +37,7 @@
   overflow: visible;
 }
 
-/* 内联编辑：与侧栏同源打开斜杠列表 */
+/* 内联编辑：与侧栏同源打开斜杠列表（闪电图标） */
 .claudian-inline-slash-picker-icon {
   display: flex;
   flex-shrink: 0;

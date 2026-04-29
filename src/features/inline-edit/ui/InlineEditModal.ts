@@ -425,7 +425,7 @@ class InlineEditController {
 
     const slashOpenEl = document.createElement('div');
     slashOpenEl.className = 'claudian-inline-slash-picker-icon';
-    setIcon(slashOpenEl, 'slash');
+    setIcon(slashOpenEl, 'zap');
     slashOpenEl.setAttribute('aria-label', t('chat.ribbon.openSlashCommands'));
     inputWrap.appendChild(slashOpenEl);
 

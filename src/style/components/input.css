@@ -41,9 +41,39 @@
   min-height: 0;
 }
 
-/* Header mode: hide nav row above input (content moved to header) */
+/* 内层：左侧闪电与输入框卡片左缘对齐；右侧为标签 + 头部操作（可迁至顶栏） */
+.claudian-input-nav-row-inner {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  gap: 8px;
+}
+
+.claudian-nav-slash-picker-slot {
+  flex-shrink: 0;
+}
+
+.claudian-nav-row-middle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 1;
+  min-width: 0;
+}
+
+/* 顶栏模式：标签与操作已迁入 header，此处仅保留与输入区同行的闪电按钮 */
 .claudian-container--header-mode .claudian-input-nav-row {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.claudian-container--header-mode .claudian-nav-row-middle:empty {
   display: none;
+  flex: 0 0 0;
+  min-width: 0;
+  width: 0;
+  overflow: hidden;
 }
 
 /* Selection indicator (shown when text is selected in editor) */

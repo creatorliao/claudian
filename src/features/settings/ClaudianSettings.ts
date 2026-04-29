@@ -180,7 +180,13 @@ export class ClaudianSettingTab extends PluginSettingTab {
   private renderGeneralTab(container: HTMLElement): void {
     const showMore = this.plugin.settings.showMoreGeneralOptions ?? false;
 
-    new Setting(container)
+    // 常用项置顶：关闭「显示更多」时仅展示本节，降低认知负荷
+    this.renderGeneralUserAndAgent(container);
+    this.renderGeneralLanguage(container);
+    this.renderGeneralMaxTabs(container, !showMore);
+
+    // 「显示更多」固定在通用页底部；展开项全部排在开关下方连续展示（不与常用项穿插）
+    const moreOptionsSetting = new Setting(container)
       .setName(t('settings.moreOptions.name'))
       .setDesc(t('settings.moreOptions.desc'))
       .addToggle((toggle) =>
@@ -190,8 +196,23 @@ export class ClaudianSettingTab extends PluginSettingTab {
           this.display();
         }),
       );
+    moreOptionsSetting.settingEl?.addClass('claudian-settings-general-more-options');
 
-    new Setting(container)
+    if (!showMore) {
+      return;
+    }
+
+    const advancedRoot = container.createDiv({
+      cls: 'claudian-settings-general-advanced-block',
+    });
+
+    const hintEl = advancedRoot.createDiv({
+      cls: 'setting-item-description claudian-more-options-expanded-hint',
+    });
+    hintEl.style.marginBottom = '1rem';
+    hintEl.setText(t('settings.moreOptions.hintWhenExpanded'));
+
+    new Setting(advancedRoot)
       .setName(t('settings.workspaceSwitch.name'))
       .setDesc(t('settings.workspaceSwitch.desc'))
       .addToggle((toggle) =>
@@ -208,22 +229,10 @@ export class ClaudianSettingTab extends PluginSettingTab {
           }),
       );
 
-    this.renderGeneralUserAndAgent(container);
-    this.renderProviderToggles(container, { simpleModeHint: !showMore });
-    this.renderGeneralLanguage(container);
-    this.renderGeneralMaxTabs(container, !showMore);
+    // 进阶区不再展示「简易模式」提示（用户已主动展开）
+    this.renderProviderToggles(advancedRoot, { simpleModeHint: false });
 
-    if (!showMore) {
-      return;
-    }
-
-    const hintEl = container.createDiv({
-      cls: 'setting-item-description claudian-more-options-expanded-hint',
-    });
-    hintEl.style.marginBottom = '1rem';
-    hintEl.setText(t('settings.moreOptions.hintWhenExpanded'));
-
-    this.renderGeneralAdvancedSections(container);
+    this.renderGeneralAdvancedSections(advancedRoot);
   }
 
   /** 称呼与助手展示名称（通用页置顶） */

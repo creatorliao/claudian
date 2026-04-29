@@ -30,6 +30,8 @@ export class ClaudianView extends ItemView {
   private tabBarContainerEl: HTMLElement | null = null;
   private tabContentEl: HTMLElement | null = null;
   private navRowContent: HTMLElement | null = null;
+  /** 标签徽章 + 头部操作按钮；顶栏模式下子节点会迁出，仅左侧斜杠按钮留在输入区上方 */
+  private navRowMiddleEl: HTMLElement | null = null;
 
   // DOM Elements
   private viewContainerEl: HTMLElement | null = null;
@@ -303,14 +305,25 @@ export class ClaudianView extends ItemView {
   }
 
   /**
-   * Builds the nav row content (tab badges + header actions).
-   * This is called once and the content is moved between locations.
+   * Builds the nav row content：左侧闪电（打开斜杠列表，与下方输入框左缘对齐）+
+   * 中间拓展区（标签徽章 + 头部操作，可按设置迁到顶栏）。
    */
   private buildNavRowContent(): HTMLElement {
-    // Create a fragment to hold nav row content
-    const fragment = document.createDocumentFragment();
+    const root = document.createElement('div');
+    root.className = 'claudian-input-nav-row-inner';
 
-    // Tab badges (left side in nav row, or in title slot for header mode)
+    const slashSlot = root.createDiv({ cls: 'claudian-nav-slash-picker-slot' });
+    const slashBtn = slashSlot.createDiv({ cls: 'claudian-header-btn claudian-nav-slash-command-btn' });
+    setIcon(slashBtn, 'zap');
+    slashBtn.setAttribute('aria-label', t('chat.ribbon.openSlashCommands'));
+    slashBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.getActiveTab()?.ui.slashCommandDropdown?.openSlashPickerFromToolbar();
+    });
+
+    this.navRowMiddleEl = document.createElement('div');
+    this.navRowMiddleEl.className = 'claudian-nav-row-middle';
+
     this.tabBarContainerEl = document.createElement('div');
     this.tabBarContainerEl.className = 'claudian-tab-bar-container';
     this.tabBar = new TabBar(this.tabBarContainerEl, {
@@ -318,9 +331,8 @@ export class ClaudianView extends ItemView {
       onTabClose: (tabId) => this.handleTabClose(tabId),
       onNewTab: () => this.createNewTab(),
     });
-    fragment.appendChild(this.tabBarContainerEl);
+    this.navRowMiddleEl.appendChild(this.tabBarContainerEl);
 
-    // Header actions (right side)
     this.headerActionsContent = document.createElement('div');
     this.headerActionsContent.className = 'claudian-header-actions';
 
@@ -368,13 +380,9 @@ export class ClaudianView extends ItemView {
       this.toggleHistoryDropdown();
     });
 
-    fragment.appendChild(this.headerActionsContent);
-
-    // Create a wrapper div to hold the fragment (for input mode nav row)
-    const wrapper = document.createElement('div');
-    wrapper.style.display = 'contents';
-    wrapper.appendChild(fragment);
-    return wrapper;
+    this.navRowMiddleEl.appendChild(this.headerActionsContent);
+    root.appendChild(this.navRowMiddleEl);
+    return root;
   }
 
   /**
@@ -383,12 +391,15 @@ export class ClaudianView extends ItemView {
    * - 'header' mode: Tab badges go to title slot (after logo), actions go to header right side
    */
   private updateNavRowLocation(): void {
-    if (!this.tabBarContainerEl || !this.headerActionsContent) return;
+    if (!this.tabBarContainerEl || !this.headerActionsContent || !this.navRowMiddleEl || !this.navRowContent) {
+      return;
+    }
 
     const isHeaderMode = this.plugin.settings.tabBarPosition === 'header';
+    const activeTab = this.tabManager?.getActiveTab();
 
     if (isHeaderMode) {
-      // Header mode: Tab badges go to title slot, actions go to header right side
+      // Header mode: Tab badges go to title slot, actions go to header right side；输入区上方仅保留闪电（左侧与输入框对齐）
       if (this.titleSlotEl) {
         this.titleSlotEl.appendChild(this.tabBarContainerEl);
       }
@@ -396,16 +407,16 @@ export class ClaudianView extends ItemView {
         this.headerActionsEl.appendChild(this.headerActionsContent);
         this.headerActionsEl.style.display = 'flex';
       }
-    } else {
-      // Input mode: Both go to active tab's navRowEl via the wrapper
-      const activeTab = this.tabManager?.getActiveTab();
-      if (activeTab && this.navRowContent) {
-        // Re-assemble the nav row content wrapper
-        this.navRowContent.appendChild(this.tabBarContainerEl);
-        this.navRowContent.appendChild(this.headerActionsContent);
+      if (activeTab) {
         activeTab.dom.navRowEl.appendChild(this.navRowContent);
       }
-      // Hide header actions slot when in input mode
+    } else {
+      // Input mode: 中间区收容标签与操作，整块挂在当前标签 navRow
+      if (activeTab) {
+        this.navRowMiddleEl.appendChild(this.tabBarContainerEl);
+        this.navRowMiddleEl.appendChild(this.headerActionsContent);
+        activeTab.dom.navRowEl.appendChild(this.navRowContent);
+      }
       if (this.headerActionsEl) {
         this.headerActionsEl.style.display = 'none';
       }

@@ -873,9 +873,6 @@ function initializeInputToolbar(
         mode === 'plan' && getTabCapabilities(tab, plugin).supportsPlanMode,
       );
     },
-    openSlashCommandPicker: () => {
-      tab.ui.slashCommandDropdown?.openSlashPickerFromToolbar();
-    },
   });
 
   tab.ui.modelSelector = toolbarComponents.modelSelector;

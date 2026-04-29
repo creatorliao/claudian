@@ -39,8 +39,6 @@ export interface ToolbarCallbacks {
   getEnvironmentVariables?: () => string;
   getUIConfig: () => ProviderChatUIConfig;
   getCapabilities: () => ProviderCapabilities;
-  /** 打开输入框的斜杠命令/技能列表（与输入 `/` 同源） */
-  openSlashCommandPicker?: () => void;
 }
 
 /** 将权限拨杆文案映射为当前界面语言（提供商仍返回英文标识值）。 */
@@ -1202,17 +1200,6 @@ export function createInputToolbar(
   const contextUsageMeter = new ContextUsageMeter(parentEl);
   const externalContextSelector = new ExternalContextSelector(parentEl, callbacks);
   const mcpServerSelector = new McpServerSelector(parentEl);
-
-  if (callbacks.openSlashCommandPicker) {
-    const slashWrap = parentEl.createDiv({ cls: 'claudian-slash-picker-toolbar' });
-    const slashBtn = slashWrap.createDiv({ cls: 'claudian-slash-picker-toolbar-icon' });
-    setIcon(slashBtn, 'slash');
-    slashBtn.setAttribute('aria-label', t('chat.ribbon.openSlashCommands'));
-    slashBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      callbacks.openSlashCommandPicker?.();
-    });
-  }
 
   return {
     modelSelector,

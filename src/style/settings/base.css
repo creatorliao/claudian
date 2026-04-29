@@ -44,6 +44,20 @@
   border-top: 1px solid var(--background-modifier-border);
 }
 
+/* 通用设置：常用项之后的「显示更多选项」行（固定在页面底部一段） */
+.claudian-settings .claudian-settings-general-more-options {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+/* 通用设置：开关下方进阶区块（工作空间、提供商、系统提示词等连续排列） */
+.claudian-settings .claudian-settings-general-advanced-block {
+  margin-top: 4px;
+  padding-left: 10px;
+  border-left: 2px solid var(--background-modifier-border);
+}
+
 /* Codex placeholder */
 .claudian-settings-codex-placeholder {
   padding: 40px 20px;
